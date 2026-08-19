@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/agentping-logo.png" alt="AgentPing logo" width="180" />
+</p>
+
 # AgentPing
 
 **A tiny desk-side inbox for AI coding agents.**
