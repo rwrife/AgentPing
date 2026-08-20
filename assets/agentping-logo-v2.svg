@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1200" viewBox="0 0 1200 1200" role="img" aria-labelledby="title desc">
+  <title id="title">AgentPing logo</title>
+  <desc id="desc">A friendly AI desk device with a notification ping and AgentPing wordmark.</desc>
+  <defs>
+    <linearGradient id="disc" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#35c8ff"/>
+      <stop offset="0.55" stop-color="#6e73ff"/>
+      <stop offset="1" stop-color="#b84cff"/>
+    </linearGradient>
+    <linearGradient id="screen" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#142248"/>
+      <stop offset="1" stop-color="#091127"/>
+    </linearGradient>
+    <linearGradient id="cyan" x1="0" x2="1">
+      <stop offset="0" stop-color="#25e5ff"/>
+      <stop offset="1" stop-color="#5197ff"/>
+    </linearGradient>
+    <linearGradient id="alert" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#ffcc3f"/>
+      <stop offset="1" stop-color="#ff625d"/>
+    </linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="24" stdDeviation="28" flood-color="#071126" flood-opacity="0.28"/>
+    </filter>
+  </defs>
+
+  <g filter="url(#shadow)">
+    <circle cx="600" cy="455" r="325" fill="url(#disc)"/>
+
+    <g transform="translate(350 225) rotate(-4 250 300)">
+      <rect x="35" y="25" width="500" height="520" rx="94" fill="#f5f7ff"/>
+      <rect x="77" y="72" width="416" height="380" rx="66" fill="url(#screen)"/>
+      <path d="M157 238c24 31 55 31 80 0" fill="none" stroke="#59dbff" stroke-width="22" stroke-linecap="round"/>
+      <path d="M333 238c24 31 55 31 80 0" fill="none" stroke="#59dbff" stroke-width="22" stroke-linecap="round"/>
+      <path d="M238 332c45 41 103 41 148 0" fill="none" stroke="#74efff" stroke-width="20" stroke-linecap="round"/>
+      <ellipse cx="145" cy="315" rx="25" ry="12" fill="#b461ff" opacity="0.8"/>
+      <ellipse cx="426" cy="315" rx="25" ry="12" fill="#b461ff" opacity="0.8"/>
+      <rect x="155" y="515" width="260" height="92" rx="44" fill="#dfe4f4"/>
+      <rect x="225" y="550" width="120" height="16" rx="8" fill="url(#cyan)"/>
+      <circle cx="35" cy="305" r="30" fill="#1c2a55" stroke="#40dfff" stroke-width="12"/>
+    </g>
+
+    <g transform="translate(790 230)">
+      <path d="M30 5h105c36 0 65 29 65 65v72c0 36-29 65-65 65h-36l-45 48 6-48H30c-36 0-65-29-65-65V70C-35 34-6 5 30 5z" fill="url(#alert)" stroke="#fff" stroke-width="18"/>
+      <rect x="72" y="48" width="20" height="82" rx="10" fill="#fff"/>
+      <circle cx="82" cy="157" r="12" fill="#fff"/>
+    </g>
+
+    <g fill="none" stroke="url(#cyan)" stroke-width="22" stroke-linecap="round">
+      <path d="M995 300c50 18 84 51 102 99"/>
+      <path d="M1019 248c83 27 142 82 172 164"/>
+      <path d="M1044 199c116 37 199 117 238 228"/>
+    </g>
+
+    <g transform="translate(118 790)">
+      <rect x="0" y="0" width="964" height="245" rx="92" fill="#121b3a" stroke="#fff" stroke-width="20"/>
+      <path d="M83 121l45-45M83 121l45 45M185 76l45 45-45 45" fill="none" stroke="#38dfff" stroke-width="17" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="280" y="158" font-family="Arial Rounded MT Bold, Nunito, Inter, Arial, sans-serif" font-size="112" font-weight="800" letter-spacing="-5" fill="#fff">Agent<tspan fill="#42dfff">Ping</tspan></text>
+      <g fill="url(#cyan)">
+        <rect x="824" y="86" width="94" height="16" rx="8"/>
+        <rect x="844" y="120" width="74" height="16" rx="8"/>
+        <rect x="864" y="154" width="54" height="16" rx="8"/>
+      </g>
+    </g>
+  </g>
+</svg>
