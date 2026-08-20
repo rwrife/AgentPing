@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/agentping-logo.png" alt="AgentPing logo" width="180" />
+  <img src="assets/agentping-logo-v2.png" alt="AgentPing logo" width="180" />
 </p>
 
 # AgentPing
