@@ -1,6 +1,6 @@
 # AgentPing autonomous executor state
 
-- **Updated (UTC):** 2026-08-21T17:13:46Z
+- **Updated (UTC):** 2026-08-21T17:14:53Z
 - **Repository:** `rwrife/AgentPing`
 - **Starting main:** `b401b96a7e3d7829c57016a64c3d0a84cc2efee8`
 - **Starting queue:** 0 open PRs; open issues #1–#9
@@ -8,7 +8,7 @@
 - **Selected issue:** [#1 — Establish a truthful, buildable repository baseline and CI](https://github.com/rwrife/AgentPing/issues/1)
 - **Branch:** `feat/issue-1-buildable-baseline-20260821T165552Z`
 - **Worktree:** `/home/rwrife/repos/AgentPing-worktrees/issue-1-buildable-baseline-20260821T165552Z`
-- **Implementation PR:** pending creation
+- **Implementation PR:** [#10 — feat: establish truthful buildable baseline](https://github.com/rwrife/AgentPing/pull/10)
 
 ## Files changed
 
