@@ -1,0 +1,149 @@
+[
+  {
+    "protocolVersion": "1.0",
+    "messageId": "10000000-0000-4000-8000-000000000001",
+    "type": "capability",
+    "sentAt": "2026-08-21T18:00:00Z",
+    "connectionId": "conn-fixture-1",
+    "sequence": 1,
+    "payload": {
+      "deviceId": "display-fixture-1",
+      "role": "display",
+      "supportedVersions": ["1.0"],
+      "features": ["events", "sessions", "attention", "approve", "deny", "reply", "resume"],
+      "maxMessageBytes": 16384,
+      "resumeFromSequence": 0,
+      "softwareVersion": "0.1.0-fixture"
+    }
+  },
+  {
+    "protocolVersion": "1.0",
+    "messageId": "10000000-0000-4000-8000-000000000002",
+    "type": "heartbeat",
+    "sentAt": "2026-08-21T18:00:15Z",
+    "connectionId": "conn-fixture-1",
+    "sequence": 2,
+    "payload": {
+      "uptimeMs": 15000,
+      "status": "ready",
+      "lastReceivedSequence": 1,
+      "queueDepth": 0
+    }
+  },
+  {
+    "protocolVersion": "1.0",
+    "messageId": "10000000-0000-4000-8000-000000000003",
+    "type": "session",
+    "sentAt": "2026-08-21T18:00:16Z",
+    "connectionId": "conn-fixture-1",
+    "sequence": 3,
+    "payload": {
+      "sessionId": "codex-agentping-42",
+      "provider": "codex",
+      "state": "running",
+      "displayName": "AgentPing issue 2",
+      "updatedAt": "2026-08-21T18:00:16Z",
+      "revision": 7,
+      "unreadCount": 1
+    }
+  },
+  {
+    "protocolVersion": "1.0",
+    "messageId": "10000000-0000-4000-8000-000000000004",
+    "type": "event",
+    "sentAt": "2026-08-21T18:00:17Z",
+    "connectionId": "conn-fixture-1",
+    "sequence": 4,
+    "payload": {
+      "eventId": "evt-42",
+      "sessionId": "codex-agentping-42",
+      "provider": "codex",
+      "eventKind": "progress",
+      "summary": "Protocol fixtures generated",
+      "detail": "No provider credential is present in this message.",
+      "severity": "success",
+      "metadata": { "repository": "rwrife/AgentPing" }
+    }
+  },
+  {
+    "protocolVersion": "1.0",
+    "messageId": "10000000-0000-4000-8000-000000000005",
+    "type": "attention",
+    "sentAt": "2026-08-21T18:00:18Z",
+    "connectionId": "conn-fixture-1",
+    "sequence": 5,
+    "payload": {
+      "attentionId": "attention-42",
+      "sessionId": "codex-agentping-42",
+      "revision": 8,
+      "category": "approval",
+      "title": "Delete generated cache?",
+      "body": "The provider requests deletion of a generated cache directory.",
+      "responseDeadlineAt": "2026-08-21T18:00:48Z",
+      "destructive": true,
+      "allowedActions": ["approve", "deny"]
+    }
+  },
+  {
+    "protocolVersion": "1.0",
+    "messageId": "10000000-0000-4000-8000-000000000006",
+    "type": "approval",
+    "sentAt": "2026-08-21T18:00:25Z",
+    "connectionId": "conn-fixture-1",
+    "sequence": 6,
+    "payload": {
+      "actionId": "20000000-0000-4000-8000-000000000001",
+      "attentionId": "attention-42",
+      "expectedRevision": 8,
+      "destructive": true,
+      "confirmation": {
+        "presentedMessageId": "10000000-0000-4000-8000-000000000005",
+        "promptDigest": "b22537d7049a5629b767a7d9be8e6d6bf6edac9900590209ad0ad4fcbcb47f73",
+        "confirmedAt": "2026-08-21T18:00:24Z"
+      }
+    }
+  },
+  {
+    "protocolVersion": "1.0",
+    "messageId": "10000000-0000-4000-8000-000000000007",
+    "type": "denial",
+    "sentAt": "2026-08-21T18:00:26Z",
+    "connectionId": "conn-fixture-1",
+    "sequence": 7,
+    "payload": {
+      "actionId": "20000000-0000-4000-8000-000000000002",
+      "attentionId": "attention-43",
+      "expectedRevision": 2,
+      "reason": "user_denied",
+      "note": "Keep the generated artifact for inspection."
+    }
+  },
+  {
+    "protocolVersion": "1.0",
+    "messageId": "10000000-0000-4000-8000-000000000008",
+    "type": "reply",
+    "sentAt": "2026-08-21T18:00:27Z",
+    "connectionId": "conn-fixture-1",
+    "sequence": 8,
+    "payload": {
+      "actionId": "20000000-0000-4000-8000-000000000003",
+      "attentionId": "attention-44",
+      "expectedRevision": 1,
+      "text": "Run the focused tests first."
+    }
+  },
+  {
+    "protocolVersion": "1.0",
+    "messageId": "10000000-0000-4000-8000-000000000009",
+    "type": "error",
+    "sentAt": "2026-08-21T18:00:28Z",
+    "connectionId": "conn-fixture-1",
+    "sequence": 9,
+    "payload": {
+      "code": "STALE_REVISION",
+      "message": "The attention item changed before the action arrived.",
+      "retryable": false,
+      "relatedMessageId": "10000000-0000-4000-8000-000000000008"
+    }
+  }
+]

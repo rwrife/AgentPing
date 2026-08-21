@@ -1,0 +1,289 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentping.dev/protocol/v1/agentping.schema.json",
+  "title": "AgentPing device protocol v1 message",
+  "description": "Authenticated bridge/display message envelope. Pairing and provider credentials are deliberately out of band.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocolVersion",
+    "messageId",
+    "type",
+    "sentAt",
+    "connectionId",
+    "sequence",
+    "payload"
+  ],
+  "properties": {
+    "protocolVersion": { "const": "1.0" },
+    "messageId": { "$ref": "#/$defs/uuid" },
+    "type": {
+      "enum": [
+        "event",
+        "session",
+        "attention",
+        "approval",
+        "denial",
+        "reply",
+        "heartbeat",
+        "error",
+        "capability"
+      ]
+    },
+    "sentAt": { "type": "string", "format": "date-time" },
+    "connectionId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "sequence": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "payload": { "type": "object" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "type": { "const": "event" } }, "required": ["type"] },
+      "then": { "properties": { "payload": { "$ref": "#/$defs/eventPayload" } } }
+    },
+    {
+      "if": { "properties": { "type": { "const": "session" } }, "required": ["type"] },
+      "then": { "properties": { "payload": { "$ref": "#/$defs/sessionPayload" } } }
+    },
+    {
+      "if": { "properties": { "type": { "const": "attention" } }, "required": ["type"] },
+      "then": { "properties": { "payload": { "$ref": "#/$defs/attentionPayload" } } }
+    },
+    {
+      "if": { "properties": { "type": { "const": "approval" } }, "required": ["type"] },
+      "then": { "properties": { "payload": { "$ref": "#/$defs/approvalPayload" } } }
+    },
+    {
+      "if": { "properties": { "type": { "const": "denial" } }, "required": ["type"] },
+      "then": { "properties": { "payload": { "$ref": "#/$defs/denialPayload" } } }
+    },
+    {
+      "if": { "properties": { "type": { "const": "reply" } }, "required": ["type"] },
+      "then": { "properties": { "payload": { "$ref": "#/$defs/replyPayload" } } }
+    },
+    {
+      "if": { "properties": { "type": { "const": "heartbeat" } }, "required": ["type"] },
+      "then": { "properties": { "payload": { "$ref": "#/$defs/heartbeatPayload" } } }
+    },
+    {
+      "if": { "properties": { "type": { "const": "error" } }, "required": ["type"] },
+      "then": { "properties": { "payload": { "$ref": "#/$defs/errorPayload" } } }
+    },
+    {
+      "if": { "properties": { "type": { "const": "capability" } }, "required": ["type"] },
+      "then": { "properties": { "payload": { "$ref": "#/$defs/capabilityPayload" } } }
+    }
+  ],
+  "$defs": {
+    "uuid": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
+    },
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "provider": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 32,
+      "pattern": "^[a-z][a-z0-9_-]*$"
+    },
+    "eventPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["eventId", "sessionId", "provider", "eventKind", "summary", "severity"],
+      "properties": {
+        "eventId": { "$ref": "#/$defs/identifier" },
+        "sessionId": { "$ref": "#/$defs/identifier" },
+        "provider": { "$ref": "#/$defs/provider" },
+        "eventKind": {
+          "enum": ["started", "progress", "completed", "failed", "message"]
+        },
+        "summary": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "detail": { "type": "string", "maxLength": 2048 },
+        "severity": { "enum": ["info", "success", "warning", "error"] },
+        "metadata": {
+          "type": "object",
+          "maxProperties": 16,
+          "propertyNames": {
+            "allOf": [
+              { "pattern": "^[a-z][a-z0-9_.-]{0,63}$" },
+              {
+                "not": {
+                  "pattern": "(^|[_.-])(token|secret|password|credential|authorization|cookie|api[_-]?key)([_.-]|$)"
+                }
+              }
+            ]
+          },
+          "additionalProperties": { "type": "string", "maxLength": 256 }
+        }
+      }
+    },
+    "sessionPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sessionId", "provider", "state", "displayName", "updatedAt", "revision", "unreadCount"],
+      "properties": {
+        "sessionId": { "$ref": "#/$defs/identifier" },
+        "provider": { "$ref": "#/$defs/provider" },
+        "state": { "enum": ["idle", "running", "waiting_for_input", "completed", "failed"] },
+        "displayName": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "revision": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+        "unreadCount": { "type": "integer", "minimum": 0, "maximum": 999 }
+      }
+    },
+    "attentionPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "attentionId",
+        "sessionId",
+        "revision",
+        "category",
+        "title",
+        "body",
+        "responseDeadlineAt",
+        "destructive",
+        "allowedActions"
+      ],
+      "properties": {
+        "attentionId": { "$ref": "#/$defs/identifier" },
+        "sessionId": { "$ref": "#/$defs/identifier" },
+        "revision": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+        "category": { "enum": ["approval", "reply", "notification"] },
+        "title": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "body": { "type": "string", "minLength": 1, "maxLength": 1024 },
+        "responseDeadlineAt": { "type": "string", "format": "date-time" },
+        "destructive": { "type": "boolean" },
+        "allowedActions": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 3,
+          "uniqueItems": true,
+          "items": { "enum": ["approve", "deny", "reply"] }
+        }
+      }
+    },
+    "approvalPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["actionId", "attentionId", "expectedRevision", "destructive"],
+      "properties": {
+        "actionId": { "$ref": "#/$defs/uuid" },
+        "attentionId": { "$ref": "#/$defs/identifier" },
+        "expectedRevision": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+        "destructive": { "type": "boolean" },
+        "confirmation": { "$ref": "#/$defs/confirmation" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "destructive": { "const": true } }, "required": ["destructive"] },
+          "then": { "required": ["confirmation"] }
+        }
+      ]
+    },
+    "confirmation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["presentedMessageId", "promptDigest", "confirmedAt"],
+      "properties": {
+        "presentedMessageId": { "$ref": "#/$defs/uuid" },
+        "promptDigest": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "confirmedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "denialPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["actionId", "attentionId", "expectedRevision", "reason"],
+      "properties": {
+        "actionId": { "$ref": "#/$defs/uuid" },
+        "attentionId": { "$ref": "#/$defs/identifier" },
+        "expectedRevision": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+        "reason": { "enum": ["user_denied", "expired", "stale", "policy_blocked"] },
+        "note": { "type": "string", "maxLength": 256 }
+      }
+    },
+    "replyPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["actionId", "attentionId", "expectedRevision", "text"],
+      "properties": {
+        "actionId": { "$ref": "#/$defs/uuid" },
+        "attentionId": { "$ref": "#/$defs/identifier" },
+        "expectedRevision": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+        "text": { "type": "string", "minLength": 1, "maxLength": 512 }
+      }
+    },
+    "heartbeatPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["uptimeMs", "status", "lastReceivedSequence", "queueDepth"],
+      "properties": {
+        "uptimeMs": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+        "status": { "enum": ["ready", "busy", "degraded"] },
+        "lastReceivedSequence": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+        "queueDepth": { "type": "integer", "minimum": 0, "maximum": 256 }
+      }
+    },
+    "errorPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "message", "retryable"],
+      "properties": {
+        "code": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]{1,63}$" },
+        "message": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "retryable": { "type": "boolean" },
+        "relatedMessageId": { "$ref": "#/$defs/uuid" }
+      }
+    },
+    "capabilityPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["deviceId", "role", "supportedVersions", "features", "maxMessageBytes", "resumeFromSequence"],
+      "properties": {
+        "deviceId": { "$ref": "#/$defs/identifier" },
+        "role": { "enum": ["bridge", "display"] },
+        "supportedVersions": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "uniqueItems": true,
+          "items": { "type": "string", "pattern": "^[1-9][0-9]*\\.[0-9]+$" }
+        },
+        "features": {
+          "type": "array",
+          "maxItems": 16,
+          "uniqueItems": true,
+          "items": {
+            "enum": ["events", "sessions", "attention", "approve", "deny", "reply", "resume"]
+          }
+        },
+        "maxMessageBytes": { "const": 16384 },
+        "resumeFromSequence": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+        "softwareVersion": { "type": "string", "minLength": 1, "maxLength": 64 }
+      }
+    }
+  },
+  "x-agentping-limits": {
+    "maxMessageBytes": 16384,
+    "maxReplyCharacters": 512,
+    "maxClockSkewSeconds": 300,
+    "maxReplayWindowMessages": 256,
+    "heartbeatIntervalSeconds": 15,
+    "approvalTimeoutSeconds": 30
+  }
+}
