@@ -1,0 +1,100 @@
+[
+  {
+    "name": "unsupported protocol version",
+    "message": {
+      "protocolVersion": "2.0",
+      "messageId": "30000000-0000-4000-8000-000000000001",
+      "type": "heartbeat",
+      "sentAt": "2026-08-21T18:00:00Z",
+      "connectionId": "invalid-1",
+      "sequence": 1,
+      "payload": { "uptimeMs": 1, "status": "ready", "lastReceivedSequence": 0, "queueDepth": 0 }
+    }
+  },
+  {
+    "name": "unknown message kind",
+    "message": {
+      "protocolVersion": "1.0",
+      "messageId": "30000000-0000-4000-8000-000000000002",
+      "type": "execute",
+      "sentAt": "2026-08-21T18:00:00Z",
+      "connectionId": "invalid-2",
+      "sequence": 1,
+      "payload": {}
+    }
+  },
+  {
+    "name": "destructive approval without explicit confirmation",
+    "message": {
+      "protocolVersion": "1.0",
+      "messageId": "30000000-0000-4000-8000-000000000003",
+      "type": "approval",
+      "sentAt": "2026-08-21T18:00:00Z",
+      "connectionId": "invalid-3",
+      "sequence": 1,
+      "payload": {
+        "actionId": "30000000-0000-4000-8000-000000000004",
+        "attentionId": "attention-destructive",
+        "expectedRevision": 4,
+        "destructive": true
+      }
+    }
+  },
+  {
+    "name": "provider credential smuggled into event",
+    "message": {
+      "protocolVersion": "1.0",
+      "messageId": "30000000-0000-4000-8000-000000000005",
+      "type": "event",
+      "sentAt": "2026-08-21T18:00:00Z",
+      "connectionId": "invalid-4",
+      "sequence": 1,
+      "payload": {
+        "eventId": "event-invalid",
+        "sessionId": "session-invalid",
+        "provider": "codex",
+        "eventKind": "message",
+        "summary": "This must be rejected",
+        "severity": "error",
+        "providerToken": "not-a-real-secret"
+      }
+    }
+  },
+  {
+    "name": "empty short reply",
+    "message": {
+      "protocolVersion": "1.0",
+      "messageId": "30000000-0000-4000-8000-000000000006",
+      "type": "reply",
+      "sentAt": "2026-08-21T18:00:00Z",
+      "connectionId": "invalid-5",
+      "sequence": 1,
+      "payload": {
+        "actionId": "30000000-0000-4000-8000-000000000007",
+        "attentionId": "attention-invalid",
+        "expectedRevision": 1,
+        "text": ""
+      }
+    }
+  },
+  {
+    "name": "credential-like key hidden in event metadata",
+    "message": {
+      "protocolVersion": "1.0",
+      "messageId": "30000000-0000-4000-8000-000000000008",
+      "type": "event",
+      "sentAt": "2026-08-21T18:00:00Z",
+      "connectionId": "invalid-6",
+      "sequence": 1,
+      "payload": {
+        "eventId": "event-invalid-metadata",
+        "sessionId": "session-invalid",
+        "provider": "codex",
+        "eventKind": "message",
+        "summary": "Nested credentials must also be rejected",
+        "severity": "error",
+        "metadata": { "provider_token": "not-a-real-secret" }
+      }
+    }
+  }
+]

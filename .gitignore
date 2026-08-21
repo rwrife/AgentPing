@@ -11,6 +11,8 @@ firmware/sdkconfig.*
 
 # Local tool environments
 .venv*/
+**/__pycache__/
+*.pyc
 
 # Editors and OS
 .vscode/

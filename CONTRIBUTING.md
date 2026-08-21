@@ -4,6 +4,7 @@
 
 - .NET SDK 10.0.300 (enforced by `global.json` with roll-forward disabled)
 - Python 3.12.3 and the locked PlatformIO dependencies in `firmware/requirements-ci.txt`
+- Locked JSON Schema validator dependencies in `protocol/requirements-ci.txt`
 - Docker for the bridge container check
 
 ## Verify a change
@@ -11,7 +12,7 @@
 ```bash
 python3 -m venv .venv-platformio
 . .venv-platformio/bin/activate
-python3 -m pip install --requirement firmware/requirements-ci.txt
+python3 -m pip install --requirement firmware/requirements-ci.txt --requirement protocol/requirements-ci.txt
 ./scripts/verify.sh
 docker build --file bridge/AgentPing.Bridge/Dockerfile --tag agentping-bridge:local .
 ```

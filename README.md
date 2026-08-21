@@ -23,16 +23,24 @@ AgentPing is an early, buildable foundation for a Windows/.NET bridge and a Wave
 
 - pinned PlatformIO/ESP-IDF ESP32-C6 project
 - compile-tested structured heartbeat skeleton
+- schema-derived protocol-v1 constants compiled into the firmware
 - no hardcoded network or provider credentials
 
-The firmware does **not** initialize the display, touch, Wi-Fi, LVGL, or device protocol yet. The bridge does **not** implement provider adapters, device pairing, WebSockets, approvals, persistence, or tray UI yet. See the open issues for dependency-ordered implementation work.
+### Protocol contract
+
+- JSON Schema Draft 2020-12 contract for all nine v1 message kinds
+- bounded envelopes, revisioned/idempotent actions, version negotiation, and reconnect/resume rules
+- LAN threat model and full-entropy token pairing/rotation/revocation design
+- golden valid/fail-closed fixtures consumed by Python validation and bridge serialization tests
+
+The firmware does **not** initialize the display, touch, Wi-Fi, TLS, pairing, LVGL, or protocol transport yet. The bridge does **not** implement provider adapters, device pairing, WebSockets, approvals, persistence, or tray UI yet. The protocol artifacts are a tested contract, not runtime networking evidence. See the open issues for dependency-ordered implementation work.
 
 ## Repository layout
 
 ```text
 bridge/       ASP.NET Core bridge and tests
 firmware/     ESP32-C6 PlatformIO skeleton
-protocol/     reserved for shared machine-readable protocol artifacts
+protocol/     shared machine-readable protocol schema, fixtures, and validator
 hardware/     hardware scope and future editable KiCad sources
 docs/         architecture and protocol status
 integration/  process-level integration tooling
@@ -58,7 +66,7 @@ curl http://127.0.0.1:8742/health
 curl http://127.0.0.1:8742/api/status
 ```
 
-Expected health response: `Healthy`. The status JSON identifies `agentping-bridge`, reports `status: ok`, and uses `apiVersion: baseline-v0` to make clear that protocol v1 does not exist yet.
+Expected health response: `Healthy`. The status JSON identifies `agentping-bridge`, reports `status: ok`, and uses `apiVersion: baseline-v0` because the device transport is not implemented. Protocol-v1 schema/models existing in the repository do not change that runtime truth.
 
 ## Build the firmware
 
@@ -66,6 +74,8 @@ Expected health response: `Healthy`. The status JSON identifies `agentping-bridg
 python3 -m venv .venv-platformio
 . .venv-platformio/bin/activate
 python3 -m pip install --requirement firmware/requirements-ci.txt
+python3 -m pip install --requirement protocol/requirements-ci.txt
+python3 protocol/validate.py
 platformio run -d firmware
 ```
 
@@ -82,10 +92,10 @@ The container listens on `0.0.0.0:8742` inside its isolated network namespace so
 
 ## Architecture and protocol
 
-The ESP32 is intended to remain a thin client; GitHub/OpenAI/Anthropic credentials stay on the PC. The bridge binds to loopback by default until authenticated LAN pairing is implemented.
+The ESP32 remains a thin client; GitHub/OpenAI/Anthropic credentials stay on the PC. The bridge binds to loopback by default until the specified authenticated LAN pairing and TLS transport are implemented.
 
 - [`docs/architecture.md`](docs/architecture.md) describes current and planned boundaries.
-- [`docs/protocol.md`](docs/protocol.md) explicitly documents the pre-protocol baseline and points to issue #2 for protocol v1.
+- [`docs/protocol.md`](docs/protocol.md) specifies protocol v1, secure pairing, compatibility, ordering, resume, and fail-closed action rules.
 - [`hardware/README.md`](hardware/README.md) states the current hardware evidence and future KiCad scope.
 
 ## Contributing and security

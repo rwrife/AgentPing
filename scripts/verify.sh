@@ -4,6 +4,7 @@ set -euo pipefail
 ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 cd "$ROOT"
 
+python3 protocol/validate.py
 dotnet restore AgentPing.sln --locked-mode
 dotnet build AgentPing.sln --configuration Release --no-restore
 dotnet test AgentPing.sln --configuration Release --no-build --logger "console;verbosity=normal"
