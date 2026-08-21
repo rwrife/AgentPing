@@ -1,6 +1,6 @@
 # AgentPing autonomous executor state
 
-- **Updated (UTC):** 2026-08-21T19:23:09Z
+- **Updated (UTC):** 2026-08-21T19:24:15Z
 - **Repository:** `rwrife/AgentPing`
 - **Starting main:** `b003dbedaca374d5aaac1f389b632bfdf319ef56`
 - **Starting queue:** 0 open PRs; open issues #2–#9
@@ -9,7 +9,7 @@
 - **Selection rationale:** #1 is merged and #2 is the highest-priority unblocked dependency for bridge, firmware, adapter, action, tray, and release work.
 - **Branch:** `feat/issue-2-protocol-v1-20260821T191603Z`
 - **Worktree:** `/home/rwrife/repos/AgentPing-worktrees/issue-2-protocol-v1-20260821T191603Z`
-- **Implementation PR:** pending creation
+- **Implementation PR:** [#11 — feat: specify secure device protocol v1](https://github.com/rwrife/AgentPing/pull/11)
 
 ## Files changed
 
