@@ -6,133 +6,91 @@
 
 **A tiny desk-side inbox for AI coding agents.**
 
-AgentPing turns an ESP32-C6 AMOLED touch display into a physical notification and response surface for coding agents such as GitHub Copilot, Codex, and Claude Code.
+AgentPing is an early, buildable foundation for a Windows/.NET bridge and a Waveshare ESP32-C6 Touch AMOLED 1.64 display. The long-term product is a physical notification and response surface for coding agents. The current repository intentionally implements only the baseline described below.
 
-The project has two parts:
-
-- **AgentPing Bridge** — a small Windows/.NET service that receives agent events, tracks sessions and attention requests, and relays state to devices.
-- **AgentPing Display** — firmware for the Waveshare ESP32-C6 1.64-inch 280×456 AMOLED touch board.
-
-```text
-Copilot / Codex / Claude
-          |
-          | hooks / local APIs
-          v
-+-------------------------+
-| AgentPing Bridge        |
-| Windows / .NET          |
-|                         |
-| events + approvals      |
-| unified session state   |
-| WebSocket server        |
-+------------+------------+
-             |
-             | Wi-Fi / WebSocket
-             v
-+-------------------------+
-| ESP32-C6 AgentPing      |
-| 280x456 AMOLED + touch  |
-|                         |
-| status / alerts / reply |
-+-------------------------+
-```
-
-## Current status
-
-This repository is an early working scaffold.
+## What works today
 
 ### Bridge
 
-- [x] ASP.NET Core service on port `8742`
-- [x] Normalized agent/session state
-- [x] `GET /api/status`
-- [x] `POST /api/events`
-- [x] WebSocket device feed at `/ws`
-- [x] Approval broker endpoints for future hook integration
-- [ ] GitHub Copilot adapter
-- [ ] Codex adapter
-- [ ] Claude Code adapter
-- [ ] Windows tray UI / installer
+- ASP.NET Core 10 executable with structured JSON console logging
+- loopback-only default listener at `http://127.0.0.1:8742`
+- `GET /health` liveness endpoint
+- `GET /api/status` minimal, non-secret baseline status
+- integration tests and a process-level smoke test
+- reproducible Docker image build
 
-### Display
+### Firmware
 
-- [x] Waveshare-specific firmware skeleton
-- [x] Wi-Fi + WebSocket connection model
-- [x] LVGL status screen skeleton
-- [ ] touch actions
-- [ ] approval / deny UI
-- [ ] custom reply keyboard
-- [ ] OTA updates
-- [ ] haptics / sounds
+- pinned PlatformIO/ESP-IDF ESP32-C6 project
+- compile-tested structured heartbeat skeleton
+- no hardcoded network or provider credentials
 
-## Run the bridge
+The firmware does **not** initialize the display, touch, Wi-Fi, LVGL, or device protocol yet. The bridge does **not** implement provider adapters, device pairing, WebSockets, approvals, persistence, or tray UI yet. See the open issues for dependency-ordered implementation work.
+
+## Repository layout
+
+```text
+bridge/       ASP.NET Core bridge and tests
+firmware/     ESP32-C6 PlatformIO skeleton
+protocol/     reserved for shared machine-readable protocol artifacts
+hardware/     hardware scope and future editable KiCad sources
+docs/         architecture and protocol status
+integration/  process-level integration tooling
+scripts/      canonical local verification command
+```
+
+## Build and test the bridge
 
 Requires the .NET 10 SDK.
 
-```powershell
+```bash
+dotnet restore AgentPing.sln --locked-mode
+dotnet build AgentPing.sln --configuration Release --no-restore
+dotnet test AgentPing.sln --configuration Release --no-build
+./integration/smoke-bridge.sh
+```
+
+Run the service:
+
+```bash
 dotnet run --project bridge/AgentPing.Bridge
+curl http://127.0.0.1:8742/health
+curl http://127.0.0.1:8742/api/status
 ```
 
-Then test it:
+Expected health response: `Healthy`. The status JSON identifies `agentping-bridge`, reports `status: ok`, and uses `apiVersion: baseline-v0` to make clear that protocol v1 does not exist yet.
 
-```powershell
-Invoke-RestMethod http://localhost:8742/api/status
+## Build the firmware
+
+```bash
+python3 -m venv .venv-platformio
+. .venv-platformio/bin/activate
+python3 -m pip install --requirement firmware/requirements-ci.txt
+platformio run -d firmware
 ```
 
-Send a fake agent event:
+A successful compile is static evidence only. Flashing, display, touch, Wi-Fi, and physical bench behavior are not CI-validated. See [`firmware/README.md`](firmware/README.md).
 
-```powershell
-$body = @{
-  provider = "codex"
-  sessionId = "demo-1"
-  sessionName = "AgentPing demo"
-  state = "waiting_for_user"
-  message = "Should I run the tests?"
-  attention = $true
-} | ConvertTo-Json
+## Container build
 
-Invoke-RestMethod `
-  -Method Post `
-  -Uri http://localhost:8742/api/events `
-  -ContentType application/json `
-  -Body $body
+```bash
+docker build --file bridge/AgentPing.Bridge/Dockerfile --tag agentping-bridge:local .
+docker run --rm -p 127.0.0.1:8742:8742 agentping-bridge:local
 ```
 
-## Hardware target
+The container listens on `0.0.0.0:8742` inside its isolated network namespace so Docker can forward traffic; the documented host publish is explicitly restricted to `127.0.0.1`.
 
-Initial firmware targets the **Waveshare ESP32-C6 Touch AMOLED 1.64** board:
+## Architecture and protocol
 
-- ESP32-C6
-- 280 × 456 AMOLED
-- capacitive touch
-- Wi-Fi 6 / BLE
-- LVGL
+The ESP32 is intended to remain a thin client; GitHub/OpenAI/Anthropic credentials stay on the PC. The bridge binds to loopback by default until authenticated LAN pairing is implemented.
 
-Waveshare's Arduino example currently uses Arduino-ESP32 3.2.0 and LVGL 8.4.0. The firmware folder intentionally keeps AgentPing application code separate from the vendor display/touch BSP so we can track upstream board support cleanly.
+- [`docs/architecture.md`](docs/architecture.md) describes current and planned boundaries.
+- [`docs/protocol.md`](docs/protocol.md) explicitly documents the pre-protocol baseline and points to issue #2 for protocol v1.
+- [`hardware/README.md`](hardware/README.md) states the current hardware evidence and future KiCad scope.
 
-## Protocol
+## Contributing and security
 
-The ESP32 is intentionally a thin client. Credentials for GitHub/OpenAI/Anthropic stay on the PC.
-
-See [`docs/protocol.md`](docs/protocol.md) for the device protocol and [`docs/architecture.md`](docs/architecture.md) for the overall design.
-
-## Security model
-
-The intended design is LAN-only by default:
-
-- no GitHub/OpenAI/Anthropic secrets on the ESP32
-- bridge binds to the local machine/LAN
-- devices authenticate to the bridge with a device token
-- destructive approvals will require explicit confirmation
-
-## Roadmap
-
-1. Make the bridge + ESP32 status feed work end-to-end.
-2. Add Copilot, Codex, and Claude hooks for notifications.
-3. Add synchronous approval/deny flows.
-4. Add short text replies.
-5. Add a Windows tray app and automatic discovery/pairing.
-6. Add voice/haptics as optional hardware extensions.
+See [`CONTRIBUTING.md`](CONTRIBUTING.md) for exact verification commands and [`SECURITY.md`](SECURITY.md) for private vulnerability reporting and trust-boundary requirements.
 
 ## License
 
