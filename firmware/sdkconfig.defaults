@@ -1,0 +1,2 @@
+# Waveshare documents 16 MB flash for ESP32-C6-Touch-AMOLED-1.64.
+CONFIG_ESPTOOLPY_FLASHSIZE_16MB=y

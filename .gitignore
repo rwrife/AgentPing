@@ -1,0 +1,21 @@
+# .NET
+**/bin/
+**/obj/
+*.user
+
+# PlatformIO
+firmware/.pio/
+firmware/sdkconfig.*
+!firmware/sdkconfig.defaults
+.pio/
+
+# Local tool environments
+.venv*/
+
+# Editors and OS
+.vscode/
+.idea/
+.DS_Store
+
+# Runtime/log output
+*.log
