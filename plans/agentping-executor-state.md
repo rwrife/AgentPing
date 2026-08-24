@@ -1,17 +1,19 @@
 # AgentPing autonomous executor state
 
-- **Updated (UTC):** 2026-08-24T19:31:34Z
+- **Updated (UTC):** 2026-08-24T19:36:09Z
 - **Repository:** `rwrife/AgentPing`
 - **Starting main:** `31dae91cb7b1e742d63c0ecd9e8ff330454f6db0`
 - **Starting queue:** 0 open PRs; open issues #3–#9
-- **PR actions:** the starting PR queue was empty, so there were no PR repairs, merges, or auto-merge actions before issue work; implementation PR #13 was created after verification and its four CI jobs are pending.
+- **PR actions:** the starting PR queue was empty, so there were no PR repairs, merges, or auto-merge actions before issue work. Created implementation PR #13; final-head CI run 32768697475 passed all four jobs; squash-merged the PR and deleted its remote branch.
 - **Selected issue:** [#3 — Implement the tested AgentPing Bridge core](https://github.com/rwrife/AgentPing/issues/3)
 - **Selection rationale:** #1 and #2 are closed; #3 is the highest-priority unblocked dependency and #4–#7 plus #9 depend directly or transitively on it.
 - **Branch:** `feat/issue-3-bridge-core-20260822T191558Z`
 - **Worktree:** `/home/rwrife/repos/AgentPing-worktrees/issue-3-bridge-core-20260822T191558Z`
-- **Implementation PR:** [#13 — feat: implement the tested AgentPing Bridge core](https://github.com/rwrife/AgentPing/pull/13) — open; mergeable; CI pending
-- **Current queue:** open PR #13; open issues #3–#9
-- **Self-removal:** not triggered because the issue queue is non-empty
+- **Implementation PR:** [#13 — feat: implement the tested AgentPing Bridge core](https://github.com/rwrife/AgentPing/pull/13) — **MERGED** at 2026-08-24T19:35:44Z
+- **Merge commit:** `688bd85caeedce186cbd8f66b18c1aa19802cbc4`
+- **Selected issue outcome:** #3 closed automatically at 2026-08-24T19:35:46Z
+- **Final queue:** 0 open PRs; open issues #4–#9
+- **Self-removal:** not triggered because six issues remain open
 
 ## Files changed
 
@@ -35,6 +37,7 @@
 - `PLATFORMIO_BUILD_DIR=/tmp/agentping-pio-build-20260824T192637Z platformio run -d firmware` — PASS with pinned PlatformIO 6.1.18 / ESP-IDF 5.5.0; 3.1% RAM and 15.2% application partition.
 - `docker build --file bridge/AgentPing.Bridge/Dockerfile --tag agentping-bridge:issue-3-20260824 .` — PASS using pinned SDK/runtime image digests; image `sha256:79894a4b2501c6111cc4151d8ea3e138d4c6c39e79a64c1434cc753ccc2ec190`.
 - Non-root runtime container loopback probe — PASS: `Healthy`; protocol-v1 status with zero startup sessions/attentions/history and server sequence 0; container user `1654`; host publish restricted to `127.0.0.1`.
+- [GitHub Actions run 32768697475](https://github.com/rwrife/AgentPing/actions/runs/32768697475) — PASS on final PR head `99a05c2`: Protocol contract and fixtures, Bridge build and tests/process smoke, Bridge container build, and ESP32-C6 firmware build.
 - Host `./scripts/verify.sh` — protocol stage PASS, then stopped truthfully because the Linux runner has no host `dotnet`; equivalent pinned-container .NET checks and isolated PlatformIO compile passed above. GitHub Actions remains the canonical combined environment.
 
 ## Evidence limits and blockers
