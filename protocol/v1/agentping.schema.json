@@ -42,6 +42,12 @@
       "minimum": 0,
       "maximum": 9007199254740991
     },
+    "serverSequence": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991,
+      "description": "Bridge-only durable state checkpoint. Devices acknowledge the highest fully applied value in capability.payload.resumeFromSequence when reconnecting."
+    },
     "payload": { "type": "object" }
   },
   "allOf": [
@@ -274,6 +280,9 @@
         },
         "maxMessageBytes": { "const": 16384 },
         "resumeFromSequence": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+        "resetState": { "type": "boolean", "description": "Bridge response only. Clear prior state before the following snapshot." },
+        "snapshotItemCount": { "type": "integer", "minimum": 0, "description": "Bridge response only. Number of snapshot items following this frame." },
+        "snapshotCheckpoint": { "type": "integer", "minimum": 0, "maximum": 9007199254740991, "description": "Bridge response only. Persist after all snapshot items, immediately if the count is zero." },
         "softwareVersion": { "type": "string", "minLength": 1, "maxLength": 64 }
       }
     }

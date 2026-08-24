@@ -32,6 +32,8 @@ public sealed record ProtocolEnvelope<TPayload>
     public required DateTimeOffset SentAt { get; init; }
     public required string ConnectionId { get; init; }
     public required ulong Sequence { get; init; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public ulong? ServerSequence { get; init; }
     public required TPayload Payload { get; init; }
 }
 
@@ -128,5 +130,11 @@ public sealed record CapabilityPayload
     public required IReadOnlyList<string> Features { get; init; }
     public required int MaxMessageBytes { get; init; }
     public required ulong ResumeFromSequence { get; init; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public bool? ResetState { get; init; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? SnapshotItemCount { get; init; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public ulong? SnapshotCheckpoint { get; init; }
     public string? SoftwareVersion { get; init; }
 }

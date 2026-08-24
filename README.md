@@ -14,10 +14,11 @@ AgentPing is an early, buildable foundation for a Windows/.NET bridge and a Wave
 
 - ASP.NET Core 10 executable with structured JSON console logging
 - loopback-only default listener at `http://127.0.0.1:8742`
-- `GET /health` liveness endpoint
-- `GET /api/status` minimal, non-secret baseline status
-- integration tests and a process-level smoke test
-- reproducible Docker image build
+- `GET /health` and non-secret protocol-v1 `GET /api/status`
+- strict, 16 KiB-bounded `POST /api/events` and `POST /api/attentions` ingestion
+- deterministic session/attention state, contiguous ingress ordering, idempotency, bounded history, transactional atomic persistence, stale-session handling, and restart recovery
+- digest-authenticated protocol-v1 `/ws` capability negotiation, heartbeat validation, reconnect replay, and live state fan-out
+- integration tests, process-level smoke coverage, and a reproducible Docker image build
 
 ### Firmware
 
@@ -33,7 +34,7 @@ AgentPing is an early, buildable foundation for a Windows/.NET bridge and a Wave
 - LAN threat model and full-entropy token pairing/rotation/revocation design
 - golden valid/fail-closed fixtures consumed by Python validation and bridge serialization tests
 
-The firmware does **not** initialize the display, touch, Wi-Fi, TLS, pairing, LVGL, or protocol transport yet. The bridge does **not** implement provider adapters, device pairing, WebSockets, approvals, persistence, or tray UI yet. The protocol artifacts are a tested contract, not runtime networking evidence. See the open issues for dependency-ordered implementation work.
+The firmware does **not** initialize the display, touch, Wi-Fi, TLS, pairing, LVGL, or protocol transport yet. The bridge does **not** implement provider adapters, token issuance/rotation, LAN TLS provisioning, approval execution, or tray UI yet. Device credentials are currently provisioned out of band as SHA-256 digests for development; Windows protected storage and pairing UX remain issue #7 scope. See the open issues for dependency-ordered implementation work.
 
 ## Repository layout
 
@@ -66,7 +67,7 @@ curl http://127.0.0.1:8742/health
 curl http://127.0.0.1:8742/api/status
 ```
 
-Expected health response: `Healthy`. The status JSON identifies `agentping-bridge`, reports `status: ok`, and uses `apiVersion: baseline-v0` because the device transport is not implemented. Protocol-v1 schema/models existing in the repository do not change that runtime truth.
+Expected health response: `Healthy`. The status JSON identifies `agentping-bridge`, reports `status: ok`, uses protocol `apiVersion: 1.0`, and exposes only non-secret session/attention/history counts plus the latest server sequence. See [`bridge/README.md`](bridge/README.md) for ingestion, authenticated WebSocket, persistence, and configuration details.
 
 ## Build the firmware
 
@@ -92,7 +93,7 @@ The container listens on `0.0.0.0:8742` inside its isolated network namespace so
 
 ## Architecture and protocol
 
-The ESP32 remains a thin client; GitHub/OpenAI/Anthropic credentials stay on the PC. The bridge binds to loopback by default until the specified authenticated LAN pairing and TLS transport are implemented.
+The ESP32 remains a thin client; GitHub/OpenAI/Anthropic credentials stay on the PC. The bridge binds to loopback by default and authenticates `/ws` with revocable device-token digests. Non-loopback HTTPS/WSS certificate provisioning and interactive pairing remain deferred, so the checked-in HTTP listener must not be exposed to the LAN.
 
 - [`docs/architecture.md`](docs/architecture.md) describes current and planned boundaries.
 - [`docs/protocol.md`](docs/protocol.md) specifies protocol v1, secure pairing, compatibility, ordering, resume, and fail-closed action rules.
