@@ -14,6 +14,6 @@ Do not open a public issue for a suspected vulnerability or exposed secret. Use 
 - Approval flows fail closed and are idempotent before they can trigger provider actions.
 - Destructive approvals require a second explicit confirmation bound to the exact displayed prompt, current revision, and deadline.
 
-The protocol-v1 schema and pairing design are checked in and statically tested, but the current bridge still has no LAN listener, pairing endpoint, device authentication, provider adapter, or approval executor. See [`docs/protocol.md`](docs/protocol.md) for the threat model and requirements. Those runtime features require focused security tests as they are introduced.
+The protocol-v1 schema and pairing design are checked in and statically tested. The bridge now implements loopback event/attention ingestion, atomic state persistence, digest-authenticated WebSockets, capability/heartbeat validation, bounded reconnect replay, and live state fan-out. It still has no provider adapter, pairing endpoint/UI, Windows protected token issuance/rotation, LAN TLS certificate provisioning, or approval executor. See [`docs/protocol.md`](docs/protocol.md) for the threat model and requirements. Keep the default listener on loopback until those remaining controls are implemented.
 
 Supported versions will be listed once the project publishes its first release. Until then, only the latest `main` branch is maintained.

@@ -1,6 +1,6 @@
 # AgentPing device protocol v1
 
-Status: **specified and fixture-tested; transport and pairing UI are not implemented yet**.
+Status: **bridge transport implemented and integration-tested on loopback; firmware transport, LAN TLS provisioning, and pairing UI are not implemented yet**.
 
 The canonical contract is [`protocol/v1/agentping.schema.json`](../protocol/v1/agentping.schema.json), a JSON Schema Draft 2020-12 document. Golden valid and fail-closed fixtures live beside it. Protocol messages never carry coding-provider credentials, Wi-Fi passwords, device enrollment secrets, or bridge private keys.
 
@@ -26,9 +26,10 @@ Every message has:
 | `protocolVersion` | Exact major/minor string; v1 is `1.0`. |
 | `messageId` | Globally unique UUID. Receivers deduplicate it. |
 | `type` | One of the nine schema-defined message kinds. |
-| `sentAt` | RFC 3339 UTC timestamp. More than 300 seconds of skew is rejected after time sync. |
+| `sentAt` | RFC 3339 timestamp with UTC offset zero. Event and attention ingestion rejects more than 300 seconds of skew from bridge UTC time. |
 | `connectionId` | New opaque ID for each authenticated connection. |
 | `sequence` | Monotonically increasing integer within a connection. |
+| `serverSequence` | Optional bridge-only durable state checkpoint on replay/live state messages. Providers/displays must not send it. |
 | `payload` | Type-specific object; unknown fields fail closed. |
 
 The schema defines bounded strings, arrays, metadata, revisions, queues, and action payloads. The total compact UTF-8 message is capped at 16 KiB. A receiver must check wire size before allocation/parsing and schema-validity before dispatch.
@@ -44,6 +45,8 @@ The schema defines bounded strings, arrays, metadata, revisions, queues, and act
 - `denial`: idempotent denial with bounded reason/note.
 - `reply`: idempotent short text response, at most 512 characters.
 - `error`: bounded protocol error. Error text must not echo secrets or raw rejected payloads.
+
+An attention `responseDeadlineAt` must use UTC offset zero, be later than `sentAt`, and be no more than 30 seconds later.
 
 ## Negotiation and compatibility
 
@@ -61,7 +64,7 @@ Messages are ordered by `sequence` within `connectionId`; transport order alone 
 
 1. accept the next contiguous sequence;
 2. acknowledge it in heartbeat/capability state;
-3. ignore an already-processed `messageId` or action `actionId` and return the recorded outcome;
+3. return the recorded outcome only when an already-processed identifier has the same message kind and semantic fingerprint; changed-payload or cross-type reuse is a state conflict;
 4. buffer at most 256 out-of-order messages;
 5. reconnect on a gap that cannot be filled without exceeding that window.
 
@@ -69,7 +72,7 @@ Action payloads include `actionId`, `attentionId`, and `expectedRevision`. The b
 
 ## Reconnect and resume
 
-The display reconnects with exponential backoff and jitter (1 second minimum, 60 seconds maximum), authenticates again, then reports `resumeFromSequence` in `capability`. The bridge keeps at most 256 recent messages per device. It replays only messages newer than the acknowledged contiguous sequence, with their original `messageId` and a new connection sequence. If the gap is outside the replay window, the bridge sends fresh session/attention snapshots. Pending approvals are revalidated against current revision and deadline; they are never assumed approved after reconnect.
+The display reconnects with exponential backoff and jitter (1 second minimum, 60 seconds maximum), authenticates again, then reports the highest fully applied bridge `serverSequence` as `resumeFromSequence` in `capability`. The bridge keeps at most 256 recent messages per device. It replays only messages newer than the acknowledged contiguous server sequence, preserving each original `messageId`, attaching its durable `serverSequence`, and assigning a new connection `sequence`. If the gap is outside the replay window, the bridge capability response sets `resetState: true`, `snapshotItemCount`, and `snapshotCheckpoint`. The display clears prior session and attention state before applying exactly that many following snapshot items, then persists `snapshotCheckpoint`; with zero items it clears and persists immediately. Snapshot items do not carry individual checkpoints. Pending approvals are revalidated against current revision and deadline; they are never assumed approved after reconnect.
 
 ## Pairing, rotation, and revocation
 
@@ -97,6 +100,10 @@ For a destructive action, one tap is insufficient. The user must enter a second 
 - bridge policy and provider adapter authorization.
 
 Any missing, stale, malformed, ambiguous, disconnected, timed-out, or policy-rejected state is denial/no-op. Timeouts never imply approval. Device UI success is not authoritative until the bridge returns a recorded success outcome.
+
+## Bridge implementation status
+
+The bridge enforces the 16 KiB limit on HTTP and WebSocket input, strictly deserializes protocol envelopes, enforces contiguous provider sequence ordering, rolls back in-memory transitions when durable commit fails, authenticates display upgrades against revocable token digests, requires display capability at sequence 1, validates contiguous heartbeats, persists bounded replay history and deduplication windows, and replays server-sequence entries newer than `resumeFromSequence` or sends fresh state snapshots when the retained window is insufficient. HTTP provider ingestion remains loopback-only by default. Firmware networking, HTTPS/WSS certificate provisioning for LAN use, token issuance/rotation, and approval/denial/reply execution remain deferred and must not be inferred from bridge integration tests.
 
 ## Verification
 

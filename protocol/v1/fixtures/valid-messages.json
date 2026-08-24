@@ -37,6 +37,7 @@
     "sentAt": "2026-08-21T18:00:16Z",
     "connectionId": "conn-fixture-1",
     "sequence": 3,
+    "serverSequence": 41,
     "payload": {
       "sessionId": "codex-agentping-42",
       "provider": "codex",

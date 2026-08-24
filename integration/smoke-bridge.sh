@@ -38,6 +38,6 @@ HEALTH=$(curl --fail --silent "http://127.0.0.1:$PORT/health")
 STATUS=$(curl --fail --silent "http://127.0.0.1:$PORT/api/status")
 
 [[ "$HEALTH" == "Healthy" ]]
-python3 -c 'import json,sys; d=json.load(sys.stdin); assert d["service"] == "agentping-bridge"; assert d["status"] == "ok"; assert d["apiVersion"] == "baseline-v0"' <<<"$STATUS"
+python3 -c 'import json,sys; d=json.load(sys.stdin); assert d["service"] == "agentping-bridge"; assert d["status"] == "ok"; assert d["apiVersion"] == "1.0"; assert d["sessionCount"] == 0; assert d["attentionCount"] == 0' <<<"$STATUS"
 
-printf 'SMOKE_RESULT=PASS health=%s service=agentping-bridge apiVersion=baseline-v0\n' "$HEALTH"
+printf 'SMOKE_RESULT=PASS health=%s service=agentping-bridge apiVersion=1.0 sessions=0 attentions=0\n' "$HEALTH"

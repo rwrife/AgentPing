@@ -2,8 +2,8 @@
 
 AgentPing has three trust-separated runtime layers:
 
-1. **Provider adapters (PC only)** translate coding-agent events and actions. GitHub, OpenAI, Anthropic, and other provider credentials remain on the PC and never enter device messages.
-2. **AgentPing Bridge (PC)** owns normalized session/attention state, device enrollment, policy, idempotency, provider dispatch, and audit records. The executable currently exposes only loopback health/status endpoints; device transport is intentionally deferred to bridge-core issue #3.
+1. **Provider adapters (PC only)** translate coding-agent events and actions. GitHub, OpenAI, Anthropic, and other provider credentials remain on the PC and never enter device messages. Adapters themselves remain issue #4 scope; the bridge currently accepts strict normalized protocol-v1 event/attention envelopes.
+2. **AgentPing Bridge (PC)** owns normalized session/attention state, bounded history, durable idempotency, stale-session handling, device authentication, reconnect replay, live fan-out, policy, and future provider dispatch. It binds to loopback by default.
 3. **AgentPing Display (ESP32-C6)** is a thin presentation/input client. It may hold only its own revocable device credential and pinned bridge certificate, never provider credentials.
 
 ```text
@@ -14,9 +14,9 @@ provider process -> adapter -> bridge policy/state -> authenticated WSS -> displ
 
 ## Current executable boundary
 
-The bridge binds to `127.0.0.1:8742` by default. `/health` is liveness and `/api/status` reports minimal non-secret process status. There is no LAN listener, device WebSocket, provider ingestion, persistence, pairing UI, or approval broker yet.
+The bridge binds to `127.0.0.1:8742` by default. `/health` is liveness; `/api/status` reports non-secret protocol-v1 counts and sequence state. `/api/events` and `/api/attentions` accept strict bounded protocol envelopes, enforce contiguous sequence ordering per provider connection, normalize and transactionally persist state, suppress duplicates, and publish only committed changes. Authenticated `/ws` connections negotiate capability, validate heartbeat ordering, replay bounded history or send a fresh snapshot after a missed window, and receive live session/attention updates.
 
-Protocol v1 is now specified as machine-readable JSON Schema, golden fixtures, bridge serialization models/tests, and generated firmware limits. This is contract/static-test evidence—not evidence that networking or pairing is implemented.
+Device credentials are currently provisioned out of band as SHA-256 digests and reloaded per handshake for immediate denial of revoked entries. Interactive pairing, Windows protected credential storage, token issuance/rotation, non-loopback TLS certificate provisioning, provider adapters, and approval dispatch are not implemented yet. The checked-in HTTP listener must remain loopback-only.
 
 ## Trust boundaries
 
