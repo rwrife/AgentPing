@@ -1,0 +1,7 @@
+{
+  "session_id": "claude-fixture-session",
+  "transcript_path": "/private/not-forwarded.jsonl",
+  "cwd": "/workspace/agentping",
+  "hook_event_name": "UserPromptSubmit",
+  "message": "User supplied a bounded follow-up reply"
+}

@@ -24,6 +24,7 @@ jobs:
           cache: pip
           cache-dependency-path: protocol/requirements-ci.txt
       - run: python3 -m pip install --requirement protocol/requirements-ci.txt
+      - run: python3 -m unittest discover -s tools/tests -v
       - run: python3 protocol/validate.py
 
   bridge:
@@ -38,6 +39,7 @@ jobs:
       - run: dotnet build AgentPing.sln --configuration Release --no-restore
       - run: dotnet test AgentPing.sln --configuration Release --no-build --logger "console;verbosity=normal"
       - run: ./integration/smoke-bridge.sh
+      - run: ./integration/smoke-provider-adapters.sh
 
   firmware:
     name: ESP32-C6 firmware build

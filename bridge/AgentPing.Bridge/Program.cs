@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using AgentPing.Bridge.Core;
 using AgentPing.Bridge.Protocol;
+using AgentPing.Bridge.Providers;
 using AgentPing.Bridge.Security;
 using AgentPing.Bridge.Transport;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
@@ -15,6 +16,7 @@ builder.Logging.ClearProviders();
 builder.Logging.AddJsonConsole(options => options.TimestampFormat = "O");
 builder.Services.AddHealthChecks();
 builder.Services.Configure<BridgeOptions>(builder.Configuration.GetSection("Bridge"));
+builder.Services.Configure<ProviderAdapterOptions>(builder.Configuration.GetSection("Adapters"));
 builder.Services.ConfigureHttpJsonOptions(options =>
 {
     options.SerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
@@ -46,6 +48,11 @@ builder.Services.AddSingleton(serviceProvider =>
 });
 builder.Services.AddSingleton<DeviceConnectionHub>();
 builder.Services.AddSingleton<WebSocketSessionHandler>();
+builder.Services.AddSingleton<IProviderAdapter, ManualProviderAdapter>();
+builder.Services.AddSingleton<IProviderAdapter, CodexCliProviderAdapter>();
+builder.Services.AddSingleton<IProviderAdapter, ClaudeCodeProviderAdapter>();
+builder.Services.AddSingleton<IProviderAdapter, CopilotCliProviderAdapter>();
+builder.Services.AddSingleton<ProviderAdapterDispatcher>();
 builder.Services.AddSingleton(serviceProvider =>
 {
     var options = serviceProvider.GetRequiredService<IOptions<BridgeOptions>>().Value;
@@ -90,7 +97,11 @@ app.MapHealthChecks("/health", new HealthCheckOptions
     AllowCachingResponses = false,
 });
 
-app.MapGet("/api/status", async (BridgeStateStore store, TimeProvider timeProvider, CancellationToken cancellationToken) =>
+app.MapGet("/api/status", async (
+    BridgeStateStore store,
+    ProviderAdapterDispatcher adapters,
+    TimeProvider timeProvider,
+    CancellationToken cancellationToken) =>
 {
     var snapshot = await store.GetSnapshotAsync(cancellationToken);
     return TypedResults.Ok(new BridgeStatus(
@@ -101,8 +112,71 @@ app.MapGet("/api/status", async (BridgeStateStore store, TimeProvider timeProvid
         SessionCount: snapshot.Sessions.Count,
         AttentionCount: snapshot.Attentions.Count,
         HistoryCount: snapshot.History.Count,
-        LastServerSequence: snapshot.LastServerSequence));
+        LastServerSequence: snapshot.LastServerSequence,
+        Adapters: adapters.GetStatuses()));
 }).WithName("GetBridgeStatus");
+
+app.MapPost("/api/adapters/{provider}", async Task<IResult> (
+    string provider,
+    JsonElement source,
+    HttpContext context,
+    ProviderAdapterDispatcher adapters,
+    ILogger<ProviderAdapterDispatcher> adapterLogger,
+    CancellationToken cancellationToken) =>
+{
+    if (context.Connection.RemoteIpAddress is { } remoteAddress
+        && !System.Net.IPAddress.IsLoopback(remoteAddress))
+    {
+        return Results.Problem(
+            title: "Loopback required",
+            detail: "Provider hook ingestion is available only over the local loopback listener.",
+            statusCode: StatusCodes.Status403Forbidden);
+    }
+
+    try
+    {
+        var result = await adapters.DispatchAsync(provider, source, cancellationToken);
+        return Results.Accepted(value: result);
+    }
+    catch (ProviderAdapterNotFoundException)
+    {
+        return Results.Problem(
+            title: "Unsupported provider adapter",
+            detail: "The requested provider adapter is not registered.",
+            statusCode: StatusCodes.Status404NotFound);
+    }
+    catch (ProviderAdapterDisabledException)
+    {
+        return Results.Problem(
+            title: "Provider adapter disabled",
+            detail: "Enable the provider adapter explicitly in bridge configuration before using it.",
+            statusCode: StatusCodes.Status503ServiceUnavailable);
+    }
+    catch (ProviderPayloadException)
+    {
+        return Results.Problem(
+            title: "Unsupported provider payload",
+            detail: "The hook payload is missing required fields or uses an unsupported event kind.",
+            statusCode: StatusCodes.Status422UnprocessableEntity);
+    }
+    catch (BridgeStateConflictException exception)
+    {
+        return Results.Problem(
+            title: "State conflict",
+            detail: exception.Message,
+            statusCode: StatusCodes.Status409Conflict);
+    }
+    catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+    {
+        adapterLogger.LogWarning(
+            "Provider adapter state commit failed; request rejected ({ExceptionType})",
+            exception.GetType().Name);
+        return Results.Problem(
+            title: "State unavailable",
+            detail: "Bridge state could not be committed.",
+            statusCode: StatusCodes.Status503ServiceUnavailable);
+    }
+}).WithName("IngestProviderHook");
 
 app.MapPost("/api/events", async Task<IResult> (
     ProtocolEnvelope<EventPayload> envelope,
@@ -262,7 +336,8 @@ public sealed record BridgeStatus(
     int SessionCount,
     int AttentionCount,
     int HistoryCount,
-    ulong LastServerSequence);
+    ulong LastServerSequence,
+    IReadOnlyList<ProviderAdapterStatus> Adapters);
 
 public sealed record EventIngestResponse(bool Duplicate, ulong LastServerSequence);
 

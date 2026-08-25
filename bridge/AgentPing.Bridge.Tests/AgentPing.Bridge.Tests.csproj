@@ -23,4 +23,11 @@
     <ProjectReference Include="..\AgentPing.Bridge\AgentPing.Bridge.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Include="..\provider-fixtures\*.json">
+      <Link>provider-fixtures\%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
 </Project>

@@ -1,48 +1,46 @@
 # AgentPing autonomous executor state
 
-- **Updated (UTC):** 2026-08-24T19:36:09Z
+- **Updated (UTC):** 2026-08-25T19:29:55Z
 - **Repository:** `rwrife/AgentPing`
-- **Starting main:** `31dae91cb7b1e742d63c0ecd9e8ff330454f6db0`
-- **Starting queue:** 0 open PRs; open issues #3–#9
-- **PR actions:** the starting PR queue was empty, so there were no PR repairs, merges, or auto-merge actions before issue work. Created implementation PR #13; final-head CI run 32768697475 passed all four jobs; squash-merged the PR and deleted its remote branch.
-- **Selected issue:** [#3 — Implement the tested AgentPing Bridge core](https://github.com/rwrife/AgentPing/issues/3)
-- **Selection rationale:** #1 and #2 are closed; #3 is the highest-priority unblocked dependency and #4–#7 plus #9 depend directly or transitively on it.
-- **Branch:** `feat/issue-3-bridge-core-20260822T191558Z`
-- **Worktree:** `/home/rwrife/repos/AgentPing-worktrees/issue-3-bridge-core-20260822T191558Z`
-- **Implementation PR:** [#13 — feat: implement the tested AgentPing Bridge core](https://github.com/rwrife/AgentPing/pull/13) — **MERGED** at 2026-08-24T19:35:44Z
-- **Merge commit:** `688bd85caeedce186cbd8f66b18c1aa19802cbc4`
-- **Selected issue outcome:** #3 closed automatically at 2026-08-24T19:35:46Z
-- **Final queue:** 0 open PRs; open issues #4–#9
-- **Self-removal:** not triggered because six issues remain open
+- **Starting main:** `d282c147dbc6865d6c7bf4b4014e1cdfd82871a6`
+- **Starting queue:** 0 open PRs; open issues #4–#9
+- **PR actions:** the starting PR queue was empty, so there were no PR repairs, merges, or auto-merge actions before issue work.
+- **Selected issue:** [#4 — Add Copilot, Codex CLI, and Claude Code adapters](https://github.com/rwrife/AgentPing/issues/4)
+- **Selection rationale:** #1–#3 are closed; #4 is the highest-priority unblocked dependency, and #6 plus #9 depend on it directly or transitively.
+- **Branch:** `feat/issue-4-provider-adapters-20260825T191506Z`
+- **Worktree:** `/home/rwrife/repos/AgentPing-worktrees/issue-4-provider-adapters-20260825T191506Z`
+- **Implementation PR:** pending creation after the verified commit; this record will be updated in the active issue PR.
+- **Final queue:** pending implementation PR creation; issues #4–#9 remained open at selection time.
+- **Self-removal:** not triggered because the issue queue is non-empty.
 
 ## Files changed
 
-- Added deterministic bridge state normalization for protocol-v1 event and attention envelopes, including contiguous per-connection ordering, monotonic revisions, fingerprint-checked idempotency, bounded history/deduplication windows, stale-session transitions, transactional atomic persistence, single-writer locking, rollback on commit failure, and restart recovery.
-- Added strict 16 KiB-bounded `POST /api/events` and `POST /api/attentions` endpoints plus non-secret protocol-v1 status counts.
-- Added digest-backed device authentication with immediate revocation-file reload and no plaintext token persistence.
-- Added authenticated `/ws` capability negotiation, bounded frame assembly and heartbeat deduplication, heartbeat sequence validation, reconnect replay, explicitly framed full-snapshot reset/checkpoint recovery after a missed replay window (including empty snapshots), global-sequence-ordered live session/attention fan-out, and bounded slow-consumer queues.
-- Added 41 bridge unit/integration tests covering state transitions, ordering conflicts, exact duplicate suppression and conflicting ID reuse, persistence rollback/restart and writer contention, sanitized service-unavailable handling, UTC timestamp/skew validation, stale handling, HTTP validation, authentication failures, schema-legal capability/heartbeat negotiation, replay and missed-window reset/checkpoint recovery, out-of-order fan-out serialization, live fan-out, and fail-closed heartbeat behavior.
-- Updated the process smoke test and bridge/security/architecture/protocol/integration documentation to match implemented runtime truth and explicitly preserve the loopback-only boundary until LAN TLS/pairing work lands.
+- Added independently switchable, default-off provider adapters for OpenAI Codex CLI completion notifications, Anthropic Claude Code lifecycle/permission hooks, GitHub Copilot CLI lifecycle/tool hooks, and a stable manual/test contract.
+- Added loopback-only `/api/adapters/{provider}` ingestion, non-secret adapter status reporting, bounded protocol-v1 normalization, persistent replay idempotency, changed-identifier conflict rejection, and fail-closed 30-second display-only approval attention mapping.
+- Added secret-redacted field selection that excludes input-message arrays, transcript paths, tool arguments/output, environment data, provider credentials, and raw rejected payloads.
+- Added a standard-library Python relay that accepts Codex JSON arguments or Claude/Copilot stdin JSON, enforces the 16 KiB limit, and refuses non-literal/non-loopback bridge targets.
+- Added nine synthetic/recorded-shape fixtures and automated coverage for session start, progress, approval/waiting, completion, failure, reply handoff, replay, disabled/unsupported adapters, redaction, and content-changing ID reuse.
+- Added a real process-level adapter smoke test and provider setup/capability/security/troubleshooting documentation; wired relay tests and adapter smoke into canonical local verification and CI.
 
 ## Verification evidence
 
-- `python3 protocol/validate.py` — PASS: Draft 2020-12 schema, all 9 valid message kinds, 6 fail-closed fixtures, the 16,384-byte wire bound, and generated firmware header drift.
-- Pinned .NET SDK 10.0.300 container: `dotnet restore AgentPing.sln --locked-mode` — PASS.
-- Pinned SDK container: `dotnet format AgentPing.sln --verify-no-changes --no-restore --verbosity normal` — PASS.
-- Pinned SDK container: `dotnet build AgentPing.sln --configuration Release --no-restore` — PASS, 0 warnings and 0 errors.
-- Pinned SDK container: `dotnet test AgentPing.sln --configuration Release --no-build --logger "console;verbosity=minimal"` — PASS, 41/41 tests on the post-fix working tree.
-- Independent Codex reviews found and blocked schema-invalid outbound capability features, non-transactional persistence failure, missing HTTP sequence enforcement, under-validation of inbound capabilities/heartbeats, unsanitized persistence failures, a concurrent commit/fan-out ordering race, incomplete full-snapshot framing, missing UTC/skew enforcement, inconsistent identifier reuse, and multi-process persistence contention. All findings were fixed with regression tests. A fresh post-fix staged review returned `No actionable findings`.
-- Pinned SDK container: `dotnet list AgentPing.sln package --vulnerable --include-transitive` — PASS, no known vulnerable packages. The pre-existing xUnit 2.9.3 dependency is reported as legacy/deprecated and was not introduced by this change.
-- Project-local environment from `firmware/requirements-ci.txt`; `python -m pip check` — PASS, no broken requirements; PlatformIO Core 6.1.18 (host Python 3.11.15; CI pins Python 3.12.3).
-- `PLATFORMIO_BUILD_DIR=/tmp/agentping-pio-build-20260824T192637Z platformio run -d firmware` — PASS with pinned PlatformIO 6.1.18 / ESP-IDF 5.5.0; 3.1% RAM and 15.2% application partition.
-- `docker build --file bridge/AgentPing.Bridge/Dockerfile --tag agentping-bridge:issue-3-20260824 .` — PASS using pinned SDK/runtime image digests; image `sha256:79894a4b2501c6111cc4151d8ea3e138d4c6c39e79a64c1434cc753ccc2ec190`.
-- Non-root runtime container loopback probe — PASS: `Healthy`; protocol-v1 status with zero startup sessions/attentions/history and server sequence 0; container user `1654`; host publish restricted to `127.0.0.1`.
-- [GitHub Actions run 32768697475](https://github.com/rwrife/AgentPing/actions/runs/32768697475) — PASS on final PR head `99a05c2`: Protocol contract and fixtures, Bridge build and tests/process smoke, Bridge container build, and ESP32-C6 firmware build.
-- Host `./scripts/verify.sh` — protocol stage PASS, then stopped truthfully because the Linux runner has no host `dotnet`; equivalent pinned-container .NET checks and isolated PlatformIO compile passed above. GitHub Actions remains the canonical combined environment.
+- `python3 -m unittest discover -s tools/tests -v` — PASS, 4/4 relay validation tests.
+- `python3 protocol/validate.py` — PASS: Draft 2020-12 schema, all 9 valid message kinds, 6 fail-closed fixtures, 16,384-byte wire bound, and generated firmware header drift.
+- `dotnet restore AgentPing.sln --locked-mode` with SDK 10.0.300 — PASS.
+- `dotnet format AgentPing.sln --verify-no-changes --no-restore --verbosity normal` — PASS.
+- `dotnet build AgentPing.sln --configuration Release --no-restore` — PASS, 0 warnings and 0 errors.
+- `dotnet test AgentPing.sln --configuration Release --no-build --logger "console;verbosity=minimal"` — PASS, 61/61 tests.
+- `./integration/smoke-bridge.sh` — PASS: `Healthy`, protocol 1.0, zero baseline sessions/attentions.
+- `./integration/smoke-provider-adapters.sh` — PASS: real bridge process plus relay, two sessions, one fail-closed attention, server sequence 3, exact replay idempotent.
+- `platformio run -d firmware` via pinned PlatformIO 6.1.18 / ESP-IDF 5.5.0 — PASS; 3.1% RAM and 15.2% application partition.
+- `dotnet list AgentPing.sln package --vulnerable --include-transitive` — PASS, no known vulnerable packages.
+- `docker build --file bridge/AgentPing.Bridge/Dockerfile --tag agentping-bridge:issue-4 .` — PASS; image `sha256:a5afffff5f3bc59393e0d085c1e03157d75be26fc2e6e5108a91886b2601d660`.
+- Independent Codex staged-diff review found a bearer-redaction ordering leak, non-atomic event/attention persistence, Copilot prompt forwarding inconsistent with policy, and incomplete supported-version disclosure. All four blockers were fixed with regression tests or explicit contract-version documentation; a fresh complete staged review is required before commit.
 
 ## Evidence limits and blockers
 
-- This run provides schema validation, automated .NET unit/integration tests, container runtime probes, and firmware compile evidence.
-- It does **not** claim a LAN TLS/WSS deployment, interactive pairing, Windows protected token storage/rotation, provider adapter operation, approval execution, ESP32 networking/display/touch behavior, flashed-device behavior, RF testing, or physical bench validation.
-- Device credentials are development-provisioned out of band as SHA-256 digests; production issuance, DPAPI-backed storage, rotation, active connection termination on revocation, and pairing UI remain issue #7 scope.
+- Evidence is static validation, synthetic fixture mapping, .NET automated tests, loopback process integration, container build, and firmware compile only.
+- No live GitHub Copilot, OpenAI Codex, or Anthropic Claude account/credential was used. Provider documentation was cross-checked on 2026-08-25, but live-provider field drift remains possible and is handled as a clean 422 failure.
+- Codex external `notify` currently supplies completion events only. Claude/Copilot approval-like hooks produce display-only attention; no provider action is executed until issue #6.
+- No LAN listener, device transport, flashed firmware, display/touch, RF, or physical bench validation is claimed.
 - **Current blockers:** none.
