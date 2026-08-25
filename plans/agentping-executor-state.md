@@ -1,16 +1,20 @@
 # AgentPing autonomous executor state
 
-- **Updated (UTC):** 2026-08-25T19:32:20Z
+- **Updated (UTC):** 2026-08-25T19:36:56Z
 - **Repository:** `rwrife/AgentPing`
 - **Starting main:** `d282c147dbc6865d6c7bf4b4014e1cdfd82871a6`
 - **Starting queue:** 0 open PRs; open issues #4–#9
-- **PR actions:** the starting PR queue was empty, so there were no PR repairs, merges, or auto-merge actions before issue work.
+- **PR actions:** the starting PR queue was empty. Created implementation PR #15, fixed all four blockers from independent staged review before commit, observed all four final-head CI jobs pass, squash-merged #15, deleted its remote branch, and verified issue #4 closed automatically.
 - **Selected issue:** [#4 — Add Copilot, Codex CLI, and Claude Code adapters](https://github.com/rwrife/AgentPing/issues/4)
 - **Selection rationale:** #1–#3 are closed; #4 is the highest-priority unblocked dependency, and #6 plus #9 depend on it directly or transitively.
 - **Branch:** `feat/issue-4-provider-adapters-20260825T191506Z`
 - **Worktree:** `/home/rwrife/repos/AgentPing-worktrees/issue-4-provider-adapters-20260825T191506Z`
-- **Implementation PR:** [#15 — feat: add secure provider adapters](https://github.com/rwrife/AgentPing/pull/15) — open, mergeable, CI pending at this update.
-- **Final queue:** 1 open implementation PR (#15); issues #4–#9 remain open until the linked implementation merges.
+- **Implementation PR:** [#15 — feat: add secure provider adapters](https://github.com/rwrife/AgentPing/pull/15) — **MERGED** at 2026-08-25T19:36:40Z.
+- **Merge commit:** `6e21e03e89fc948c46031afb75cea6d4b474b580`
+- **Selected issue outcome:** #4 closed automatically at 2026-08-25T19:36:41Z.
+- **State-sync branch:** `docs/issue-4-final-state-20260825T193656Z`
+- **State-sync worktree:** `/home/rwrife/repos/AgentPing-worktrees/issue-4-final-state-20260825T193656Z`
+- **Final queue before state sync:** 0 open PRs; open issues #5–#9.
 - **Self-removal:** not triggered because the issue queue is non-empty.
 
 ## Files changed
@@ -36,6 +40,7 @@
 - `dotnet list AgentPing.sln package --vulnerable --include-transitive` — PASS, no known vulnerable packages.
 - `docker build --file bridge/AgentPing.Bridge/Dockerfile --tag agentping-bridge:issue-4 .` — PASS; image `sha256:a5afffff5f3bc59393e0d085c1e03157d75be26fc2e6e5108a91886b2601d660`.
 - Independent Codex staged-diff review found a bearer-redaction ordering leak, non-atomic event/attention persistence, Copilot prompt forwarding inconsistent with policy, and incomplete supported-version disclosure. All four blockers were fixed with regression tests or explicit contract-version documentation. A fresh review inspected all 32 staged files, reran 61 .NET and 4 Python tests, modified no files, and returned `No actionable findings`.
+- [GitHub Actions run 32890167832](https://github.com/rwrife/AgentPing/actions/runs/32890167832) — PASS on final PR head `197f463`: Protocol contract and fixtures, Bridge build and tests/process smokes, Bridge container build, and ESP32-C6 firmware build.
 
 ## Evidence limits and blockers
 
