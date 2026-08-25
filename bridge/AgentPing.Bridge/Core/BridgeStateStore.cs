@@ -186,6 +186,150 @@ public sealed class BridgeStateStore : IDisposable
         }
     }
 
+    public async Task<ProviderIngestResult> IngestProviderBatchAsync(
+        ProtocolEnvelope<EventPayload> eventEnvelope,
+        Func<SessionPayload, ProtocolEnvelope<AttentionPayload>>? createAttention,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(eventEnvelope);
+        await _gate.WaitAsync(cancellationToken);
+        try
+        {
+            var eventFingerprint = CreateFingerprint(MessageKind.Event, eventEnvelope.Payload);
+            var duplicateEventSequence = CheckDuplicate(
+                eventEnvelope.MessageId,
+                eventEnvelope.Payload.EventId,
+                MessageKind.Event,
+                eventFingerprint);
+            var previousState = _state;
+            _state = CloneState(previousState);
+            try
+            {
+                var committedItems = new List<BridgeHistoryItem>(2);
+                if (duplicateEventSequence is null)
+                {
+                    EnsureNextInboundSequence(eventEnvelope.ConnectionId, eventEnvelope.Sequence);
+                    RecordInboundSequence(eventEnvelope.ConnectionId, eventEnvelope.Sequence);
+                    var revision = _state.Sessions.TryGetValue(eventEnvelope.Payload.SessionId, out var existingSession)
+                        ? existingSession.Revision + 1
+                        : 1;
+                    var session = new SessionPayload
+                    {
+                        SessionId = eventEnvelope.Payload.SessionId,
+                        Provider = eventEnvelope.Payload.Provider,
+                        State = MapSessionState(eventEnvelope.Payload.EventKind, existingSession?.State),
+                        DisplayName = Truncate(eventEnvelope.Payload.Summary, 120),
+                        UpdatedAt = eventEnvelope.SentAt,
+                        Revision = revision,
+                        UnreadCount = Math.Min((existingSession?.UnreadCount ?? 0) + 1, 999),
+                    };
+                    _state.Sessions[session.SessionId] = session;
+                    _state.LastServerSequence++;
+                    var eventItem = new BridgeHistoryItem(
+                        _state.LastServerSequence,
+                        MessageKind.Session,
+                        eventEnvelope.MessageId,
+                        eventEnvelope.SentAt,
+                        JsonSerializer.SerializeToElement(session, JsonOptions));
+                    _state.History.Add(eventItem);
+                    committedItems.Add(eventItem);
+                    RecordFingerprint(
+                        eventEnvelope.MessageId,
+                        eventEnvelope.Payload.EventId,
+                        MessageKind.Event,
+                        eventFingerprint,
+                        _state.LastServerSequence);
+                }
+
+                var attentionDuplicate = false;
+                if (createAttention is not null)
+                {
+                    var currentSession = _state.Sessions[eventEnvelope.Payload.SessionId];
+                    var attentionEnvelope = createAttention(currentSession);
+                    var payload = attentionEnvelope.Payload;
+                    if (_state.Attentions.TryGetValue(payload.AttentionId, out var existingAttention))
+                    {
+                        var sameAttention = existingAttention.SessionId == payload.SessionId
+                            && existingAttention.Category == payload.Category
+                            && existingAttention.Title == payload.Title
+                            && existingAttention.Body == payload.Body
+                            && existingAttention.Destructive == payload.Destructive
+                            && existingAttention.AllowedActions.SequenceEqual(payload.AllowedActions, StringComparer.Ordinal);
+                        if (!sameAttention)
+                        {
+                            throw new BridgeStateConflictException(
+                                "Provider attention identifier was reused with different content.");
+                        }
+
+                        attentionDuplicate = true;
+                    }
+                    else
+                    {
+                        var attentionFingerprint = CreateFingerprint(MessageKind.Attention, payload);
+                        _ = CheckDuplicate(
+                            attentionEnvelope.MessageId,
+                            payload.AttentionId,
+                            MessageKind.Attention,
+                            attentionFingerprint);
+                        if (payload.Revision <= currentSession.Revision)
+                        {
+                            throw new BridgeStateConflictException(
+                                "Attention revision must be newer than the current session revision.");
+                        }
+
+                        EnsureNextInboundSequence(attentionEnvelope.ConnectionId, attentionEnvelope.Sequence);
+                        RecordInboundSequence(attentionEnvelope.ConnectionId, attentionEnvelope.Sequence);
+                        _state.Attentions[payload.AttentionId] = payload;
+                        _state.Sessions[currentSession.SessionId] = currentSession with
+                        {
+                            State = "waiting_for_input",
+                            UpdatedAt = attentionEnvelope.SentAt,
+                            Revision = payload.Revision,
+                            UnreadCount = Math.Min(currentSession.UnreadCount + 1, 999),
+                        };
+                        _state.LastServerSequence++;
+                        var attentionItem = new BridgeHistoryItem(
+                            _state.LastServerSequence,
+                            MessageKind.Attention,
+                            attentionEnvelope.MessageId,
+                            attentionEnvelope.SentAt,
+                            JsonSerializer.SerializeToElement(payload, JsonOptions));
+                        _state.History.Add(attentionItem);
+                        committedItems.Add(attentionItem);
+                        RecordFingerprint(
+                            attentionEnvelope.MessageId,
+                            payload.AttentionId,
+                            MessageKind.Attention,
+                            attentionFingerprint,
+                            _state.LastServerSequence);
+                    }
+                }
+
+                if (committedItems.Count > 0)
+                {
+                    TrimHistory();
+                    TrimDeduplicationWindows();
+                    await PersistAsync(cancellationToken);
+                }
+
+                return new ProviderIngestResult(
+                    duplicateEventSequence is not null,
+                    attentionDuplicate,
+                    CreateSnapshot(),
+                    committedItems);
+            }
+            catch
+            {
+                _state = previousState;
+                throw;
+            }
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
     public async Task<IReadOnlyList<BridgeHistoryItem>> MarkStaleSessionsAsync(CancellationToken cancellationToken = default)
     {
         await _gate.WaitAsync(cancellationToken);
@@ -481,5 +625,11 @@ public sealed record BridgeSnapshot(
     ulong LastServerSequence);
 
 public sealed record IngestResult(bool Duplicate, BridgeSnapshot Snapshot, ulong RecordedServerSequence);
+
+public sealed record ProviderIngestResult(
+    bool EventDuplicate,
+    bool AttentionDuplicate,
+    BridgeSnapshot Snapshot,
+    IReadOnlyList<BridgeHistoryItem> CommittedItems);
 
 public sealed class BridgeStateConflictException(string message) : InvalidOperationException(message);

@@ -1,0 +1,7 @@
+{
+  "hookEventName": "sessionStart",
+  "sessionId": "copilot-fixture-session",
+  "timestamp": "2026-08-25T19:00:00Z",
+  "cwd": "/workspace/agentping",
+  "prompt": "Start the fixture session"
+}

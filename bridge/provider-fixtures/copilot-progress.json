@@ -1,0 +1,8 @@
+{
+  "hookEventName": "postToolUse",
+  "sessionId": "copilot-fixture-session",
+  "timestamp": "2026-08-25T19:00:01Z",
+  "toolName": "shell",
+  "toolCallId": "copilot-tool-progress",
+  "message": "Tool completed"
+}

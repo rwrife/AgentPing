@@ -1,0 +1,8 @@
+{
+  "type": "agent-turn-complete",
+  "thread-id": "thread-fixture-1",
+  "turn-id": "turn-fixture-1",
+  "cwd": "/workspace/agentping",
+  "input-messages": ["Implement the adapter"],
+  "last-assistant-message": "Adapter implementation completed"
+}

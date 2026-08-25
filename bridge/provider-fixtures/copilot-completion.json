@@ -1,0 +1,6 @@
+{
+  "hookEventName": "sessionEnd",
+  "sessionId": "copilot-fixture-session",
+  "timestamp": "2026-08-25T19:00:03Z",
+  "message": "Copilot CLI session completed"
+}

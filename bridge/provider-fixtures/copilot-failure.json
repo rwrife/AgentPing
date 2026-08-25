@@ -1,0 +1,6 @@
+{
+  "hookEventName": "errorOccurred",
+  "sessionId": "copilot-fixture-session",
+  "timestamp": "2026-08-25T19:00:02Z",
+  "errorMessage": "Provider process failed"
+}

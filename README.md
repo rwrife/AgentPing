@@ -19,6 +19,7 @@ AgentPing is an early, buildable foundation for a Windows/.NET bridge and a Wave
 - deterministic session/attention state, contiguous ingress ordering, idempotency, bounded history, transactional atomic persistence, stale-session handling, and restart recovery
 - digest-authenticated protocol-v1 `/ws` capability negotiation, heartbeat validation, reconnect replay, and live state fan-out
 - integration tests, process-level smoke coverage, and a reproducible Docker image build
+- default-off, loopback-only adapters for Codex CLI completion notifications and Claude Code/Copilot CLI lifecycle hooks, with bounded secret-redacted mapping and synthetic fixtures
 
 ### Firmware
 
@@ -34,7 +35,7 @@ AgentPing is an early, buildable foundation for a Windows/.NET bridge and a Wave
 - LAN threat model and full-entropy token pairing/rotation/revocation design
 - golden valid/fail-closed fixtures consumed by Python validation and bridge serialization tests
 
-The firmware does **not** initialize the display, touch, Wi-Fi, TLS, pairing, LVGL, or protocol transport yet. The bridge does **not** implement provider adapters, token issuance/rotation, LAN TLS provisioning, approval execution, or tray UI yet. Device credentials are currently provisioned out of band as SHA-256 digests for development; Windows protected storage and pairing UX remain issue #7 scope. See the open issues for dependency-ordered implementation work.
+The firmware does **not** initialize the display, touch, Wi-Fi, TLS, pairing, LVGL, or protocol transport yet. Provider adapters ingest supported local hook events but do not execute provider actions. The bridge does **not** implement token issuance/rotation, LAN TLS provisioning, approval execution, or tray UI yet. Device credentials are currently provisioned out of band as SHA-256 digests for development; Windows protected storage and pairing UX remain issue #7 scope. See the open issues for dependency-ordered implementation work.
 
 ## Repository layout
 
@@ -97,6 +98,7 @@ The ESP32 remains a thin client; GitHub/OpenAI/Anthropic credentials stay on the
 
 - [`docs/architecture.md`](docs/architecture.md) describes current and planned boundaries.
 - [`docs/protocol.md`](docs/protocol.md) specifies protocol v1, secure pairing, compatibility, ordering, resume, and fail-closed action rules.
+- [`docs/provider-adapters.md`](docs/provider-adapters.md) documents default-off Codex CLI, Claude Code, Copilot CLI, and manual/test hook ingestion.
 - [`hardware/README.md`](hardware/README.md) states the current hardware evidence and future KiCad scope.
 
 ## Contributing and security

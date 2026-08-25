@@ -1,0 +1,7 @@
+{
+  "session_id": "claude-fixture-session",
+  "transcript_path": "/private/not-forwarded.jsonl",
+  "cwd": "/workspace/agentping",
+  "hook_event_name": "SessionStart",
+  "source": "startup"
+}
