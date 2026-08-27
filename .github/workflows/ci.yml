@@ -52,6 +52,7 @@ jobs:
           cache: pip
           cache-dependency-path: firmware/requirements-ci.txt
       - run: python3 -m pip install --requirement firmware/requirements-ci.txt
+      - run: firmware/tests/run_host_tests.sh
       - run: platformio run -d firmware
 
   bridge-container:

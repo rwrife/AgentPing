@@ -5,6 +5,7 @@ ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 cd "$ROOT"
 
 python3 -m unittest discover -s tools/tests -v
+firmware/tests/run_host_tests.sh
 python3 protocol/validate.py
 dotnet restore AgentPing.sln --locked-mode
 dotnet build AgentPing.sln --configuration Release --no-restore

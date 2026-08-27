@@ -6,7 +6,7 @@
 
 **A tiny desk-side inbox for AI coding agents.**
 
-AgentPing is an early, buildable foundation for a Windows/.NET bridge and a Waveshare ESP32-C6 Touch AMOLED 1.64 display. The long-term product is a physical notification and response surface for coding agents. The current repository intentionally implements only the baseline described below.
+AgentPing is a buildable foundation for a Windows/.NET bridge and a Waveshare ESP32-C6 Touch AMOLED 1.64 display. The long-term product is a physical notification and response surface for coding agents. The current repository implements the tested software slices described below without claiming unperformed physical validation.
 
 ## What works today
 
@@ -23,10 +23,11 @@ AgentPing is an early, buildable foundation for a Windows/.NET bridge and a Wave
 
 ### Firmware
 
-- pinned PlatformIO/ESP-IDF ESP32-C6 project
-- compile-tested structured heartbeat skeleton
-- schema-derived protocol-v1 constants compiled into the firmware
-- no hardcoded network or provider credentials
+- pinned PlatformIO 6.1.18 / ESP-IDF 5.5.0 ESP32-C6 project with locked managed components
+- compile-tested CO5300 AMOLED, FT6146 touch, and LVGL initialization from pinned Waveshare schematic/BSP evidence
+- accessible disconnected/idle/running/waiting/completed/error UI with burn-in movement and touch reports
+- strict host-tested protocol parser/state reducer, authenticated WSS capability/heartbeat/replay transport, persistent resume state, and bounded reconnect backoff
+- USB-serial NVS provisioning and physical factory reset with no hardcoded network/provider credentials or secret-bearing logs
 
 ### Protocol contract
 
@@ -35,13 +36,13 @@ AgentPing is an early, buildable foundation for a Windows/.NET bridge and a Wave
 - LAN threat model and full-entropy token pairing/rotation/revocation design
 - golden valid/fail-closed fixtures consumed by Python validation and bridge serialization tests
 
-The firmware does **not** initialize the display, touch, Wi-Fi, TLS, pairing, LVGL, or protocol transport yet. Provider adapters ingest supported local hook events but do not execute provider actions. The bridge does **not** implement token issuance/rotation, LAN TLS provisioning, approval execution, or tray UI yet. Device credentials are currently provisioned out of band as SHA-256 digests for development; Windows protected storage and pairing UX remain issue #7 scope. See the open issues for dependency-ordered implementation work.
+The firmware implementation is compile-tested and its pure protocol logic is host-tested, but no physical module was available to validate pixels, touch, Wi-Fi/RF, or TLS on device. The bridge still does **not** implement token issuance/rotation, a non-loopback LAN TLS listener, approval execution, or tray/pairing UI, so the checked-in stack does not yet provide a complete live device connection. Provider adapters ingest supported local hook events but do not execute provider actions. Device credentials remain out-of-band development inputs; Windows protected storage and pairing UX are issue #7 scope. See the open issues for dependency-ordered implementation work.
 
 ## Repository layout
 
 ```text
 bridge/       ASP.NET Core bridge and tests
-firmware/     ESP32-C6 PlatformIO skeleton
+firmware/     ESP32-C6 PlatformIO firmware, native logic tests, and bring-up guide
 protocol/     shared machine-readable protocol schema, fixtures, and validator
 hardware/     hardware scope and future editable KiCad sources
 docs/         architecture and protocol status
@@ -77,6 +78,7 @@ python3 -m venv .venv-platformio
 . .venv-platformio/bin/activate
 python3 -m pip install --requirement firmware/requirements-ci.txt
 python3 -m pip install --requirement protocol/requirements-ci.txt
+firmware/tests/run_host_tests.sh
 python3 protocol/validate.py
 platformio run -d firmware
 ```
@@ -94,7 +96,7 @@ The container listens on `0.0.0.0:8742` inside its isolated network namespace so
 
 ## Architecture and protocol
 
-The ESP32 remains a thin client; GitHub/OpenAI/Anthropic credentials stay on the PC. The bridge binds to loopback by default and authenticates `/ws` with revocable device-token digests. Non-loopback HTTPS/WSS certificate provisioning and interactive pairing remain deferred, so the checked-in HTTP listener must not be exposed to the LAN.
+The ESP32 remains a thin client; GitHub/OpenAI/Anthropic credentials stay on the PC. Its transport accepts only RFC1918-literal WSS endpoints, a provisioned leaf-certificate trust anchor, and a revocable device token. The bridge binds to loopback by default and authenticates `/ws` with token digests, but non-loopback HTTPS/WSS certificate provisioning and interactive pairing remain deferred, so the checked-in HTTP listener must not be exposed to the LAN.
 
 - [`docs/architecture.md`](docs/architecture.md) describes current and planned boundaries.
 - [`docs/protocol.md`](docs/protocol.md) specifies protocol v1, secure pairing, compatibility, ordering, resume, and fail-closed action rules.

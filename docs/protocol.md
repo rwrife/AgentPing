@@ -1,6 +1,6 @@
 # AgentPing device protocol v1
 
-Status: **bridge transport implemented and integration-tested on loopback; firmware transport, LAN TLS provisioning, and pairing UI are not implemented yet**.
+Status: **bridge transport is integration-tested on loopback; firmware WSS/replay logic is implemented, host-tested, and compile-tested; LAN TLS provisioning, pairing UI, and physical device validation are not implemented yet**.
 
 The canonical contract is [`protocol/v1/agentping.schema.json`](../protocol/v1/agentping.schema.json), a JSON Schema Draft 2020-12 document. Golden valid and fail-closed fixtures live beside it. Protocol messages never carry coding-provider credentials, Wi-Fi passwords, device enrollment secrets, or bridge private keys.
 
@@ -103,7 +103,7 @@ Any missing, stale, malformed, ambiguous, disconnected, timed-out, or policy-rej
 
 ## Bridge implementation status
 
-The bridge enforces the 16 KiB limit on HTTP and WebSocket input, strictly deserializes protocol envelopes, enforces contiguous provider sequence ordering, rolls back in-memory transitions when durable commit fails, authenticates display upgrades against revocable token digests, requires display capability at sequence 1, validates contiguous heartbeats, persists bounded replay history and deduplication windows, and replays server-sequence entries newer than `resumeFromSequence` or sends fresh state snapshots when the retained window is insufficient. HTTP provider ingestion remains loopback-only by default. Firmware networking, HTTPS/WSS certificate provisioning for LAN use, token issuance/rotation, and approval/denial/reply execution remain deferred and must not be inferred from bridge integration tests.
+The bridge enforces the 16 KiB limit on HTTP and WebSocket input, strictly deserializes protocol envelopes, enforces contiguous provider sequence ordering, rolls back in-memory transitions when durable commit fails, authenticates display upgrades against revocable token digests, requires display capability at sequence 1, validates contiguous heartbeats, persists bounded replay history and deduplication windows, and replays server-sequence entries newer than `resumeFromSequence` or sends fresh state snapshots when the retained window is insufficient. HTTP provider ingestion remains loopback-only by default. Firmware now implements bounded parsing, persistent resume/snapshot reduction, authenticated WSS framing, heartbeat, and reconnect behavior, but that code has compile/host-test evidence only. Bridge-side HTTPS/WSS certificate provisioning for LAN use, token issuance/rotation, physical device validation, and approval/denial/reply execution remain deferred.
 
 ## Verification
 
