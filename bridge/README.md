@@ -53,7 +53,7 @@ Pairing and protected credential provisioning are not implemented yet. For integ
 }
 ```
 
-Send the original token only in the WebSocket `Authorization: Bearer <token>` header. Query-string credentials are not accepted. The bridge reloads the digest file for every handshake, so setting `revoked` to `true` denies new connections immediately. Never commit the token file or original token.
+Send the original token only with the WebSocket Bearer authorization scheme. Query-string credentials are not accepted. The bridge reloads the digest file for every handshake, so setting `revoked` to `true` denies new connections immediately. Never commit the token file or original token.
 
 Production Windows protected storage, token issuance/rotation, connection termination on revocation, and pairing UX remain issue #7 scope.
 

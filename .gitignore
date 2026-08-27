@@ -5,6 +5,7 @@
 
 # PlatformIO
 firmware/.pio/
+firmware/managed_components/
 firmware/sdkconfig.*
 !firmware/sdkconfig.defaults
 .pio/
