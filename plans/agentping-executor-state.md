@@ -1,6 +1,6 @@
 # AgentPing autonomous executor state
 
-- **Updated (UTC):** 2026-08-27T20:26:51Z
+- **Updated (UTC):** 2026-08-27T20:31:22Z
 - **Repository:** `rwrife/AgentPing`
 - **Starting main:** `b885a73ef0f693a5e47fd1d9faf5c826bc1cfd68`
 - **Starting queue:** 0 open PRs; open issues #5–#9.
@@ -11,7 +11,7 @@
 - **Worktree:** `/home/rwrife/repos/AgentPing-worktrees/issue-5-display-firmware-20260826T191622Z`
 - **Worktree continuity:** resumed the collision-safe issue #5 worktree created by the prior executor run; no duplicate branch or PR existed.
 - **Implementation commit:** `8a92aa2` (`feat(firmware): implement ESP32-C6 display client`)
-- **Implementation PR:** [#17](https://github.com/rwrife/AgentPing/pull/17) — open, mergeable; CI started.
+- **Implementation PR:** [#17](https://github.com/rwrife/AgentPing/pull/17) — open and mergeable; CI run [33113389770](https://github.com/rwrife/AgentPing/actions/runs/33113389770) passed all four jobs on `3dd1c10`.
 - **Self-removal:** not triggered because issues #5–#9 remain open.
 
 ## Files changed
@@ -40,6 +40,7 @@
 - Direct upstream evidence check via `gh api` at Waveshare commit `b90e28c953c1fc882258fa8dbd56b7706bc888b7` — PASS: BSP and schematic agree on CO5300, FT6146/FT3168 protocol, GPIOs 1/4/5/7/8/10/11/18/19/20, 80 MHz QSPI, and 0x14 panel gap.
 - Criterion-driven Codex review found and drove fixes for provisioning stack use, atomic enrollment, WebSocket continuations, metadata keys, Unicode limits/persistence sizing, contiguous durable checkpoints, and dropped UI updates. Snapshot-checkpoint jumps and zero-offset timestamp rejection were retained because they are explicit protocol requirements in `docs/protocol.md` and bridge tests.
 - `git diff --check` — PASS after fresh dependency resolution.
+- GitHub Actions run `33113389770` — PASS: Bridge build and tests (39s), Protocol contract and fixtures (16s), Bridge container build (23s), ESP32-C6 firmware build (3m32s). Node.js 20 deprecation annotations were warnings only; no failed or skipped job.
 
 ## Evidence limits and blockers
 
