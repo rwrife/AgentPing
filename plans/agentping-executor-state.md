@@ -1,6 +1,6 @@
 # AgentPing autonomous executor state
 
-- **Updated (UTC):** 2026-08-27T20:25:23Z
+- **Updated (UTC):** 2026-08-27T20:26:51Z
 - **Repository:** `rwrife/AgentPing`
 - **Starting main:** `b885a73ef0f693a5e47fd1d9faf5c826bc1cfd68`
 - **Starting queue:** 0 open PRs; open issues #5–#9.
@@ -10,7 +10,8 @@
 - **Branch:** `feat/issue-5-display-firmware-20260826T191622Z`
 - **Worktree:** `/home/rwrife/repos/AgentPing-worktrees/issue-5-display-firmware-20260826T191622Z`
 - **Worktree continuity:** resumed the collision-safe issue #5 worktree created by the prior executor run; no duplicate branch or PR existed.
-- **Implementation PR:** pending creation after commit/push.
+- **Implementation commit:** `8a92aa2` (`feat(firmware): implement ESP32-C6 display client`)
+- **Implementation PR:** [#17](https://github.com/rwrife/AgentPing/pull/17) — open, mergeable; CI started.
 - **Self-removal:** not triggered because issues #5–#9 remain open.
 
 ## Files changed
