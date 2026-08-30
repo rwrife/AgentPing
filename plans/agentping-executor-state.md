@@ -1,6 +1,6 @@
 # AgentPing autonomous executor state
 
-- **Updated (UTC):** 2026-08-30T19:35:13Z
+- **Updated (UTC):** 2026-08-30T19:46:51Z
 - **Repository:** `rwrife/AgentPing`
 - **Starting main:** `a8ee525cf46f982d5c1342b33a6c44cdf0f263ca`
 - **Starting queue:** 0 open PRs; open issues #6–#9.
@@ -29,12 +29,13 @@
 - TDD regression: multi-session replay initially displayed the wrong provider; after session-keyed lookup, `firmware/tests/run_host_tests.sh` passed.
 - TDD regression: provider attention deadline initially remained 30 seconds; after the safety-margin fix, the focused endpoint test passed at 15 seconds.
 - TDD regression: Copilot relay failure initially exited without a deny object; after the fix, the focused Python test and full 7-test relay suite passed.
+- Full-diff review cycle 1 found two blockers: firmware rejected the bridge's new `cancel`/`acknowledge` capability flags, and firmware flattened destructive confirmation fields. Added serialized firmware contract coverage, accepted the negotiated features, and emitted/parsed the schema-required nested `confirmation` object; native and full ESP-IDF builds pass after both fixes.
 - Pinned .NET 10.0.300 SDK container: locked restore passed; format check passed; Release build passed with 0 warnings/errors; 70/70 tests passed.
 - Bridge process smokes: `SMOKE_RESULT=PASS`; `ADAPTER_SMOKE_RESULT=PASS` with two sessions, one attention, server sequence 3, and idempotent replay.
 - NuGet advisory scan: no known vulnerable direct or transitive packages.
 - Python 3.12.3 container: pinned requirements installed; `pip check` passed; 7/7 relay tests passed; protocol validator passed all 9 valid kinds and 6 fail-closed fixtures.
 - Native firmware protocol tests: `protocol_core: all tests passed`.
-- Fresh PlatformIO 6.1.18 / ESP-IDF 5.5.0 build: PASS; RAM 121,244 / 327,680 bytes (37.0%), app flash 1,446,841 / 3,145,728 bytes (46.0%).
+- Fresh PlatformIO 6.1.18 / ESP-IDF 5.5.0 build: PASS; RAM 121,244 / 327,680 bytes (37.0%), app flash 1,447,417 / 3,145,728 bytes (46.0%).
 - Bridge Docker build: PASS, image `sha256:b40126251e77ad2f97029f2bc138f44e1fd0645e3614001035d893b387ed5899`.
 - `git diff --check`: PASS.
 

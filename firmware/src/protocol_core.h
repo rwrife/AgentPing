@@ -68,6 +68,11 @@ struct PreparedAction {
 };
 
 std::string action_context(const ViewModel& view);
+std::string serialize_action_payload(
+    const PreparedAction& action,
+    std::string_view action_id,
+    std::string_view prompt_digest,
+    std::string_view confirmed_at);
 PreparedAction prepare_action(const ViewModel& view, std::string_view action,
                               std::string_view text, bool confirmed,
                               std::int64_t now_epoch);

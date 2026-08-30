@@ -174,32 +174,6 @@ std::string timestamp() {
   return value;
 }
 
-std::string json_escape(std::string_view value) {
-  std::string output;
-  output.reserve(value.size() + 8);
-  static constexpr char kHex[] = "0123456789abcdef";
-  for (const unsigned char character : value) {
-    switch (character) {
-      case '\"': output += "\\\""; break;
-      case '\\': output += "\\\\"; break;
-      case '\b': output += "\\b"; break;
-      case '\f': output += "\\f"; break;
-      case '\n': output += "\\n"; break;
-      case '\r': output += "\\r"; break;
-      case '\t': output += "\\t"; break;
-      default:
-        if (character < 0x20) {
-          output += "\\u00";
-          output.push_back(kHex[character >> 4U]);
-          output.push_back(kHex[character & 0x0fU]);
-        } else {
-          output.push_back(static_cast<char>(character));
-        }
-    }
-  }
-  return output;
-}
-
 std::string sha256_hex(std::string_view value) {
   const mbedtls_md_info_t* info = mbedtls_md_info_from_type(MBEDTLS_MD_SHA256);
   unsigned char digest[32] = {};
@@ -218,21 +192,11 @@ std::string sha256_hex(std::string_view value) {
 }
 
 std::string action_payload(const PreparedAction& action) {
-  const std::string prefix = "{\"actionId\":\"" + random_uuid()
-      + "\",\"attentionId\":\"" + action.attention_id
-      + "\",\"expectedRevision\":" + std::to_string(action.expected_revision);
-  if (action.message_type == "approval") {
-    const std::string digest = sha256_hex(action.canonical_prompt);
-    if (digest.empty()) return {};
-    return prefix + ",\"presentedMessageId\":\"" + action.presented_message_id
-        + "\",\"destructive\":" + (action.destructive ? "true" : "false")
-        + ",\"promptDigest\":\"" + digest + "\",\"confirmedAt\":\""
-        + timestamp() + "\"}";
-  }
-  if (action.message_type == "reply") {
-    return prefix + ",\"text\":\"" + json_escape(action.text) + "\"}";
-  }
-  return prefix + ",\"reason\":\"" + action.reason + "\"}";
+  const std::string digest = action.message_type == "approval" && action.destructive
+      ? sha256_hex(action.canonical_prompt)
+      : std::string{};
+  if (action.message_type == "approval" && action.destructive && digest.empty()) return {};
+  return serialize_action_payload(action, random_uuid(), digest, timestamp());
 }
 
 std::string envelope(const char* type, const std::string& payload,

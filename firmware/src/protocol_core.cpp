@@ -482,7 +482,8 @@ bool validate_capability(const Object& payload, Envelope& output) {
       || !string_field(payload, "role", role, 1, 16) || role != "bridge"
       || !string_array(payload, "supportedVersions", 1, 8, {protocol_v1::kVersion}, true)
       || !string_array(payload, "features", 0, 16,
-                       {"events", "sessions", "attention", "approve", "deny", "reply", "resume"})
+                       {"events", "sessions", "attention", "approve", "deny", "reply",
+                        "cancel", "acknowledge", "resume"})
       || !number_field(payload, "maxMessageBytes", max_message_bytes)
       || max_message_bytes != protocol_v1::kMaxMessageBytes
       || !number_field(payload, "resumeFromSequence", resume_from)) {
@@ -577,26 +578,35 @@ bool validate_attention(const Object& payload, Envelope& output) {
 bool validate_action_echo(const Object& payload, Envelope& output, std::string_view type) {
   std::string action_id;
   if (type == "approval") {
-    std::string presented_message_id;
-    std::string prompt_digest;
-    std::string confirmed_at;
     bool destructive = false;
-    if (!only_fields(payload, {"actionId", "attentionId", "expectedRevision", "presentedMessageId",
-                               "destructive", "promptDigest", "confirmedAt"})
+    if (!only_fields(payload, {"actionId", "attentionId", "expectedRevision", "destructive",
+                               "confirmation"})
         || !string_field(payload, "actionId", action_id, 36, 36) || !is_uuid(action_id)
         || !string_field(payload, "attentionId", output.attention_id, 1, 128)
         || !is_identifier(output.attention_id)
         || !number_field(payload, "expectedRevision", output.revision)
-        || !string_field(payload, "presentedMessageId", presented_message_id, 36, 36)
-        || !is_uuid(presented_message_id)
-        || !boolean_field(payload, "destructive", destructive)
-        || !string_field(payload, "promptDigest", prompt_digest, 64, 64)
-        || !string_field(payload, "confirmedAt", confirmed_at, 20, 40)
-        || !is_utc_timestamp(confirmed_at)) {
+        || !boolean_field(payload, "destructive", destructive)) {
       return false;
     }
-    for (const unsigned char value : prompt_digest) {
-      if (!std::isdigit(value) && (value < 'a' || value > 'f')) return false;
+    const auto confirmation = payload.find("confirmation");
+    if (destructive && confirmation == payload.end()) return false;
+    if (confirmation != payload.end()) {
+      if (confirmation->second.type != JsonValue::Type::object) return false;
+      const auto& object = confirmation->second.object;
+      std::string presented_message_id;
+      std::string prompt_digest;
+      std::string confirmed_at;
+      if (!only_fields(object, {"presentedMessageId", "promptDigest", "confirmedAt"})
+          || !string_field(object, "presentedMessageId", presented_message_id, 36, 36)
+          || !is_uuid(presented_message_id)
+          || !string_field(object, "promptDigest", prompt_digest, 64, 64)
+          || !string_field(object, "confirmedAt", confirmed_at, 20, 40)
+          || !is_utc_timestamp(confirmed_at)) {
+        return false;
+      }
+      for (const unsigned char value : prompt_digest) {
+        if (!std::isdigit(value) && (value < 'a' || value > 'f')) return false;
+      }
     }
     output.title = "Approval recorded";
   } else if (type == "denial") {
@@ -1000,6 +1010,62 @@ std::string action_context(const ViewModel& view) {
       + "\nScope: " + scope + "\nDeadline: " + view.response_deadline_at;
   if (view.destructive) context += "\nDESTRUCTIVE · confirm twice";
   return context;
+}
+
+std::string serialize_action_payload(
+    const PreparedAction& action,
+    std::string_view action_id,
+    std::string_view prompt_digest,
+    std::string_view confirmed_at) {
+  const auto escape = [](std::string_view value) {
+    std::string output;
+    output.reserve(value.size() + 8);
+    static constexpr char kHex[] = "0123456789abcdef";
+    for (const unsigned char character : value) {
+      switch (character) {
+        case '\"': output += "\\\""; break;
+        case '\\': output += "\\\\"; break;
+        case '\b': output += "\\b"; break;
+        case '\f': output += "\\f"; break;
+        case '\n': output += "\\n"; break;
+        case '\r': output += "\\r"; break;
+        case '\t': output += "\\t"; break;
+        default:
+          if (character < 0x20) {
+            output += "\\u00";
+            output.push_back(kHex[character >> 4U]);
+            output.push_back(kHex[character & 0x0fU]);
+          } else {
+            output.push_back(static_cast<char>(character));
+          }
+      }
+    }
+    return output;
+  };
+
+  if (action.status != ActionPreparationStatus::ready) return {};
+  const std::string prefix = "{\"actionId\":\"" + escape(action_id)
+      + "\",\"attentionId\":\"" + escape(action.attention_id)
+      + "\",\"expectedRevision\":" + std::to_string(action.expected_revision);
+  if (action.message_type == "approval") {
+    std::string payload = prefix + ",\"destructive\":"
+        + (action.destructive ? "true" : "false");
+    if (action.destructive) {
+      if (action.presented_message_id.empty() || prompt_digest.empty() || confirmed_at.empty()) return {};
+      payload += ",\"confirmation\":{\"presentedMessageId\":\""
+          + escape(action.presented_message_id) + "\",\"promptDigest\":\""
+          + escape(prompt_digest) + "\",\"confirmedAt\":\""
+          + escape(confirmed_at) + "\"}";
+    }
+    return payload + "}";
+  }
+  if (action.message_type == "reply") {
+    return prefix + ",\"text\":\"" + escape(action.text) + "\"}";
+  }
+  if (action.message_type == "denial") {
+    return prefix + ",\"reason\":\"" + escape(action.reason) + "\"}";
+  }
+  return {};
 }
 
 PreparedAction prepare_action(const ViewModel& view, std::string_view action,

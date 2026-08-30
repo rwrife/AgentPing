@@ -30,7 +30,7 @@ std::string capability(bool reset = false, unsigned count = 0, unsigned checkpoi
   std::string result =
       "{\"deviceId\":\"agentping-bridge\",\"role\":\"bridge\","
       "\"supportedVersions\":[\"1.0\"],"
-      "\"features\":[\"events\",\"sessions\",\"attention\",\"resume\"],"
+      "\"features\":[\"events\",\"sessions\",\"attention\",\"approve\",\"deny\",\"reply\",\"cancel\",\"acknowledge\",\"resume\"],"
       "\"maxMessageBytes\":16384,\"resumeFromSequence\":" + std::to_string(resume)
       + ",\"resetState\":";
   result += reset ? "true" : "false";
@@ -349,6 +349,20 @@ void action_preparation_is_fail_closed() {
   assert(approval.status == agentping::ActionPreparationStatus::ready);
   assert(approval.message_type == "approval");
   assert(approval.canonical_prompt == "Delete cache?\nRemove generated cache");
+  const std::string approval_payload = agentping::serialize_action_payload(
+      approval,
+      "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      std::string(64, 'b'),
+      "2026-08-26T00:00:20Z");
+  assert(approval_payload
+         == "{\"actionId\":\"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa\","
+            "\"attentionId\":\"attention-1\",\"expectedRevision\":4,\"destructive\":true,"
+            "\"confirmation\":{\"presentedMessageId\":\"123e4567-e89b-12d3-a456-426614174000\","
+            "\"promptDigest\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\","
+            "\"confirmedAt\":\"2026-08-26T00:00:20Z\"}}");
+  Envelope approval_echo;
+  assert(agentping::parse_envelope(message("approval", 2, approval_payload), approval_echo)
+         == ParseError::none);
 
   const auto cancelled = agentping::prepare_action(attention, "cancel", {}, false, 1900);
   assert(cancelled.status == agentping::ActionPreparationStatus::ready);

@@ -41,6 +41,7 @@ class ProviderRelayTests(unittest.TestCase):
         for payload in ("[]", "not-json", '{"x":"' + "x" * 16_384 + '"}'):
             with self.subTest(length=len(payload)), self.assertRaises(ValueError):
                 load_payload(payload)
+
     def test_renders_documented_provider_permission_decisions(self) -> None:
         allow = {"action": "approve", "status": "recorded"}
         deny = {"action": "cancel", "status": "recorded"}
