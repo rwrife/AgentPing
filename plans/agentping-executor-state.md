@@ -10,7 +10,7 @@
 - **Branch:** `feat/issue-6-safe-actions-20260828T191508Z`
 - **Worktree:** `/home/rwrife/repos/AgentPing-worktrees/issue-6-safe-actions-20260828T191508Z`
 - **Worktree continuity:** resumed the existing cleanly based, uncommitted issue #6 worktree; no remote branch or duplicate PR existed.
-- **Implementation PR:** pending creation in this run.
+- **Implementation PR:** [#18](https://github.com/rwrife/AgentPing/pull/18)
 - **Self-removal:** not triggered because issues #6–#9 remain open.
 
 ## Implemented scope
