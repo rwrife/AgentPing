@@ -17,6 +17,7 @@
 #include "freertos/event_groups.h"
 #include "freertos/semphr.h"
 #include "freertos/task.h"
+#include "mbedtls/md.h"
 
 #include <cstdio>
 #include <cstring>
@@ -173,6 +174,31 @@ std::string timestamp() {
   return value;
 }
 
+std::string sha256_hex(std::string_view value) {
+  const mbedtls_md_info_t* info = mbedtls_md_info_from_type(MBEDTLS_MD_SHA256);
+  unsigned char digest[32] = {};
+  if (info == nullptr
+      || mbedtls_md(info, reinterpret_cast<const unsigned char*>(value.data()),
+                    value.size(), digest) != 0) {
+    return {};
+  }
+  static constexpr char kHex[] = "0123456789abcdef";
+  std::string output(64, '0');
+  for (std::size_t index = 0; index < sizeof(digest); ++index) {
+    output[index * 2] = kHex[digest[index] >> 4U];
+    output[index * 2 + 1] = kHex[digest[index] & 0x0fU];
+  }
+  return output;
+}
+
+std::string action_payload(const PreparedAction& action) {
+  const std::string digest = action.message_type == "approval" && action.destructive
+      ? sha256_hex(action.canonical_prompt)
+      : std::string{};
+  if (action.message_type == "approval" && action.destructive && digest.empty()) return {};
+  return serialize_action_payload(action, random_uuid(), digest, timestamp());
+}
+
 std::string envelope(const char* type, const std::string& payload,
                      const std::string& connection, std::uint64_t sequence) {
   return std::string("{\"protocolVersion\":\"") + protocol_v1::kVersion
@@ -300,35 +326,72 @@ void run_transport(const DeviceConfig& config) {
             "capability",
             "{\"deviceId\":\"" + config.device_id
                 + "\",\"role\":\"display\",\"supportedVersions\":[\"1.0\"],"
-                  "\"features\":[\"events\",\"sessions\",\"attention\",\"resume\"],"
+                  "\"features\":[\"events\",\"sessions\",\"attention\",\"approve\",\"deny\",\"reply\",\"cancel\",\"acknowledge\",\"resume\"],"
                   "\"maxMessageBytes\":16384,\"resumeFromSequence\":"
                 + std::to_string(resume) + ",\"softwareVersion\":\"0.1.0\"}",
             connection, outgoing_sequence++);
         if (!send_text(client, capability)) xEventGroupSetBits(events, kWebSocketClosed);
 
-        while ((xEventGroupWaitBits(events, kWebSocketClosed, pdFALSE, pdTRUE,
-                                    pdMS_TO_TICKS(protocol_v1::kHeartbeatIntervalSeconds * 1000U))
+        std::int64_t next_heartbeat = esp_timer_get_time()
+            + static_cast<std::int64_t>(protocol_v1::kHeartbeatIntervalSeconds) * 1000LL * 1000LL;
+        while ((xEventGroupWaitBits(events, kWebSocketClosed, pdFALSE, pdTRUE, pdMS_TO_TICKS(100))
                 & kWebSocketClosed) == 0) {
-          std::uint64_t received_sequence = 0;
-          if (lock_state()) {
-            received_sequence = protocol_state.last_received_sequence();
-            unlock_state();
+          ui::PendingAction selected_action;
+          if (ui::take_action(selected_action)) {
+            ViewModel action_view;
+            if (lock_state()) {
+              action_view = protocol_state.view();
+              unlock_state();
+            }
+            const PreparedAction prepared = prepare_action(
+                action_view, selected_action.action, selected_action.text,
+                selected_action.confirmed, static_cast<std::int64_t>(std::time(nullptr)));
+            if (prepared.status != ActionPreparationStatus::ready) {
+              ui::render({UiState::failed, "Response not sent",
+                          prepared.status == ActionPreparationStatus::expired
+                              ? "The request expired"
+                              : "The request changed or is not allowed",
+                          action_view.revision});
+            } else {
+              const std::string payload = action_payload(prepared);
+              const std::string action_message = payload.empty()
+                  ? std::string{}
+                  : envelope(prepared.message_type.c_str(), payload, connection, outgoing_sequence++);
+              if (action_message.empty() || !send_text(client, action_message)) {
+                ESP_LOGW("transport", "device action send failed; action content omitted");
+                xEventGroupSetBits(events, kWebSocketClosed);
+                break;
+              }
+              ESP_LOGI("transport", "device action sent; type=%s content omitted",
+                       prepared.message_type.c_str());
+            }
           }
-          const std::string heartbeat = envelope(
-              "heartbeat",
-              "{\"uptimeMs\":" + std::to_string(esp_timer_get_time() / 1000)
-                  + ",\"status\":\"ready\",\"lastReceivedSequence\":"
-                  + std::to_string(received_sequence) + ",\"queueDepth\":0}",
-              connection, outgoing_sequence++);
-          if (!send_text(client, heartbeat)) {
-            xEventGroupSetBits(events, kWebSocketClosed);
-            break;
+
+          const std::int64_t now_us = esp_timer_get_time();
+          if (now_us >= next_heartbeat) {
+            std::uint64_t received_sequence = 0;
+            if (lock_state()) {
+              received_sequence = protocol_state.last_received_sequence();
+              unlock_state();
+            }
+            const std::string heartbeat = envelope(
+                "heartbeat",
+                "{\"uptimeMs\":" + std::to_string(now_us / 1000)
+                    + ",\"status\":\"ready\",\"lastReceivedSequence\":"
+                    + std::to_string(received_sequence) + ",\"queueDepth\":0}",
+                connection, outgoing_sequence++);
+            if (!send_text(client, heartbeat)) {
+              xEventGroupSetBits(events, kWebSocketClosed);
+              break;
+            }
+            next_heartbeat = now_us
+                + static_cast<std::int64_t>(protocol_v1::kHeartbeatIntervalSeconds) * 1000LL * 1000LL;
           }
-          if (esp_timer_get_time() >= next_time_checkpoint) {
+          if (now_us >= next_time_checkpoint) {
             if (!save_time_checkpoint(configuration_generation)) {
               ESP_LOGW("time", "periodic checkpoint failed");
             }
-            next_time_checkpoint = esp_timer_get_time() + kTimeCheckpointIntervalUs;
+            next_time_checkpoint = now_us + kTimeCheckpointIntervalUs;
           }
         }
       }

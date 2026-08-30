@@ -10,12 +10,12 @@ The bridge is the PC-side source of normalized AgentPing session and attention s
 | `GET /api/status` | Non-secret counts and server sequence | Loopback by default |
 | `POST /api/events` | Strict protocol-v1 `event` envelope ingestion | Loopback by default |
 | `POST /api/attentions` | Strict protocol-v1 `attention` envelope ingestion | Loopback by default |
-| `POST /api/adapters/{provider}` | Default-off local provider hook normalization | Loopback only |
+| `POST /api/adapters/{provider}` | Default-off provider hook normalization; `?waitForAction=true` waits for a bounded device response | Loopback only |
 | `GET /ws` | Protocol-v1 display WebSocket | Device bearer token required |
 
 The HTTP ingestion routes reject unmapped fields, credential-like metadata keys, invalid enum/bound values, non-UTC or more-than-300-second-skewed timestamps, bodies over 16,384 UTF-8 bytes, and noncontiguous sequences within a provider `connectionId`. New provider connections begin at sequence 1. Events deterministically update session state; attention messages must reference an existing session and carry a newer revision. Exact duplicate message, event, and attention IDs return the recorded outcome without applying the operation twice; changed-payload or cross-type reuse fails with a state conflict.
 
-The WebSocket requires a schema-valid `capability` message at sequence 1, negotiates only protocol `1.0`, and replays bounded state newer than `resumeFromSequence`. A missed replay window is explicitly framed by `resetState`, `snapshotItemCount`, and `snapshotCheckpoint` in the bridge capability response, including zero-item snapshots. Replay/live items carry durable `serverSequence` checkpoints. The bridge accepts only schema-valid contiguous heartbeats for the negotiated connection and closes on malformed, oversized, unsupported, or ambiguous input. Live committed session/attention changes are buffered and fanned out in global server-sequence order through bounded per-device queues.
+The WebSocket requires a schema-valid `capability` message at sequence 1, negotiates only protocol `1.0`, and replays bounded state newer than `resumeFromSequence`. A missed replay window is explicitly framed by `resetState`, `snapshotItemCount`, and `snapshotCheckpoint` in the bridge capability response, including zero-item snapshots. Replay/live items carry durable `serverSequence` checkpoints. The bridge accepts only schema-valid contiguous heartbeats and device approval/denial/reply envelopes for the negotiated connection. Actions are checked against the current attention ID, revision, deadline, allowed actions, and destructive prompt confirmation; accepted outcomes persist before an adapter waiter is released. Malformed, out-of-order, cross-connection, stale, conflicting, or oversized input fails closed.
 
 ## Safe defaults and configuration
 
@@ -69,4 +69,4 @@ dotnet test AgentPing.sln --configuration Release --no-build
 docker build --file bridge/AgentPing.Bridge/Dockerfile --tag agentping-bridge:local .
 ```
 
-The automated evidence covers HTTP validation, deterministic state transitions, attention queueing, idempotency, bounded history, atomic restart recovery, stale-session handling, digest authentication, capability negotiation, replay/live fan-out, heartbeat handling, provider fixture mapping/relay safety, and process/container startup. It does not prove live provider accounts, provider action execution, LAN TLS, physical-device connectivity, pairing, Windows protected storage, tray behavior, or bench hardware behavior.
+The automated evidence covers HTTP validation, deterministic state transitions, attention queueing, action deadline/prompt binding, restart idempotency, bounded history, atomic recovery, stale-session handling, digest authentication, capability negotiation, replay/live fan-out, heartbeat/action handling, provider decision rendering, and process/container startup. It does not prove live provider accounts, LAN TLS, physical-device connectivity, pairing, Windows protected storage, tray behavior, or bench validation.

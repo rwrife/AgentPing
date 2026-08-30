@@ -2,8 +2,8 @@
 
 AgentPing has three trust-separated runtime layers:
 
-1. **Provider adapters (PC only)** translate supported local coding-agent hook events into bounded protocol-v1 state. GitHub, OpenAI, Anthropic, and other provider credentials remain on the PC and never enter device messages. Codex CLI completion notifications and Claude Code/Copilot CLI lifecycle hooks are implemented behind independent default-off switches. Provider action execution remains issue #6 scope.
-2. **AgentPing Bridge (PC)** owns normalized session/attention state, bounded history, durable idempotency, stale-session handling, device authentication, reconnect replay, live fan-out, policy, and future provider dispatch. It binds to loopback by default.
+1. **Provider adapters (PC only)** translate supported local coding-agent hook events into bounded protocol-v1 state and translate a committed device outcome into each provider's documented permission-decision JSON. GitHub, OpenAI, Anthropic, and other provider credentials remain on the PC and never enter device messages. Adapters are independent and default off.
+2. **AgentPing Bridge (PC)** owns normalized session/attention state, bounded history, durable action idempotency, stale-session handling, device authentication, reconnect replay, live fan-out, policy, and commit-before-provider-notify dispatch. It binds to loopback by default.
 3. **AgentPing Display (ESP32-C6)** is a thin presentation/input client. It may hold only its own revocable device credential and pinned bridge certificate, never provider credentials.
 
 ```text

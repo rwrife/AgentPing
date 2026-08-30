@@ -72,6 +72,29 @@ public sealed class ProviderAdapterTests
     }
 
     [Fact]
+    public void Codex_permission_request_hook_maps_to_destructive_attention_without_tool_arguments()
+    {
+        using var source = JsonDocument.Parse("""
+            {
+              "hook_event_name":"PermissionRequest",
+              "session_id":"codex-session",
+              "turn_id":"codex-turn",
+              "tool_name":"Bash",
+              "tool_input":{"command":"rm -rf private","description":"Remove generated cache"}
+            }
+            """);
+
+        var mapped = new CodexCliProviderAdapter().Map(source.RootElement);
+
+        Assert.NotNull(mapped.Attention);
+        Assert.True(mapped.Attention.Destructive);
+        Assert.Equal(new[] { "approve", "deny" }, mapped.Attention.AllowedActions);
+        var serialized = JsonSerializer.Serialize(mapped);
+        Assert.DoesNotContain("rm -rf private", serialized, StringComparison.Ordinal);
+        Assert.Contains("Remove generated cache", mapped.Attention.Body, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Copilot_pre_tool_use_becomes_destructive_attention_without_forwarding_tool_arguments()
     {
         using var source = JsonDocument.Parse("""

@@ -177,9 +177,9 @@
         "allowedActions": {
           "type": "array",
           "minItems": 1,
-          "maxItems": 3,
+          "maxItems": 5,
           "uniqueItems": true,
-          "items": { "enum": ["approve", "deny", "reply"] }
+          "items": { "enum": ["approve", "deny", "reply", "cancel", "acknowledge"] }
         }
       }
     },
@@ -219,7 +219,7 @@
         "actionId": { "$ref": "#/$defs/uuid" },
         "attentionId": { "$ref": "#/$defs/identifier" },
         "expectedRevision": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
-        "reason": { "enum": ["user_denied", "expired", "stale", "policy_blocked"] },
+        "reason": { "enum": ["user_denied", "user_cancelled", "acknowledged", "expired", "stale", "policy_blocked"] },
         "note": { "type": "string", "maxLength": 256 }
       }
     },
@@ -275,7 +275,7 @@
           "maxItems": 16,
           "uniqueItems": true,
           "items": {
-            "enum": ["events", "sessions", "attention", "approve", "deny", "reply", "resume"]
+            "enum": ["events", "sessions", "attention", "approve", "deny", "reply", "cancel", "acknowledge", "resume"]
           }
         },
         "maxMessageBytes": { "const": 16384 },

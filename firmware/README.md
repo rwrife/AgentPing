@@ -7,15 +7,16 @@ This directory contains the reproducible ESP-IDF/PlatformIO firmware for the **W
 - CO5300 280 × 456 AMOLED over 80 MHz QSPI, including the panel's 0x14 X offset and DMA-completion-driven LVGL flushing
 - FT6146 touch controller over I²C using its FT3168-compatible register protocol, with LVGL pointer input and bounded coordinate-only serial reports
 - LVGL status surface for disconnected, idle, active/running, waiting for input, completed, and failed/error states
+- negotiated approve/deny/cancel/acknowledge/reply controls, an on-device reply keyboard, and required second-tap confirmation for destructive approval
 - redundant icon + text + color status cues, dark high-contrast styling, 65% brightness, and periodic pixel shifting for AMOLED burn-in mitigation
 - USB-serial provisioning into NVS with no compiled credentials and no secret-bearing logs
 - physical BOOT-button factory reset (hold for three seconds during boot)
 - Wi-Fi station mode with WPA2-or-better authentication threshold and protected management-frame capability
 - RFC1918-literal-only `wss://.../ws` endpoint policy, exact provisioned self-signed bridge leaf certificate as TLS trust anchor, and Bearer device authentication
-- protocol-v1 capability negotiation, bounded multi-chunk and multi-frame text-message assembly, strict JSON/payload validation, contiguous connection ordering, reconnect replay/snapshot handling, persistent durable resume checkpoints, heartbeats, and 1–60 second exponential backoff with jitter
-- host-native tests for parsing, state reduction, replay snapshots, fail-closed behavior, endpoint policy, and backoff bounds
+- protocol-v1 capability negotiation, bounded multi-chunk and multi-frame text-message assembly, strict JSON/payload/action validation, contiguous connection ordering, reconnect replay/snapshot handling, persistent durable resume checkpoints, heartbeats, and 1–60 second exponential backoff with jitter
+- host-native tests for parsing, state reduction, action preparation, replay snapshots, fail-closed behavior, endpoint policy, and backoff bounds
 
-Approve/deny/reply controls are deliberately not present; they remain issue #6 scope. Touch is input-capable but cannot authorize an action in this firmware.
+An action is bound to the displayed attention ID, source message ID, revision, and deadline. Approval includes a SHA-256 digest of the canonical displayed title/body; destructive approval is not serialized until a second explicit tap. Reply text is bounded to 512 Unicode characters and omitted from logs. The device shows success only after the bridge echoes the committed action. These controls are compile/host-tested but not physically bench-tested.
 
 ## Pinned toolchain and source evidence
 

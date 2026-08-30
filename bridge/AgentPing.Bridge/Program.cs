@@ -47,6 +47,7 @@ builder.Services.AddSingleton(serviceProvider =>
         serviceProvider.GetRequiredService<TimeProvider>());
 });
 builder.Services.AddSingleton<DeviceConnectionHub>();
+builder.Services.AddSingleton<ProviderActionBroker>();
 builder.Services.AddSingleton<WebSocketSessionHandler>();
 builder.Services.AddSingleton<IProviderAdapter, ManualProviderAdapter>();
 builder.Services.AddSingleton<IProviderAdapter, CodexCliProviderAdapter>();
@@ -118,6 +119,7 @@ app.MapGet("/api/status", async (
 
 app.MapPost("/api/adapters/{provider}", async Task<IResult> (
     string provider,
+    bool? waitForAction,
     JsonElement source,
     HttpContext context,
     ProviderAdapterDispatcher adapters,
@@ -136,6 +138,11 @@ app.MapPost("/api/adapters/{provider}", async Task<IResult> (
     try
     {
         var result = await adapters.DispatchAsync(provider, source, cancellationToken);
+        if (waitForAction == true)
+        {
+            return Results.Ok(await adapters.WaitForActionAsync(result, cancellationToken));
+        }
+
         return Results.Accepted(value: result);
     }
     catch (ProviderAdapterNotFoundException)
@@ -151,6 +158,13 @@ app.MapPost("/api/adapters/{provider}", async Task<IResult> (
             title: "Provider adapter disabled",
             detail: "Enable the provider adapter explicitly in bridge configuration before using it.",
             statusCode: StatusCodes.Status503ServiceUnavailable);
+    }
+    catch (ProviderActionNotAvailableException)
+    {
+        return Results.Problem(
+            title: "Action unavailable",
+            detail: "The provider event did not create an actionable attention item.",
+            statusCode: StatusCodes.Status409Conflict);
     }
     catch (ProviderPayloadException)
     {

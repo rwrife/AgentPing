@@ -426,6 +426,33 @@ bool is_utc_timestamp(std::string_view value) {
   return day >= 1 && day <= maximum_day;
 }
 
+bool timestamp_epoch(std::string_view value, std::int64_t& output) {
+  if (!is_utc_timestamp(value)) return false;
+  unsigned year = 0;
+  unsigned month = 0;
+  unsigned day = 0;
+  unsigned hour = 0;
+  unsigned minute = 0;
+  unsigned second = 0;
+  if (!decimal_at(value, 0, 4, year) || !decimal_at(value, 5, 2, month)
+      || !decimal_at(value, 8, 2, day) || !decimal_at(value, 11, 2, hour)
+      || !decimal_at(value, 14, 2, minute) || !decimal_at(value, 17, 2, second)) {
+    return false;
+  }
+  const int adjusted_year = static_cast<int>(year) - (month <= 2 ? 1 : 0);
+  const int era = (adjusted_year >= 0 ? adjusted_year : adjusted_year - 399) / 400;
+  const unsigned year_of_era = static_cast<unsigned>(adjusted_year - era * 400);
+  const unsigned shifted_month = month > 2 ? month - 3 : month + 9;
+  const unsigned day_of_year = (153 * shifted_month + 2) / 5 + day - 1;
+  const unsigned day_of_era = year_of_era * 365 + year_of_era / 4
+      - year_of_era / 100 + day_of_year;
+  const std::int64_t days = static_cast<std::int64_t>(era) * 146097
+      + static_cast<std::int64_t>(day_of_era) - 719468;
+  output = days * 86400 + static_cast<std::int64_t>(hour) * 3600
+      + static_cast<std::int64_t>(minute) * 60 + second;
+  return true;
+}
+
 bool string_array(const Object& object, const char* name, std::size_t minimum,
                   std::size_t maximum, const std::set<std::string>& allowed,
                   bool require_protocol_version = false) {
@@ -455,7 +482,8 @@ bool validate_capability(const Object& payload, Envelope& output) {
       || !string_field(payload, "role", role, 1, 16) || role != "bridge"
       || !string_array(payload, "supportedVersions", 1, 8, {protocol_v1::kVersion}, true)
       || !string_array(payload, "features", 0, 16,
-                       {"events", "sessions", "attention", "approve", "deny", "reply", "resume"})
+                       {"events", "sessions", "attention", "approve", "deny", "reply",
+                        "cancel", "acknowledge", "resume"})
       || !number_field(payload, "maxMessageBytes", max_message_bytes)
       || max_message_bytes != protocol_v1::kMaxMessageBytes
       || !number_field(payload, "resumeFromSequence", resume_from)) {
@@ -496,12 +524,10 @@ bool validate_session(const Object& payload, Envelope& output) {
                              "revision", "unreadCount"})) {
     return false;
   }
-  std::string session_id;
-  std::string provider;
   std::string updated_at;
   std::uint64_t unread = 0;
-  if (!string_field(payload, "sessionId", session_id, 1, 128) || !is_identifier(session_id)
-      || !string_field(payload, "provider", provider, 1, 32) || !is_provider(provider)
+  if (!string_field(payload, "sessionId", output.session_id, 1, 128) || !is_identifier(output.session_id)
+      || !string_field(payload, "provider", output.provider, 1, 32) || !is_provider(output.provider)
       || !string_field(payload, "state", output.state, 1, 32)
       || std::set<std::string>{"idle", "running", "waiting_for_input", "completed", "failed"}.count(output.state) == 0
       || !string_field(payload, "displayName", output.title, 1, 120)
@@ -510,7 +536,7 @@ bool validate_session(const Object& payload, Envelope& output) {
       || !number_field(payload, "unreadCount", unread, 999)) {
     return false;
   }
-  output.detail = provider + " · " + output.state;
+  output.detail = output.provider + " · " + output.state;
   return true;
 }
 
@@ -519,24 +545,102 @@ bool validate_attention(const Object& payload, Envelope& output) {
                              "body", "responseDeadlineAt", "destructive", "allowedActions"})) {
     return false;
   }
-  std::string attention_id;
-  std::string session_id;
   std::string category;
-  std::string deadline;
-  bool destructive = false;
-  if (!string_field(payload, "attentionId", attention_id, 1, 128) || !is_identifier(attention_id)
-      || !string_field(payload, "sessionId", session_id, 1, 128) || !is_identifier(session_id)
+  if (!string_field(payload, "attentionId", output.attention_id, 1, 128)
+      || !is_identifier(output.attention_id)
+      || !string_field(payload, "sessionId", output.session_id, 1, 128)
+      || !is_identifier(output.session_id)
       || !number_field(payload, "revision", output.revision)
       || !string_field(payload, "category", category, 1, 16)
       || std::set<std::string>{"approval", "reply", "notification"}.count(category) == 0
       || !string_field(payload, "title", output.title, 1, 120)
       || !string_field(payload, "body", output.detail, 1, 1024)
-      || !string_field(payload, "responseDeadlineAt", deadline, 20, 40) || !is_utc_timestamp(deadline)
-      || !boolean_field(payload, "destructive", destructive)
-      || !string_array(payload, "allowedActions", 1, 3, {"approve", "deny", "reply"})) {
+      || !string_field(payload, "responseDeadlineAt", output.response_deadline_at, 20, 40)
+      || !timestamp_epoch(output.response_deadline_at, output.response_deadline_epoch)
+      || !boolean_field(payload, "destructive", output.destructive)
+      || !string_array(payload, "allowedActions", 1, 5,
+                       {"approve", "deny", "reply", "cancel", "acknowledge"})) {
     return false;
   }
+  const auto actions = payload.find("allowedActions");
+  if (actions == payload.end() || actions->second.type != JsonValue::Type::array) return false;
+  for (const auto& action : actions->second.array) {
+    output.allow_approve = output.allow_approve || action.string == "approve";
+    output.allow_deny = output.allow_deny || action.string == "deny";
+    output.allow_reply = output.allow_reply || action.string == "reply";
+    output.allow_cancel = output.allow_cancel || action.string == "cancel";
+    output.allow_acknowledge = output.allow_acknowledge || action.string == "acknowledge";
+  }
   output.state = "waiting_for_input";
+  return !output.destructive || output.allow_deny;
+}
+
+bool validate_action_echo(const Object& payload, Envelope& output, std::string_view type) {
+  std::string action_id;
+  if (type == "approval") {
+    bool destructive = false;
+    if (!only_fields(payload, {"actionId", "attentionId", "expectedRevision", "destructive",
+                               "confirmation"})
+        || !string_field(payload, "actionId", action_id, 36, 36) || !is_uuid(action_id)
+        || !string_field(payload, "attentionId", output.attention_id, 1, 128)
+        || !is_identifier(output.attention_id)
+        || !number_field(payload, "expectedRevision", output.revision)
+        || !boolean_field(payload, "destructive", destructive)) {
+      return false;
+    }
+    const auto confirmation = payload.find("confirmation");
+    if (destructive && confirmation == payload.end()) return false;
+    if (confirmation != payload.end()) {
+      if (confirmation->second.type != JsonValue::Type::object) return false;
+      const auto& object = confirmation->second.object;
+      std::string presented_message_id;
+      std::string prompt_digest;
+      std::string confirmed_at;
+      if (!only_fields(object, {"presentedMessageId", "promptDigest", "confirmedAt"})
+          || !string_field(object, "presentedMessageId", presented_message_id, 36, 36)
+          || !is_uuid(presented_message_id)
+          || !string_field(object, "promptDigest", prompt_digest, 64, 64)
+          || !string_field(object, "confirmedAt", confirmed_at, 20, 40)
+          || !is_utc_timestamp(confirmed_at)) {
+        return false;
+      }
+      for (const unsigned char value : prompt_digest) {
+        if (!std::isdigit(value) && (value < 'a' || value > 'f')) return false;
+      }
+    }
+    output.title = "Approval recorded";
+  } else if (type == "denial") {
+    std::string reason;
+    if (!only_fields(payload, {"actionId", "attentionId", "expectedRevision", "reason", "note"})
+        || !string_field(payload, "actionId", action_id, 36, 36) || !is_uuid(action_id)
+        || !string_field(payload, "attentionId", output.attention_id, 1, 128)
+        || !is_identifier(output.attention_id)
+        || !number_field(payload, "expectedRevision", output.revision)
+        || !string_field(payload, "reason", reason, 1, 32)
+        || std::set<std::string>{"user_denied", "user_cancelled", "acknowledged", "expired", "stale", "policy_blocked"}.count(reason) == 0) {
+      return false;
+    }
+    const auto note = payload.find("note");
+    if (note != payload.end()
+        && (note->second.type != JsonValue::Type::string || !valid_utf8(note->second.string)
+            || utf8_code_points(note->second.string) > 256)) {
+      return false;
+    }
+    output.title = reason == "acknowledged" ? "Acknowledged" : "Request declined";
+  } else {
+    std::string text;
+    if (!only_fields(payload, {"actionId", "attentionId", "expectedRevision", "text"})
+        || !string_field(payload, "actionId", action_id, 36, 36) || !is_uuid(action_id)
+        || !string_field(payload, "attentionId", output.attention_id, 1, 128)
+        || !is_identifier(output.attention_id)
+        || !number_field(payload, "expectedRevision", output.revision)
+        || !string_field(payload, "text", text, 1, protocol_v1::kMaxReplyCharacters)) {
+      return false;
+    }
+    output.title = "Reply recorded";
+  }
+  output.state = "completed";
+  output.detail = "Bridge committed the response";
   return true;
 }
 
@@ -761,6 +865,9 @@ ParseError parse_envelope(std::string_view wire, Envelope& output) {
   if (output.type == "capability") valid = validate_capability(payload->object, output);
   else if (output.type == "session") valid = validate_session(payload->object, output);
   else if (output.type == "attention") valid = validate_attention(payload->object, output);
+  else if (output.type == "approval" || output.type == "denial" || output.type == "reply") {
+    valid = validate_action_echo(payload->object, output, output.type);
+  }
   else if (output.type == "event") valid = validate_event(payload->object);
   else if (output.type == "error") valid = validate_error(payload->object, output);
   else if (output.type == "heartbeat") valid = validate_heartbeat(payload->object);
@@ -815,9 +922,28 @@ ParseError ProtocolState::apply(const Envelope& message) {
     }
   } else if (message.type == "session") {
     next_view = {ui_state(message.state), message.title, message.detail, message.revision};
+    next_view.provider = message.provider;
+    next_view.session_id = message.session_id;
     next_retained_view = next_view;
   } else if (message.type == "attention") {
+    const auto provider = session_providers_.find(message.session_id);
+    if (provider == session_providers_.end()) return ParseError::ordering;
     next_view = {UiState::waiting, message.title, message.detail, message.revision};
+    next_view.provider = provider->second;
+    next_view.session_id = message.session_id;
+    next_view.attention_id = message.attention_id;
+    next_view.presented_message_id = message.message_id;
+    next_view.response_deadline_at = message.response_deadline_at;
+    next_view.response_deadline_epoch = message.response_deadline_epoch;
+    next_view.destructive = message.destructive;
+    next_view.allow_approve = message.allow_approve;
+    next_view.allow_deny = message.allow_deny;
+    next_view.allow_reply = message.allow_reply;
+    next_view.allow_cancel = message.allow_cancel;
+    next_view.allow_acknowledge = message.allow_acknowledge;
+    next_retained_view = next_view;
+  } else if (message.type == "approval" || message.type == "denial" || message.type == "reply") {
+    next_view = {UiState::completed, message.title, message.detail, message.revision};
     next_retained_view = next_view;
   } else if (message.type == "error") {
     next_view = {UiState::failed, message.title, message.detail, 0};
@@ -836,6 +962,15 @@ ParseError ProtocolState::apply(const Envelope& message) {
 
   if (connection_.empty()) connection_ = message.connection_id;
   negotiated_ = negotiated_ || message.type == "capability";
+  if (message.type == "capability" && message.capability.reset_state) {
+    session_providers_.clear();
+  } else if (message.type == "session") {
+    if (session_providers_.find(message.session_id) == session_providers_.end()
+        && session_providers_.size() >= protocol_v1::kMaxReplayWindowMessages) {
+      session_providers_.erase(session_providers_.begin());
+    }
+    session_providers_[message.session_id] = message.provider;
+  }
   view_ = std::move(next_view);
   retained_view_ = std::move(next_retained_view);
   resume_sequence_ = next_resume;
@@ -856,6 +991,134 @@ void ProtocolState::disconnected() {
   snapshot_checkpoint_ = 0;
   snapshot_in_progress_ = false;
   view_ = {};
+}
+
+std::string action_context(const ViewModel& view) {
+  std::string scope;
+  const auto append_action = [&scope](bool allowed, const char* action) {
+    if (!allowed) return;
+    if (!scope.empty()) scope += ", ";
+    scope += action;
+  };
+  append_action(view.allow_approve, "approve");
+  append_action(view.allow_deny, "deny");
+  append_action(view.allow_cancel, "cancel");
+  append_action(view.allow_acknowledge, "acknowledge");
+  append_action(view.allow_reply, "reply");
+
+  std::string context = view.provider + " · " + view.session_id
+      + "\nScope: " + scope + "\nDeadline: " + view.response_deadline_at;
+  if (view.destructive) context += "\nDESTRUCTIVE · confirm twice";
+  return context;
+}
+
+std::string serialize_action_payload(
+    const PreparedAction& action,
+    std::string_view action_id,
+    std::string_view prompt_digest,
+    std::string_view confirmed_at) {
+  const auto escape = [](std::string_view value) {
+    std::string output;
+    output.reserve(value.size() + 8);
+    static constexpr char kHex[] = "0123456789abcdef";
+    for (const unsigned char character : value) {
+      switch (character) {
+        case '\"': output += "\\\""; break;
+        case '\\': output += "\\\\"; break;
+        case '\b': output += "\\b"; break;
+        case '\f': output += "\\f"; break;
+        case '\n': output += "\\n"; break;
+        case '\r': output += "\\r"; break;
+        case '\t': output += "\\t"; break;
+        default:
+          if (character < 0x20) {
+            output += "\\u00";
+            output.push_back(kHex[character >> 4U]);
+            output.push_back(kHex[character & 0x0fU]);
+          } else {
+            output.push_back(static_cast<char>(character));
+          }
+      }
+    }
+    return output;
+  };
+
+  if (action.status != ActionPreparationStatus::ready) return {};
+  const std::string prefix = "{\"actionId\":\"" + escape(action_id)
+      + "\",\"attentionId\":\"" + escape(action.attention_id)
+      + "\",\"expectedRevision\":" + std::to_string(action.expected_revision);
+  if (action.message_type == "approval") {
+    std::string payload = prefix + ",\"destructive\":"
+        + (action.destructive ? "true" : "false");
+    if (action.destructive) {
+      if (action.presented_message_id.empty() || prompt_digest.empty() || confirmed_at.empty()) return {};
+      payload += ",\"confirmation\":{\"presentedMessageId\":\""
+          + escape(action.presented_message_id) + "\",\"promptDigest\":\""
+          + escape(prompt_digest) + "\",\"confirmedAt\":\""
+          + escape(confirmed_at) + "\"}";
+    }
+    return payload + "}";
+  }
+  if (action.message_type == "reply") {
+    return prefix + ",\"text\":\"" + escape(action.text) + "\"}";
+  }
+  if (action.message_type == "denial") {
+    return prefix + ",\"reason\":\"" + escape(action.reason) + "\"}";
+  }
+  return {};
+}
+
+PreparedAction prepare_action(const ViewModel& view, std::string_view action,
+                              std::string_view text, bool confirmed,
+                              std::int64_t now_epoch) {
+  PreparedAction result;
+  if (view.state != UiState::waiting || view.attention_id.empty()
+      || view.presented_message_id.empty()) {
+    return result;
+  }
+  if (view.response_deadline_epoch <= 0 || now_epoch >= view.response_deadline_epoch) {
+    result.status = ActionPreparationStatus::expired;
+    return result;
+  }
+
+  bool allowed = false;
+  if (action == "approve") allowed = view.allow_approve;
+  else if (action == "deny") allowed = view.allow_deny;
+  else if (action == "reply") allowed = view.allow_reply;
+  else if (action == "cancel") allowed = view.allow_cancel;
+  else if (action == "acknowledge") allowed = view.allow_acknowledge;
+  else return result;
+  if (!allowed) {
+    result.status = ActionPreparationStatus::not_allowed;
+    return result;
+  }
+
+  result.action = std::string(action);
+  result.attention_id = view.attention_id;
+  result.presented_message_id = view.presented_message_id;
+  result.expected_revision = view.revision;
+  result.destructive = view.destructive;
+  result.canonical_prompt = view.title + "\n" + view.detail;
+  if (action == "approve") {
+    if (view.destructive && !confirmed) {
+      result.status = ActionPreparationStatus::confirmation_required;
+      return result;
+    }
+    result.message_type = "approval";
+  } else if (action == "reply") {
+    if (text.empty() || !valid_utf8(text) || utf8_code_points(text) > protocol_v1::kMaxReplyCharacters) {
+      return result;
+    }
+    result.message_type = "reply";
+    result.text = std::string(text);
+  } else {
+    result.message_type = "denial";
+    if (action == "deny") result.reason = "user_denied";
+    else if (action == "cancel") result.reason = "user_cancelled";
+    else result.reason = "acknowledged";
+  }
+  result.status = ActionPreparationStatus::ready;
+  return result;
 }
 
 std::uint32_t backoff_delay_ms(unsigned attempt, std::uint32_t random_value) {

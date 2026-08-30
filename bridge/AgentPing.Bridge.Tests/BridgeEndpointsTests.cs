@@ -350,7 +350,7 @@ public sealed class BridgeEndpointsTests : IClassFixture<WebApplicationFactory<P
             .EnumerateArray()
             .Select(feature => feature.GetString())
             .ToArray();
-        Assert.Equal(new[] { "events", "sessions", "attention", "resume" }, features);
+        Assert.Equal(new[] { "events", "sessions", "attention", "approve", "deny", "reply", "cancel", "acknowledge", "resume" }, features);
         await socket.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, "test complete", CancellationToken.None);
     }
 
