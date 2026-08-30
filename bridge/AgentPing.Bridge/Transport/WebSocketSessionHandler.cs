@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using AgentPing.Bridge.Core;
 using AgentPing.Bridge.Protocol;
+using AgentPing.Bridge.Providers;
 using AgentPing.Bridge.Security;
 
 namespace AgentPing.Bridge.Transport;
@@ -11,6 +12,7 @@ namespace AgentPing.Bridge.Transport;
 public sealed class WebSocketSessionHandler(
     BridgeStateStore stateStore,
     DeviceConnectionHub connectionHub,
+    ProviderActionBroker actionBroker,
     TimeProvider timeProvider,
     ILogger<WebSocketSessionHandler> logger)
 {
@@ -73,7 +75,7 @@ public sealed class WebSocketSessionHandler(
                 DeviceId = "agentping-bridge",
                 Role = "bridge",
                 SupportedVersions = [ProtocolV1.Version],
-                Features = ["events", "sessions", "attention", "resume"],
+                Features = ["events", "sessions", "attention", "approve", "deny", "reply", "cancel", "acknowledge", "resume"],
                 MaxMessageBytes = ProtocolV1.MaxMessageBytes,
                 ResumeFromSequence = resumeFromSequence,
                 ResetState = replayWindowMissed,
@@ -160,57 +162,169 @@ public sealed class WebSocketSessionHandler(
                     return;
                 }
 
-                ProtocolEnvelope<HeartbeatPayload>? heartbeat;
+                JsonElement payload;
+                string messageType;
                 try
                 {
-                    heartbeat = JsonSerializer.Deserialize<ProtocolEnvelope<HeartbeatPayload>>(message, JsonOptions);
+                    using var document = JsonDocument.Parse(message);
+                    messageType = document.RootElement.GetProperty("type").GetString() ?? string.Empty;
+                    payload = document.RootElement.GetProperty("payload").Clone();
+                }
+                catch (Exception exception) when (exception is JsonException or KeyNotFoundException or InvalidOperationException)
+                {
+                    await ClosePolicyViolationAsync(socket, "Malformed protocol message.", sessionCancellation.Token);
+                    return;
+                }
+
+                if (messageType == "heartbeat")
+                {
+                    ProtocolEnvelope<HeartbeatPayload>? heartbeat;
+                    try
+                    {
+                        heartbeat = JsonSerializer.Deserialize<ProtocolEnvelope<HeartbeatPayload>>(message, JsonOptions);
+                    }
+                    catch (JsonException)
+                    {
+                        await ClosePolicyViolationAsync(socket, "Malformed heartbeat message.", sessionCancellation.Token);
+                        return;
+                    }
+
+                    if (!ProtocolValidation.IsValidHeartbeat(heartbeat, inboundConnectionId))
+                    {
+                        await ClosePolicyViolationAsync(socket, "Unexpected message or sequence.", sessionCancellation.Token);
+                        return;
+                    }
+
+                    var validHeartbeat = heartbeat!;
+                    if (processedMessages.TryGetValue(validHeartbeat.MessageId, out var processed))
+                    {
+                        if (processed.Type != MessageKind.Heartbeat || processed.Sequence != validHeartbeat.Sequence)
+                        {
+                            await ClosePolicyViolationAsync(socket, "Message ID reuse is inconsistent.", sessionCancellation.Token);
+                            return;
+                        }
+
+                        receiveTask = ReceiveMessageAsync(socket, sessionCancellation.Token);
+                        continue;
+                    }
+
+                    if (validHeartbeat.Sequence != expectedInboundSequence)
+                    {
+                        await ClosePolicyViolationAsync(socket, "Unexpected message or sequence.", sessionCancellation.Token);
+                        return;
+                    }
+
+                    RecordProcessedMessage(processedMessages, processedHeartbeatOrder, validHeartbeat.MessageId,
+                        MessageKind.Heartbeat, validHeartbeat.Sequence);
+                    expectedInboundSequence++;
+                    logger.LogDebug(
+                        "Heartbeat received from device {DeviceId} at sequence {Sequence}",
+                        authenticatedDevice.DeviceId,
+                        validHeartbeat.Sequence);
+                    receiveTask = ReceiveMessageAsync(socket, sessionCancellation.Token);
+                    continue;
+                }
+
+                DeviceActionRequest? actionRequest;
+                var actionKind = messageType switch
+                {
+                    "approval" => MessageKind.Approval,
+                    "denial" => MessageKind.Denial,
+                    "reply" => MessageKind.Reply,
+                    _ => (MessageKind?)null,
+                };
+                bool validAction;
+                try
+                {
+                    validAction = actionKind switch
+                    {
+                        MessageKind.Approval => ProtocolValidation.TryCreateDeviceAction(
+                            JsonSerializer.Deserialize<ProtocolEnvelope<ApprovalPayload>>(message, JsonOptions),
+                            inboundConnectionId, authenticatedDevice.DeviceId, timeProvider, out actionRequest),
+                        MessageKind.Denial => ProtocolValidation.TryCreateDeviceAction(
+                            JsonSerializer.Deserialize<ProtocolEnvelope<DenialPayload>>(message, JsonOptions),
+                            inboundConnectionId, authenticatedDevice.DeviceId, timeProvider, out actionRequest),
+                        MessageKind.Reply => ProtocolValidation.TryCreateDeviceAction(
+                            JsonSerializer.Deserialize<ProtocolEnvelope<ReplyPayload>>(message, JsonOptions),
+                            inboundConnectionId, authenticatedDevice.DeviceId, timeProvider, out actionRequest),
+                        _ => SetInvalidAction(out actionRequest),
+                    };
                 }
                 catch (JsonException)
                 {
-                    await ClosePolicyViolationAsync(socket, "Malformed heartbeat message.", sessionCancellation.Token);
+                    validAction = SetInvalidAction(out actionRequest);
+                }
+                if (!validAction || actionRequest is null)
+                {
+                    await ClosePolicyViolationAsync(socket, "Malformed or unsupported device action.", sessionCancellation.Token);
                     return;
                 }
 
-                if (!ProtocolValidation.IsValidHeartbeat(heartbeat, inboundConnectionId))
+                if (processedMessages.TryGetValue(actionRequest.MessageId, out var priorAction))
                 {
-                    await ClosePolicyViolationAsync(socket, "Unexpected message or sequence.", sessionCancellation.Token);
-                    return;
-                }
-
-                var validHeartbeat = heartbeat!;
-                if (processedMessages.TryGetValue(validHeartbeat.MessageId, out var processed))
-                {
-                    if (processed.Type != MessageKind.Heartbeat
-                        || processed.Sequence != validHeartbeat.Sequence)
+                    if (priorAction.Type != actionRequest.Type || priorAction.Sequence != expectedInboundSequence - 1)
                     {
                         await ClosePolicyViolationAsync(socket, "Message ID reuse is inconsistent.", sessionCancellation.Token);
                         return;
                     }
 
+                    outboundSequence++;
+                    await SendActionEchoAsync(socket, actionRequest, payload, connectionId, outboundSequence, sessionCancellation.Token);
                     receiveTask = ReceiveMessageAsync(socket, sessionCancellation.Token);
                     continue;
                 }
 
-                if (validHeartbeat.Sequence != expectedInboundSequence)
+                var actionSequence = ExtractSequence(message);
+                if (actionSequence != expectedInboundSequence)
                 {
                     await ClosePolicyViolationAsync(socket, "Unexpected message or sequence.", sessionCancellation.Token);
                     return;
                 }
 
-                processedMessages.Add(
-                    validHeartbeat.MessageId,
-                    (MessageKind.Heartbeat, validHeartbeat.Sequence));
-                processedHeartbeatOrder.Enqueue(validHeartbeat.MessageId);
-                if (processedHeartbeatOrder.Count > ProtocolV1.MaxReplayWindowMessages)
+                RecordProcessedMessage(processedMessages, processedHeartbeatOrder, actionRequest.MessageId,
+                    actionRequest.Type, actionSequence);
+                expectedInboundSequence++;
+                ActionProcessResult? actionResult = null;
+                try
                 {
-                    processedMessages.Remove(processedHeartbeatOrder.Dequeue());
+                    actionResult = await stateStore.ProcessActionAsync(actionRequest, sessionCancellation.Token);
+                }
+                catch (BridgeActionRejectedException exception)
+                {
+                    outboundSequence++;
+                    await SendAsync(socket, new ProtocolEnvelope<ErrorPayload>
+                    {
+                        ProtocolVersion = ProtocolV1.Version,
+                        MessageId = Guid.NewGuid(),
+                        Type = MessageKind.Error,
+                        SentAt = timeProvider.GetUtcNow(),
+                        ConnectionId = connectionId,
+                        Sequence = outboundSequence,
+                        Payload = new ErrorPayload
+                        {
+                            Code = exception.Code,
+                            Message = exception.Message,
+                            Retryable = exception.Code is "STALE_REVISION" or "ACTION_NOT_ALLOWED",
+                            RelatedMessageId = actionRequest.MessageId,
+                        },
+                    }, sessionCancellation.Token);
                 }
 
-                expectedInboundSequence++;
-                logger.LogDebug(
-                    "Heartbeat received from device {DeviceId} at sequence {Sequence}",
-                    authenticatedDevice.DeviceId,
-                    validHeartbeat.Sequence);
+                if (actionResult is not null)
+                {
+                    outboundSequence++;
+                    await SendActionEchoAsync(socket, actionRequest, payload, connectionId, outboundSequence, sessionCancellation.Token);
+                    actionBroker.Complete(actionResult);
+                    if (!actionResult.Duplicate)
+                    {
+                        connectionHub.Publish(actionResult.CommittedItem);
+                    }
+                    logger.LogInformation(
+                        "Recorded {Action} for attention {AttentionId} from device {DeviceId}",
+                        actionResult.Outcome.Action,
+                        actionResult.Outcome.AttentionId,
+                        authenticatedDevice.DeviceId);
+                }
 
                 receiveTask = ReceiveMessageAsync(socket, sessionCancellation.Token);
             }
@@ -220,6 +334,49 @@ public sealed class WebSocketSessionHandler(
             sessionCancellation.Cancel();
         }
     }
+
+    private static bool SetInvalidAction(out DeviceActionRequest? request)
+    {
+        request = null;
+        return false;
+    }
+
+    private static ulong ExtractSequence(byte[] message)
+    {
+        using var document = JsonDocument.Parse(message);
+        return document.RootElement.GetProperty("sequence").GetUInt64();
+    }
+
+    private static void RecordProcessedMessage(
+        IDictionary<Guid, (MessageKind Type, ulong Sequence)> processedMessages,
+        Queue<Guid> processedOrder,
+        Guid messageId,
+        MessageKind type,
+        ulong sequence)
+    {
+        processedMessages.Add(messageId, (type, sequence));
+        processedOrder.Enqueue(messageId);
+        if (processedOrder.Count > ProtocolV1.MaxReplayWindowMessages)
+        {
+            processedMessages.Remove(processedOrder.Dequeue());
+        }
+    }
+
+    private static Task SendActionEchoAsync(
+        WebSocket socket,
+        DeviceActionRequest request,
+        JsonElement payload,
+        string connectionId,
+        ulong outboundSequence,
+        CancellationToken cancellationToken) =>
+        SendAsync(socket, new ActionEchoEnvelope(
+            ProtocolV1.Version,
+            request.MessageId,
+            request.Type,
+            request.SentAt,
+            connectionId,
+            outboundSequence,
+            payload), cancellationToken);
 
     private static async Task<byte[]?> ReceiveMessageAsync(
         WebSocket socket,
@@ -336,6 +493,15 @@ public sealed class WebSocketSessionHandler(
         options.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.SnakeCaseLower));
         return options;
     }
+
+    private sealed record ActionEchoEnvelope(
+        string ProtocolVersion,
+        Guid MessageId,
+        MessageKind Type,
+        DateTimeOffset SentAt,
+        string ConnectionId,
+        ulong Sequence,
+        JsonElement Payload);
 
     private sealed record OutboundEnvelope(
         string ProtocolVersion,

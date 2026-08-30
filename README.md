@@ -19,14 +19,14 @@ AgentPing is a buildable foundation for a Windows/.NET bridge and a Waveshare ES
 - deterministic session/attention state, contiguous ingress ordering, idempotency, bounded history, transactional atomic persistence, stale-session handling, and restart recovery
 - digest-authenticated protocol-v1 `/ws` capability negotiation, heartbeat validation, reconnect replay, and live state fan-out
 - integration tests, process-level smoke coverage, and a reproducible Docker image build
-- default-off, loopback-only adapters for Codex CLI completion notifications and Claude Code/Copilot CLI lifecycle hooks, with bounded secret-redacted mapping and synthetic fixtures
+- default-off, loopback-only adapters for Codex CLI, Claude Code, and Copilot CLI hooks, with bounded secret-redacted mapping, durable approve/deny outcomes, and synthetic fixtures
 
 ### Firmware
 
 - pinned PlatformIO 6.1.18 / ESP-IDF 5.5.0 ESP32-C6 project with locked managed components
 - compile-tested CO5300 AMOLED, FT6146 touch, and LVGL initialization from pinned Waveshare schematic/BSP evidence
-- accessible disconnected/idle/running/waiting/completed/error UI with burn-in movement and touch reports
-- strict host-tested protocol parser/state reducer, authenticated WSS capability/heartbeat/replay transport, persistent resume state, and bounded reconnect backoff
+- accessible disconnected/idle/running/waiting/completed/error UI with burn-in movement plus touch approve/deny/cancel/acknowledge/reply controls and two-tap destructive confirmation
+- strict host-tested protocol parser/action policy/state reducer, authenticated WSS capability/heartbeat/replay/action transport, persistent resume state, and bounded reconnect backoff
 - USB-serial NVS provisioning and physical factory reset with no hardcoded network/provider credentials or secret-bearing logs
 
 ### Protocol contract
@@ -36,7 +36,7 @@ AgentPing is a buildable foundation for a Windows/.NET bridge and a Waveshare ES
 - LAN threat model and full-entropy token pairing/rotation/revocation design
 - golden valid/fail-closed fixtures consumed by Python validation and bridge serialization tests
 
-The firmware implementation is compile-tested and its pure protocol logic is host-tested, but no physical module was available to validate pixels, touch, Wi-Fi/RF, or TLS on device. The bridge still does **not** implement token issuance/rotation, a non-loopback LAN TLS listener, approval execution, or tray/pairing UI, so the checked-in stack does not yet provide a complete live device connection. Provider adapters ingest supported local hook events but do not execute provider actions. Device credentials remain out-of-band development inputs; Windows protected storage and pairing UX are issue #7 scope. See the open issues for dependency-ordered implementation work.
+The firmware implementation is compile-tested and its pure protocol/action logic is host-tested, but no physical module was available to validate pixels, touch, Wi-Fi/RF, or TLS on device. The bridge still does **not** implement token issuance/rotation, a non-loopback LAN TLS listener, or tray/pairing UI, so the checked-in stack does not yet provide a complete live device connection. Provider permission decisions are synthetic-test validated against documented hook contracts but were not exercised with live provider accounts. Device credentials remain out-of-band development inputs; Windows protected storage and pairing UX are issue #7 scope. See the open issues for dependency-ordered implementation work.
 
 ## Repository layout
 

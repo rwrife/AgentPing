@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using System.Text;
 using AgentPing.Bridge.Protocol;
 
 namespace AgentPing.Bridge.Core;
@@ -15,13 +16,16 @@ public static partial class ProtocolValidation
         ["approval", "reply", "notification"];
 
     private static readonly HashSet<string> AllowedActions =
-        ["approve", "deny", "reply"];
+        ["approve", "deny", "reply", "cancel", "acknowledge"];
 
     private static readonly HashSet<string> AllowedFeatures =
-        ["events", "sessions", "attention", "approve", "deny", "reply", "resume"];
+        ["events", "sessions", "attention", "approve", "deny", "reply", "cancel", "acknowledge", "resume"];
 
     private static readonly HashSet<string> HeartbeatStatuses =
         ["ready", "busy", "degraded"];
+
+    private static readonly HashSet<string> DeviceDenialReasons =
+        ["user_denied", "user_cancelled", "acknowledged"];
 
     public static bool IsValidCapability(
         ProtocolEnvelope<CapabilityPayload>? envelope,
@@ -68,6 +72,86 @@ public static partial class ProtocolValidation
         && HeartbeatStatuses.Contains(envelope.Payload.Status)
         && envelope.Payload.LastReceivedSequence <= 9_007_199_254_740_991UL
         && envelope.Payload.QueueDepth is >= 0 and <= ProtocolV1.MaxReplayWindowMessages;
+
+    public static bool TryCreateDeviceAction(
+        ProtocolEnvelope<ApprovalPayload>? envelope,
+        string expectedConnectionId,
+        string deviceId,
+        TimeProvider timeProvider,
+        out DeviceActionRequest? request)
+    {
+        request = null;
+        if (!IsValidActionEnvelope(envelope, MessageKind.Approval, expectedConnectionId, timeProvider)
+            || envelope!.Payload is not { } payload
+            || !IsProtocolMessageId(payload.ActionId)
+            || !IsIdentifier(payload.AttentionId)
+            || payload.ExpectedRevision > 9_007_199_254_740_991UL
+            || payload.Destructive && (payload.Confirmation is null
+                || !IsProtocolMessageId(payload.Confirmation.PresentedMessageId)
+                || !PromptDigestPattern().IsMatch(payload.Confirmation.PromptDigest)
+                || !IsCurrentUtcTimestamp(payload.Confirmation.ConfirmedAt, timeProvider)))
+        {
+            return false;
+        }
+
+        request = new DeviceActionRequest(
+            envelope.MessageId, envelope.Type, envelope.SentAt, payload.ActionId,
+            payload.AttentionId, payload.ExpectedRevision, deviceId, payload.Destructive,
+            payload.Confirmation, null, null, null);
+        return true;
+    }
+
+    public static bool TryCreateDeviceAction(
+        ProtocolEnvelope<DenialPayload>? envelope,
+        string expectedConnectionId,
+        string deviceId,
+        TimeProvider timeProvider,
+        out DeviceActionRequest? request)
+    {
+        request = null;
+        if (!IsValidActionEnvelope(envelope, MessageKind.Denial, expectedConnectionId, timeProvider)
+            || envelope!.Payload is not { } payload
+            || !IsProtocolMessageId(payload.ActionId)
+            || !IsIdentifier(payload.AttentionId)
+            || payload.ExpectedRevision > 9_007_199_254_740_991UL
+            || !DeviceDenialReasons.Contains(payload.Reason)
+            || payload.Note?.EnumerateRunes().Count() > 256)
+        {
+            return false;
+        }
+
+        request = new DeviceActionRequest(
+            envelope.MessageId, envelope.Type, envelope.SentAt, payload.ActionId,
+            payload.AttentionId, payload.ExpectedRevision, deviceId, false,
+            null, payload.Reason, payload.Note, null);
+        return true;
+    }
+
+    public static bool TryCreateDeviceAction(
+        ProtocolEnvelope<ReplyPayload>? envelope,
+        string expectedConnectionId,
+        string deviceId,
+        TimeProvider timeProvider,
+        out DeviceActionRequest? request)
+    {
+        request = null;
+        if (!IsValidActionEnvelope(envelope, MessageKind.Reply, expectedConnectionId, timeProvider)
+            || envelope!.Payload is not { } payload
+            || !IsProtocolMessageId(payload.ActionId)
+            || !IsIdentifier(payload.AttentionId)
+            || payload.ExpectedRevision > 9_007_199_254_740_991UL
+            || string.IsNullOrWhiteSpace(payload.Text)
+            || payload.Text.EnumerateRunes().Count() > ProtocolV1.MaxReplyCharacters)
+        {
+            return false;
+        }
+
+        request = new DeviceActionRequest(
+            envelope.MessageId, envelope.Type, envelope.SentAt, payload.ActionId,
+            payload.AttentionId, payload.ExpectedRevision, deviceId, false,
+            null, null, null, payload.Text);
+        return true;
+    }
 
     public static IReadOnlyDictionary<string, string[]> ValidateEvent(
         ProtocolEnvelope<EventPayload> envelope,
@@ -151,12 +235,37 @@ public static partial class ProtocolValidation
         AddIf(
             errors,
             payload.AllowedActions is null
-                || payload.AllowedActions.Count is < 1 or > 3
+                || payload.AllowedActions.Count is < 1 or > 5
                 || payload.AllowedActions.Distinct(StringComparer.Ordinal).Count() != payload.AllowedActions.Count
                 || payload.AllowedActions.Any(action => !AllowedActions.Contains(action)),
             "payload.allowedActions",
-            "Allowed actions must contain 1 to 3 unique supported actions.");
+            "Allowed actions must contain 1 to 5 unique supported actions.");
         return errors;
+    }
+
+    private static bool IsValidActionEnvelope<TPayload>(
+        ProtocolEnvelope<TPayload>? envelope,
+        MessageKind expectedKind,
+        string expectedConnectionId,
+        TimeProvider timeProvider) =>
+        envelope is not null
+        && envelope.ProtocolVersion == ProtocolV1.Version
+        && IsProtocolMessageId(envelope.MessageId)
+        && envelope.Type == expectedKind
+        && envelope.ServerSequence is null
+        && envelope.Sequence is > 0 and <= 9_007_199_254_740_991UL
+        && envelope.ConnectionId == expectedConnectionId
+        && IsConnectionIdentifier(envelope.ConnectionId)
+        && envelope.Payload is not null
+        && IsCurrentUtcTimestamp(envelope.SentAt, timeProvider);
+
+    private static bool IsCurrentUtcTimestamp(DateTimeOffset value, TimeProvider timeProvider)
+    {
+        ArgumentNullException.ThrowIfNull(timeProvider);
+        var now = timeProvider.GetUtcNow();
+        return value.Offset == TimeSpan.Zero
+            && value >= now.AddSeconds(-300)
+            && value <= now.AddSeconds(300);
     }
 
     private static void ValidateSentAt(
@@ -216,6 +325,9 @@ public static partial class ProtocolValidation
 
     [GeneratedRegex("^[1-9][0-9]*\\.[0-9]+$", RegexOptions.CultureInvariant)]
     private static partial Regex VersionPattern();
+
+    [GeneratedRegex("^[0-9a-f]{64}$", RegexOptions.CultureInvariant)]
+    private static partial Regex PromptDigestPattern();
 
     [GeneratedRegex("(^|[_.-])(token|secret|password|credential|authorization|cookie|api[_-]?key)([_.-]|$)", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
     private static partial Regex CredentialKeyPattern();

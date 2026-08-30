@@ -8,10 +8,13 @@ namespace AgentPing.Bridge.Providers;
 
 public sealed class ProviderAdapterDispatcher
 {
+    internal const int ProviderActionTimeoutSeconds = 15;
+
     private readonly IReadOnlyDictionary<string, IProviderAdapter> _adapters;
     private readonly ProviderAdapterOptions _options;
     private readonly BridgeStateStore _stateStore;
     private readonly DeviceConnectionHub _connectionHub;
+    private readonly ProviderActionBroker _actionBroker;
     private readonly TimeProvider _timeProvider;
 
     public ProviderAdapterDispatcher(
@@ -19,12 +22,14 @@ public sealed class ProviderAdapterDispatcher
         IOptions<ProviderAdapterOptions> options,
         BridgeStateStore stateStore,
         DeviceConnectionHub connectionHub,
+        ProviderActionBroker actionBroker,
         TimeProvider timeProvider)
     {
         _adapters = adapters.ToDictionary(adapter => adapter.Name, StringComparer.OrdinalIgnoreCase);
         _options = options.Value;
         _stateStore = stateStore;
         _connectionHub = connectionHub;
+        _actionBroker = actionBroker;
         _timeProvider = timeProvider;
     }
 
@@ -98,7 +103,7 @@ public sealed class ProviderAdapterDispatcher
                         Category = mappedAttention.Category,
                         Title = mappedAttention.Title,
                         Body = mappedAttention.Body,
-                        ResponseDeadlineAt = now.AddSeconds(ProtocolV1.ApprovalTimeoutSeconds),
+                        ResponseDeadlineAt = now.AddSeconds(ProviderActionTimeoutSeconds),
                         Destructive = mappedAttention.Destructive,
                         AllowedActions = mappedAttention.AllowedActions,
                     },
@@ -121,7 +126,21 @@ public sealed class ProviderAdapterDispatcher
             adapter.Name,
             result.EventDuplicate,
             result.AttentionDuplicate,
-            result.Snapshot.LastServerSequence);
+            result.Snapshot.LastServerSequence,
+            mapped.Attention?.AttentionId,
+            mapped.Attention is null ? null : now.AddSeconds(ProviderActionTimeoutSeconds));
+    }
+
+    public Task<ProviderActionResponse> WaitForActionAsync(
+        ProviderDispatchResult dispatch,
+        CancellationToken cancellationToken = default)
+    {
+        if (dispatch.AttentionId is null || dispatch.ResponseDeadlineAt is null)
+        {
+            throw new ProviderActionNotAvailableException();
+        }
+
+        return _actionBroker.WaitAsync(dispatch.AttentionId, dispatch.ResponseDeadlineAt.Value, cancellationToken);
     }
 
     private bool IsEnabled(string name) => name switch
@@ -153,7 +172,12 @@ public sealed record ProviderDispatchResult(
     string Provider,
     bool EventDuplicate,
     bool AttentionDuplicate,
-    ulong LastServerSequence);
+    ulong LastServerSequence,
+    string? AttentionId,
+    DateTimeOffset? ResponseDeadlineAt);
+
+public sealed class ProviderActionNotAvailableException()
+    : InvalidOperationException("The provider event did not create an actionable attention item.");
 
 public sealed class ProviderAdapterNotFoundException(string provider)
     : InvalidOperationException($"Provider adapter '{provider}' is not supported.");

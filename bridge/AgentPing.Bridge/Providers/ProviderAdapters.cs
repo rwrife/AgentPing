@@ -60,6 +60,49 @@ public sealed class CodexCliProviderAdapter : IProviderAdapter
 
     public ProviderMappedMessage Map(JsonElement source)
     {
+        var hook = ProviderPayload.OptionalString(source, "hook_event_name", "hookEventName");
+        if (hook == "PermissionRequest")
+        {
+            var sessionId = ProviderPayload.RequiredString(source, "session_id", "sessionId");
+            var requestTurnId = ProviderPayload.RequiredString(source, "turn_id", "turnId");
+            var toolName = ProviderPayload.RequiredString(source, "tool_name", "toolName");
+            var requestId = ProviderPayload.SourceIdentifier(
+                source, "codex-permission", "tool_use_id", "toolUseId");
+            string? description = null;
+            if (source.TryGetProperty("tool_input", out var toolInput)
+                && toolInput.ValueKind == JsonValueKind.Object)
+            {
+                description = ProviderPayload.OptionalString(toolInput, "description");
+            }
+            else if (source.TryGetProperty("toolInput", out toolInput)
+                && toolInput.ValueKind == JsonValueKind.Object)
+            {
+                description = ProviderPayload.OptionalString(toolInput, "description");
+            }
+
+            var actionSummary = ProviderPayload.Text(description, 512, $"Codex requested permission to use {toolName}");
+            return new ProviderMappedMessage(
+                new ProviderMappedEvent(
+                    ProviderPayload.Identifier(requestId, "codex-event"),
+                    ProviderPayload.Identifier(sessionId, "codex-session"),
+                    "message",
+                    actionSummary,
+                    null,
+                    "warning",
+                    new Dictionary<string, string>
+                    {
+                        ["tool_name"] = ProviderPayload.Text(toolName, 256, "tool"),
+                        ["turn_id"] = ProviderPayload.Text(requestTurnId, 256, "turn"),
+                    }),
+                new ProviderMappedAttention(
+                    ProviderPayload.Identifier(requestId, "codex-attention"),
+                    "approval",
+                    "Codex permission request",
+                    ProviderPayload.Text(description, 1024, $"Codex requested permission to use {toolName}. Provider execution remains on the PC."),
+                    true,
+                    ["approve", "deny"]));
+        }
+
         var type = ProviderPayload.RequiredString(source, "type");
         if (!string.Equals(type, "agent-turn-complete", StringComparison.Ordinal))
         {

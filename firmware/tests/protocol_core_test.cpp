@@ -291,6 +291,85 @@ void snapshot_and_resume() {
   assert(wrong_snapshot_item.apply(envelope) == ParseError::ordering);
 }
 
+void snapshot_attention_uses_its_session_provider() {
+  Envelope envelope;
+  ProtocolState state;
+  assert(agentping::parse_envelope(message("capability", 1, capability(true, 3, 10)), envelope)
+         == ParseError::none);
+  assert(state.apply(envelope) == ParseError::none);
+  assert(agentping::parse_envelope(message(
+      "session", 2,
+      "{\"sessionId\":\"session-codex\",\"provider\":\"codex\",\"state\":\"running\","
+      "\"displayName\":\"Codex task\",\"updatedAt\":\"2026-08-26T00:00:00Z\","
+      "\"revision\":1,\"unreadCount\":0}"), envelope) == ParseError::none);
+  assert(state.apply(envelope) == ParseError::none);
+  assert(agentping::parse_envelope(message(
+      "session", 3,
+      "{\"sessionId\":\"session-manual\",\"provider\":\"manual\",\"state\":\"running\","
+      "\"displayName\":\"Manual task\",\"updatedAt\":\"2026-08-26T00:00:00Z\","
+      "\"revision\":1,\"unreadCount\":0}"), envelope) == ParseError::none);
+  assert(state.apply(envelope) == ParseError::none);
+  assert(agentping::parse_envelope(message(
+      "attention", 4,
+      "{\"attentionId\":\"attention-codex\",\"sessionId\":\"session-codex\",\"revision\":2,"
+      "\"category\":\"approval\",\"title\":\"Run tests?\",\"body\":\"Execute unit tests\","
+      "\"responseDeadlineAt\":\"2026-08-26T00:00:30Z\",\"destructive\":false,"
+      "\"allowedActions\":[\"approve\",\"deny\"]}"), envelope) == ParseError::none);
+  assert(state.apply(envelope) == ParseError::none);
+  assert(state.view().session_id == "session-codex");
+  assert(state.view().provider == "codex");
+}
+
+void action_preparation_is_fail_closed() {
+  agentping::ViewModel attention;
+  attention.state = UiState::waiting;
+  attention.title = "Delete cache?";
+  attention.detail = "Remove generated cache";
+  attention.revision = 4;
+  attention.attention_id = "attention-1";
+  attention.presented_message_id = "123e4567-e89b-12d3-a456-426614174000";
+  attention.provider = "codex";
+  attention.session_id = "session-1";
+  attention.response_deadline_at = "2026-08-26T00:00:30Z";
+  attention.response_deadline_epoch = 2000;
+  attention.destructive = true;
+  attention.allow_approve = true;
+  attention.allow_deny = true;
+  attention.allow_cancel = true;
+  attention.allow_reply = true;
+  attention.allow_acknowledge = true;
+
+  assert(agentping::action_context(attention)
+         == "codex · session-1\nScope: approve, deny, cancel, acknowledge, reply\n"
+            "Deadline: 2026-08-26T00:00:30Z\nDESTRUCTIVE · confirm twice");
+
+  auto approval = agentping::prepare_action(attention, "approve", {}, false, 1900);
+  assert(approval.status == agentping::ActionPreparationStatus::confirmation_required);
+  approval = agentping::prepare_action(attention, "approve", {}, true, 1900);
+  assert(approval.status == agentping::ActionPreparationStatus::ready);
+  assert(approval.message_type == "approval");
+  assert(approval.canonical_prompt == "Delete cache?\nRemove generated cache");
+
+  const auto cancelled = agentping::prepare_action(attention, "cancel", {}, false, 1900);
+  assert(cancelled.status == agentping::ActionPreparationStatus::ready);
+  assert(cancelled.message_type == "denial");
+  assert(cancelled.reason == "user_cancelled");
+  const auto acknowledged = agentping::prepare_action(attention, "acknowledge", {}, false, 1900);
+  assert(acknowledged.reason == "acknowledged");
+
+  std::string reply(512, 'x');
+  assert(agentping::prepare_action(attention, "reply", reply, false, 1900).status
+         == agentping::ActionPreparationStatus::ready);
+  reply.push_back('x');
+  assert(agentping::prepare_action(attention, "reply", reply, false, 1900).status
+         == agentping::ActionPreparationStatus::invalid);
+  assert(agentping::prepare_action(attention, "approve", {}, true, 2000).status
+         == agentping::ActionPreparationStatus::expired);
+  attention.allow_approve = false;
+  assert(agentping::prepare_action(attention, "approve", {}, true, 1900).status
+         == agentping::ActionPreparationStatus::not_allowed);
+}
+
 void backoff_bounds() {
   assert(agentping::backoff_delay_ms(0, 0) == 1000);
   for (unsigned attempt = 0; attempt < 20; ++attempt) {
@@ -354,6 +433,8 @@ int main() {
   websocket_frame_assembly();
   durable_sequence_rules();
   snapshot_and_resume();
+  snapshot_attention_uses_its_session_provider();
+  action_preparation_is_fail_closed();
   backoff_bounds();
   ui_state_mapping();
   endpoint_policy();

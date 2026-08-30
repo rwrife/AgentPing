@@ -99,7 +99,7 @@ touch up
 - [ ] no phantom touches occur for five minutes
 - [ ] LVGL remains responsive during touch activity
 
-The current firmware does not translate touch into approval, denial, or reply actions.
+The current firmware maps the negotiated action set to visible controls. Verify each control below; no unchecked item is a claim of physical validation.
 
 ## 5. Provision safely
 
@@ -138,7 +138,31 @@ Once that prerequisite exists:
 
 Keep packet captures and logs secret-redacted. Do not bypass certificate validation to make the test pass.
 
-## 7. Recovery and erase
+## 7. Validate safe response flows (physical bench matrix)
+
+For every row, record the displayed provider/session identity, allowed-action scope, UTC deadline, serial timestamps, bridge result, and provider-visible result. Use synthetic non-secret prompts. Do not test destructive commands against real data.
+
+| Scenario | Procedure | Required result | Status |
+|---|---|---|---|
+| Approve, non-destructive | Inject an approval with `approve`; tap once | progress appears, bridge records once, provider receives allow, device shows completed only after bridge echo | [ ] |
+| Approve, destructive | Inject `destructive: true`; tap approve once, then tap the changed **CONFIRM** control | first tap sends nothing; second tap sends one prompt-bound approval before the deadline | [ ] |
+| Deny | Inject `deny`; tap deny | bridge records one denial and provider receives deny | [ ] |
+| Cancel | Inject `cancel` without `deny`; tap cancel | bridge records `user_cancelled`; no provider action executes | [ ] |
+| Acknowledge | Inject `acknowledge`; tap ACK | bridge records `acknowledged`; no approval is inferred | [ ] |
+| Short reply | Enter a non-secret reply and tap reply | bridge returns the bounded text only to the manual/test waiter; logs and persisted state omit it | [ ] |
+| Reply cancel | Enter text, press the keyboard cancel control | text is cleared and no action is queued | [ ] |
+| Oversized/invalid reply | Attempt more than 512 Unicode characters or malformed input | UI/parser rejects it and sends nothing | [ ] |
+| Duplicate tap/replay | Repeat the same action ID/message after reconnect | provider side effect occurs at most once; bridge returns the recorded outcome | [ ] |
+| Stale revision | Change the attention revision before submitting | bridge returns `STALE_REVISION`; no action executes | [ ] |
+| Deadline | Wait until the displayed UTC deadline, then tap | device rejects locally or bridge returns `ACTION_EXPIRED`; timeout never approves | [ ] |
+| Disconnect before send | Remove Wi-Fi immediately before tapping | no success state appears; reconnect/reload is required | [ ] |
+| Disconnect after commit | Break Wi-Fi after bridge commit but before device receives the echo, then reconnect/replay | durable outcome is returned without a second provider execution | [ ] |
+| Bridge/network failure | Stop the bridge while a provider hook waits | relay emits an explicit deny before its 20-second local timeout; no payload or reply text is logged | [ ] |
+| Replay-window miss | Reconnect behind retained history | reset snapshot restores the exact session/provider before actions become available | [ ] |
+
+Copilot CLI command hooks have a provider-level fail-open timeout. Keep `timeoutSec` above AgentPing's 20-second relay timeout (the documented default is 30 seconds), and do not use AgentPing as the sole Copilot policy boundary. An externally killed or hung relay process cannot be made fail-closed by AgentPing.
+
+## 8. Recovery and erase
 
 To erase settings, hold **BOOT** continuously for three seconds during boot. Expected log:
 

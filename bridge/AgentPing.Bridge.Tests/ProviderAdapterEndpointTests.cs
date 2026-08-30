@@ -90,6 +90,8 @@ public sealed class ProviderAdapterEndpointTests : IDisposable
 
         Assert.Equal(HttpStatusCode.Accepted, first.StatusCode);
         Assert.Equal(HttpStatusCode.Accepted, second.StatusCode);
+        var created = await first.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(Now.AddSeconds(15), created.GetProperty("responseDeadlineAt").GetDateTimeOffset());
         var duplicate = await second.Content.ReadFromJsonAsync<JsonElement>();
         Assert.True(duplicate.GetProperty("eventDuplicate").GetBoolean());
         Assert.True(duplicate.GetProperty("attentionDuplicate").GetBoolean());

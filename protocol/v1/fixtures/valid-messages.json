@@ -82,7 +82,7 @@
       "body": "The provider requests deletion of a generated cache directory.",
       "responseDeadlineAt": "2026-08-21T18:00:48Z",
       "destructive": true,
-      "allowedActions": ["approve", "deny"]
+      "allowedActions": ["approve", "deny", "cancel"]
     }
   },
   {
@@ -115,7 +115,7 @@
       "actionId": "20000000-0000-4000-8000-000000000002",
       "attentionId": "attention-43",
       "expectedRevision": 2,
-      "reason": "user_denied",
+      "reason": "user_cancelled",
       "note": "Keep the generated artifact for inspection."
     }
   },

@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Security.Cryptography;
+using System.Text;
 using AgentPing.Bridge.Protocol;
 
 namespace AgentPing.Bridge.Core;
@@ -152,6 +153,7 @@ public sealed class BridgeStateStore : IDisposable
             {
                 RecordInboundSequence(envelope.ConnectionId, envelope.Sequence);
                 _state.Attentions[envelope.Payload.AttentionId] = envelope.Payload;
+                _state.AttentionMessageIds[envelope.Payload.AttentionId] = envelope.MessageId;
                 _state.Sessions[existing.SessionId] = existing with
                 {
                     State = "waiting_for_input",
@@ -280,6 +282,7 @@ public sealed class BridgeStateStore : IDisposable
                         EnsureNextInboundSequence(attentionEnvelope.ConnectionId, attentionEnvelope.Sequence);
                         RecordInboundSequence(attentionEnvelope.ConnectionId, attentionEnvelope.Sequence);
                         _state.Attentions[payload.AttentionId] = payload;
+                        _state.AttentionMessageIds[payload.AttentionId] = attentionEnvelope.MessageId;
                         _state.Sessions[currentSession.SessionId] = currentSession with
                         {
                             State = "waiting_for_input",
@@ -317,6 +320,117 @@ public sealed class BridgeStateStore : IDisposable
                     attentionDuplicate,
                     CreateSnapshot(),
                     committedItems);
+            }
+            catch
+            {
+                _state = previousState;
+                throw;
+            }
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
+    public async Task<ActionProcessResult> ProcessActionAsync(
+        DeviceActionRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        await _gate.WaitAsync(cancellationToken);
+        try
+        {
+            var fingerprint = CreateFingerprint(request.Type, request.FingerprintPayload);
+            var duplicateSequence = CheckDuplicate(
+                request.MessageId,
+                request.ActionId.ToString("D"),
+                request.Type,
+                fingerprint);
+            if (duplicateSequence is not null)
+            {
+                if (!_state.ActionOutcomes.TryGetValue(request.ActionId, out var priorOutcome))
+                {
+                    throw new BridgeStateConflictException("Action deduplication record is incomplete.");
+                }
+
+                var priorItem = _state.History.LastOrDefault(item => item.ServerSequence == duplicateSequence.Value)
+                    ?? throw new BridgeStateConflictException("Action history record is no longer available.");
+                return new ActionProcessResult(true, priorOutcome, CreateSnapshot(), priorItem, request);
+            }
+
+            if (!_state.Attentions.TryGetValue(request.AttentionId, out var attention))
+            {
+                throw new BridgeActionRejectedException("UNKNOWN_ATTENTION", "The attention item is no longer pending.");
+            }
+
+            if (!_state.Sessions.TryGetValue(attention.SessionId, out var session))
+            {
+                throw new BridgeActionRejectedException("UNKNOWN_SESSION", "The attention session is unavailable.");
+            }
+
+            if (request.ExpectedRevision != attention.Revision || session.Revision != attention.Revision)
+            {
+                throw new BridgeActionRejectedException("STALE_REVISION", "The attention item changed before the action arrived.");
+            }
+
+            var now = _timeProvider.GetUtcNow();
+            if (now >= attention.ResponseDeadlineAt || request.SentAt >= attention.ResponseDeadlineAt)
+            {
+                throw new BridgeActionRejectedException("ACTION_EXPIRED", "The attention response deadline has passed.");
+            }
+
+            var action = ActionPolicy.GetAction(request);
+            if (!attention.AllowedActions.Contains(action, StringComparer.Ordinal))
+            {
+                throw new BridgeActionRejectedException("ACTION_NOT_ALLOWED", "The requested action is not allowed for this attention item.");
+            }
+
+            ValidateActionPayload(request, attention, now);
+            var previousState = _state;
+            _state = CloneState(previousState);
+            try
+            {
+                _state.Attentions.Remove(attention.AttentionId);
+                _state.AttentionMessageIds.Remove(attention.AttentionId);
+                var updatedSession = session with
+                {
+                    State = "running",
+                    UpdatedAt = now,
+                    Revision = checked(attention.Revision + 1),
+                    UnreadCount = 0,
+                };
+                _state.Sessions[session.SessionId] = updatedSession;
+                _state.LastServerSequence++;
+                var committedItem = new BridgeHistoryItem(
+                    _state.LastServerSequence,
+                    MessageKind.Session,
+                    request.MessageId,
+                    now,
+                    JsonSerializer.SerializeToElement(updatedSession, JsonOptions));
+                _state.History.Add(committedItem);
+                var outcome = new ActionOutcome(
+                    request.ActionId,
+                    request.AttentionId,
+                    request.DeviceId,
+                    session.Provider,
+                    action,
+                    "recorded",
+                    now,
+                    committedItem.ServerSequence);
+                _state.ActionOutcomes[request.ActionId] = outcome;
+                _state.ActionOutcomeOrder.Add(request.ActionId);
+                RecordFingerprint(
+                    request.MessageId,
+                    request.ActionId.ToString("D"),
+                    request.Type,
+                    fingerprint,
+                    committedItem.ServerSequence);
+                TrimHistory();
+                TrimDeduplicationWindows();
+                TrimActionOutcomes();
+                await PersistAsync(cancellationToken);
+                return new ActionProcessResult(false, outcome, CreateSnapshot(), committedItem, request);
             }
             catch
             {
@@ -452,6 +566,9 @@ public sealed class BridgeStateStore : IDisposable
         ProcessedAttentionIds = [.. state.ProcessedAttentionIds],
         MessageFingerprints = [.. state.MessageFingerprints],
         IdentifierFingerprints = [.. state.IdentifierFingerprints],
+        AttentionMessageIds = new Dictionary<string, Guid>(state.AttentionMessageIds, StringComparer.Ordinal),
+        ActionOutcomes = new Dictionary<Guid, ActionOutcome>(state.ActionOutcomes),
+        ActionOutcomeOrder = [.. state.ActionOutcomeOrder],
         LastInboundSequences = new Dictionary<string, ulong>(state.LastInboundSequences, StringComparer.Ordinal),
         InboundConnectionOrder = [.. state.InboundConnectionOrder],
         LastServerSequence = state.LastServerSequence,
@@ -494,6 +611,64 @@ public sealed class BridgeStateStore : IDisposable
         TrimOldest(_state.ProcessedAttentionIds, _maxHistory);
         TrimOldest(_state.MessageFingerprints, _maxHistory);
         TrimOldest(_state.IdentifierFingerprints, _maxHistory);
+    }
+
+    private void TrimActionOutcomes()
+    {
+        while (_state.ActionOutcomeOrder.Count > _maxHistory)
+        {
+            var expired = _state.ActionOutcomeOrder[0];
+            _state.ActionOutcomeOrder.RemoveAt(0);
+            _state.ActionOutcomes.Remove(expired);
+        }
+    }
+
+    private void ValidateActionPayload(
+        DeviceActionRequest request,
+        AttentionPayload attention,
+        DateTimeOffset now)
+    {
+        if (request.Type == MessageKind.Approval)
+        {
+            if (request.Destructive != attention.Destructive)
+            {
+                throw new BridgeActionRejectedException("DESTRUCTIVE_MISMATCH", "The destructive flag does not match the pending attention.");
+            }
+
+            if (attention.Destructive)
+            {
+                if (request.Confirmation is null
+                    || !_state.AttentionMessageIds.TryGetValue(attention.AttentionId, out var presentedMessageId)
+                    || request.Confirmation.PresentedMessageId != presentedMessageId
+                    || _state.History.LastOrDefault(item => item.SourceMessageId == presentedMessageId)
+                        is not { SentAt: var presentedAt }
+                    || request.Confirmation.ConfirmedAt < presentedAt
+                    || request.Confirmation.ConfirmedAt.Offset != TimeSpan.Zero
+                    || request.Confirmation.ConfirmedAt > now
+                    || request.Confirmation.ConfirmedAt > attention.ResponseDeadlineAt)
+                {
+                    throw new BridgeActionRejectedException("CONFIRMATION_REQUIRED", "A current confirmation bound to the displayed request is required.");
+                }
+
+                var expectedDigest = ActionPolicy.ComputePromptDigest(attention);
+                if (!ActionPolicy.FixedTimeDigestEquals(expectedDigest, request.Confirmation.PromptDigest))
+                {
+                    throw new BridgeActionRejectedException("PROMPT_MISMATCH", "The confirmed prompt does not match the current attention.");
+                }
+            }
+        }
+
+        if (request.Type == MessageKind.Reply
+            && (string.IsNullOrWhiteSpace(request.Text)
+                || request.Text.EnumerateRunes().Count() > ProtocolV1.MaxReplyCharacters))
+        {
+            throw new BridgeActionRejectedException("INVALID_REPLY", "Reply text must contain 1 to 512 Unicode characters.");
+        }
+
+        if (request.Note is not null && request.Note.EnumerateRunes().Count() > 256)
+        {
+            throw new BridgeActionRejectedException("INVALID_NOTE", "Action note must contain at most 256 Unicode characters.");
+        }
     }
 
     private ulong? CheckDuplicate(Guid messageId, string identifier, MessageKind type, string fingerprint)
@@ -598,6 +773,9 @@ public sealed class BridgeStateStore : IDisposable
         public List<string> ProcessedAttentionIds { get; init; } = [];
         public List<PersistedFingerprint> MessageFingerprints { get; init; } = [];
         public List<PersistedFingerprint> IdentifierFingerprints { get; init; } = [];
+        public Dictionary<string, Guid> AttentionMessageIds { get; init; } = new(StringComparer.Ordinal);
+        public Dictionary<Guid, ActionOutcome> ActionOutcomes { get; init; } = [];
+        public List<Guid> ActionOutcomeOrder { get; init; } = [];
         public Dictionary<string, ulong> LastInboundSequences { get; init; } = new(StringComparer.Ordinal);
         public List<string> InboundConnectionOrder { get; init; } = [];
         public ulong LastServerSequence { get; set; }
@@ -631,5 +809,88 @@ public sealed record ProviderIngestResult(
     bool AttentionDuplicate,
     BridgeSnapshot Snapshot,
     IReadOnlyList<BridgeHistoryItem> CommittedItems);
+
+public sealed record DeviceActionRequest(
+    Guid MessageId,
+    MessageKind Type,
+    DateTimeOffset SentAt,
+    Guid ActionId,
+    string AttentionId,
+    ulong ExpectedRevision,
+    string DeviceId,
+    bool Destructive,
+    Confirmation? Confirmation,
+    string? Reason,
+    string? Note,
+    string? Text)
+{
+    internal object FingerprintPayload => new
+    {
+        ActionId,
+        AttentionId,
+        ExpectedRevision,
+        Destructive,
+        Confirmation,
+        Reason,
+        Note,
+        Text,
+    };
+}
+
+public sealed record ActionOutcome(
+    Guid ActionId,
+    string AttentionId,
+    string DeviceId,
+    string Provider,
+    string Action,
+    string Status,
+    DateTimeOffset RecordedAt,
+    ulong ServerSequence);
+
+public sealed record ActionProcessResult(
+    bool Duplicate,
+    ActionOutcome Outcome,
+    BridgeSnapshot Snapshot,
+    BridgeHistoryItem CommittedItem,
+    DeviceActionRequest Request);
+
+public static class ActionPolicy
+{
+    public static string GetAction(DeviceActionRequest request) => request.Type switch
+    {
+        MessageKind.Approval => "approve",
+        MessageKind.Reply => "reply",
+        MessageKind.Denial when request.Reason == "user_denied" => "deny",
+        MessageKind.Denial when request.Reason == "user_cancelled" => "cancel",
+        MessageKind.Denial when request.Reason == "acknowledged" => "acknowledge",
+        MessageKind.Denial => throw new BridgeActionRejectedException("INVALID_DENIAL_REASON", "The device supplied an unsupported denial reason."),
+        _ => throw new BridgeActionRejectedException("INVALID_ACTION", "The message kind is not a device action."),
+    };
+
+    public static string ComputePromptDigest(AttentionPayload attention)
+    {
+        var canonical = $"{attention.Title}\n{attention.Body}";
+        return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(canonical))).ToLowerInvariant();
+    }
+
+    public static bool FixedTimeDigestEquals(string expected, string supplied)
+    {
+        try
+        {
+            return CryptographicOperations.FixedTimeEquals(
+                Convert.FromHexString(expected),
+                Convert.FromHexString(supplied));
+        }
+        catch (FormatException)
+        {
+            return false;
+        }
+    }
+}
+
+public sealed class BridgeActionRejectedException(string code, string message) : InvalidOperationException(message)
+{
+    public string Code { get; } = code;
+}
 
 public sealed class BridgeStateConflictException(string message) : InvalidOperationException(message);

@@ -1,51 +1,46 @@
 # AgentPing autonomous executor state
 
-- **Updated (UTC):** 2026-08-27T20:31:22Z
+- **Updated (UTC):** 2026-08-30T19:35:13Z
 - **Repository:** `rwrife/AgentPing`
-- **Starting main:** `b885a73ef0f693a5e47fd1d9faf5c826bc1cfd68`
-- **Starting queue:** 0 open PRs; open issues #5–#9.
-- **PR actions:** the starting PR queue was empty, so no merge, repair, or auto-merge action was required.
-- **Selected issue:** [#5 — Bring up buildable ESP32-C6 display and touch firmware](https://github.com/rwrife/AgentPing/issues/5)
-- **Selection rationale:** #1–#4 are closed; #5 is the earliest remaining dependency and is required before safe action flows (#6) and end-to-end release validation (#9).
-- **Branch:** `feat/issue-5-display-firmware-20260826T191622Z`
-- **Worktree:** `/home/rwrife/repos/AgentPing-worktrees/issue-5-display-firmware-20260826T191622Z`
-- **Worktree continuity:** resumed the collision-safe issue #5 worktree created by the prior executor run; no duplicate branch or PR existed.
-- **Implementation commit:** `8a92aa2` (`feat(firmware): implement ESP32-C6 display client`)
-- **Implementation PR:** [#17](https://github.com/rwrife/AgentPing/pull/17) — open and mergeable; CI run [33113389770](https://github.com/rwrife/AgentPing/actions/runs/33113389770) passed all four jobs on `3dd1c10`.
-- **Self-removal:** not triggered because issues #5–#9 remain open.
+- **Starting main:** `a8ee525cf46f982d5c1342b33a6c44cdf0f263ca`
+- **Starting queue:** 0 open PRs; open issues #6–#9.
+- **PR actions:** no starting PR required repair, merge, or auto-merge.
+- **Selected issue:** [#6 — Implement safe approve, deny, and short-reply flows](https://github.com/rwrife/AgentPing/issues/6)
+- **Selection rationale:** #1–#5 are closed; #6 is the earliest remaining dependency and precedes tray/pairing (#7), hardware (#8), and release validation (#9).
+- **Branch:** `feat/issue-6-safe-actions-20260828T191508Z`
+- **Worktree:** `/home/rwrife/repos/AgentPing-worktrees/issue-6-safe-actions-20260828T191508Z`
+- **Worktree continuity:** resumed the existing cleanly based, uncommitted issue #6 worktree; no remote branch or duplicate PR existed.
+- **Implementation PR:** pending creation in this run.
+- **Self-removal:** not triggered because issues #6–#9 remain open.
 
-## Files changed
+## Implemented scope
 
-- Replaced the heartbeat-only firmware skeleton with a pinned ESP-IDF vertical slice for the current CO5300/FT6146 Waveshare board revision.
-- Added manufacturer-evidenced QSPI display, I²C touch, LVGL, accessible state views, reduced brightness, and periodic pixel shifting.
-- Added USB-serial NVS provisioning, a three-second BOOT-button factory reset, private-literal-only WSS policy, exact leaf-certificate trust, device Bearer authentication, WPA2-or-better Wi-Fi, SNTP, and secret-redacted logs.
-- Added strict bounded protocol-v1 parsing, capability negotiation, driver-chunk/RFC-6455 continuation assembly, contiguous durable sequence enforcement, snapshot/replay reduction, generation-scoped atomic resume-sequence-plus-view persistence, heartbeat behavior, and bounded jittered reconnect backoff.
-- Added native parser/reducer/endpoint/backoff tests, firmware build CI, exact component locks/provenance, and a physical bring-up/recovery checklist.
-- Updated repository, architecture, protocol, security, and bridge authentication documentation to match the executable boundary.
+- Added durable, idempotent approve/deny/cancel/acknowledge/reply processing bound to the pending attention ID, revision, allowed action, deadline, device, and destructive prompt confirmation.
+- Added commit-before-notify provider brokering, action replay after reconnect/restart, bounded in-memory reply handling, and provider-specific fail-closed decision JSON.
+- Added provider-hook permission mapping without forwarding raw tool arguments, credentials, prompts, or reply text into logs/persistence.
+- Added ESP32 action parsing/serialization, second-tap destructive confirmation, bounded reply keyboard with explicit cancel, progress/result/error states, and visible provider/session/scope/deadline context.
+- Added session-keyed provider identity during multi-session replay to prevent cross-session mislabeling.
+- Added a 15-second provider action deadline and 20-second relay fallback so expected Copilot bridge/network failures emit deny before its documented 30-second fail-open hook timeout.
+- Added automated bridge/protocol/reconnect/idempotency tests and an explicitly unperformed physical bench matrix for stale, timeout, disconnect/reconnect, duplicate, and reply scenarios.
 
 ## Verification evidence
 
-- `firmware/tests/run_host_tests.sh` — PASS: parser, strict schema/metadata checks, UTF-8 code-point limits, depth/duplicate rejection, WebSocket chunks/continuations and aggregate bound, contiguous durable checkpoints, state reduction, persisted-view restore semantics, snapshot/replay, UI-state mapping, RFC1918 endpoint policy (including leading-zero rejection), and 1–60 second backoff bounds.
-- `python protocol/validate.py` — PASS: Draft 2020-12 schema, all 9 valid message kinds, 6 fail-closed fixtures, 16,384-byte wire bound, and generated firmware header drift check.
-- Fresh `.venv-platformio` install from `firmware/requirements-ci.txt` and `protocol/requirements-ci.txt`; `python -m pip check` — PASS, PlatformIO Core 6.1.18.
-- Removed generated `firmware/managed_components/` and ran `PLATFORMIO_BUILD_DIR=/tmp/agentping-pio-build-issue5-fresh-deps platformio run -d firmware` — PASS from the checked-in lock: ESP-IDF 5.5.0, 120,812 / 327,680 bytes RAM (36.9%), 1,432,533 / 3,145,728 bytes app flash (45.5%). This is compile/link evidence only.
-- Pinned non-root SDK container: `dotnet restore AgentPing.sln --locked-mode` — PASS.
-- Pinned SDK container: `dotnet format AgentPing.sln --verify-no-changes --no-restore --verbosity normal` — PASS.
-- Pinned SDK container: `dotnet build AgentPing.sln --configuration Release --no-restore` — PASS, 0 warnings / 0 errors.
-- Pinned SDK container: `dotnet test AgentPing.sln --configuration Release --no-build --logger "console;verbosity=minimal"` — PASS, 61/61.
-- Pinned SDK container: `dotnet list AgentPing.sln package --vulnerable --include-transitive` — PASS, no known vulnerable packages.
-- `docker build --file bridge/AgentPing.Bridge/Dockerfile --tag agentping-bridge:issue-5-20260827 .` — PASS, image `sha256:a5afffff5f3bc59393e0d085c1e03157d75be26fc2e6e5108a91886b2601d660`.
-- Non-root image runtime probe on explicit host-loopback networking — PASS as UID 1654: `Healthy`, protocol 1.0, two synthetic sessions, one fail-closed attention, server sequence 3, replay idempotent.
-- `PATH=/tmp/agentping-dotnet-wrapper:$PATH ./scripts/verify.sh` with the repository-pinned .NET 10.0.300 SDK image — PASS end to end: 4/4 Python relay tests, native protocol suite, protocol validator, Release build, 61/61 .NET tests, bridge smoke, provider smoke, and final ESP-IDF build at 120,828 / 327,680 bytes RAM (36.9%) and 1,432,595 / 3,145,728 bytes app flash (45.5%).
-- Direct upstream evidence check via `gh api` at Waveshare commit `b90e28c953c1fc882258fa8dbd56b7706bc888b7` — PASS: BSP and schematic agree on CO5300, FT6146/FT3168 protocol, GPIOs 1/4/5/7/8/10/11/18/19/20, 80 MHz QSPI, and 0x14 panel gap.
-- Criterion-driven Codex review found and drove fixes for provisioning stack use, atomic enrollment, WebSocket continuations, metadata keys, Unicode limits/persistence sizing, contiguous durable checkpoints, and dropped UI updates. Snapshot-checkpoint jumps and zero-offset timestamp rejection were retained because they are explicit protocol requirements in `docs/protocol.md` and bridge tests.
-- `git diff --check` — PASS after fresh dependency resolution.
-- GitHub Actions run `33113389770` — PASS: Bridge build and tests (39s), Protocol contract and fixtures (16s), Bridge container build (23s), ESP32-C6 firmware build (3m32s). Node.js 20 deprecation annotations were warnings only; no failed or skipped job.
+- TDD regression: reconnect/replayed durable action initially timed out the retried provider waiter; after the fix, the focused .NET test passed.
+- TDD regression: multi-session replay initially displayed the wrong provider; after session-keyed lookup, `firmware/tests/run_host_tests.sh` passed.
+- TDD regression: provider attention deadline initially remained 30 seconds; after the safety-margin fix, the focused endpoint test passed at 15 seconds.
+- TDD regression: Copilot relay failure initially exited without a deny object; after the fix, the focused Python test and full 7-test relay suite passed.
+- Pinned .NET 10.0.300 SDK container: locked restore passed; format check passed; Release build passed with 0 warnings/errors; 70/70 tests passed.
+- Bridge process smokes: `SMOKE_RESULT=PASS`; `ADAPTER_SMOKE_RESULT=PASS` with two sessions, one attention, server sequence 3, and idempotent replay.
+- NuGet advisory scan: no known vulnerable direct or transitive packages.
+- Python 3.12.3 container: pinned requirements installed; `pip check` passed; 7/7 relay tests passed; protocol validator passed all 9 valid kinds and 6 fail-closed fixtures.
+- Native firmware protocol tests: `protocol_core: all tests passed`.
+- Fresh PlatformIO 6.1.18 / ESP-IDF 5.5.0 build: PASS; RAM 121,244 / 327,680 bytes (37.0%), app flash 1,446,841 / 3,145,728 bytes (46.0%).
+- Bridge Docker build: PASS, image `sha256:b40126251e77ad2f97029f2bc138f44e1fd0645e3614001035d893b387ed5899`.
+- `git diff --check`: PASS.
 
-## Evidence limits and blockers
+## Evidence limits / blockers
 
-- No physical Waveshare module was available. Flash/boot, AMOLED pixels and brightness, touch coordinates, Wi-Fi/RF, SNTP on target, factory-reset timing, and TLS behavior on device are **not physically validated**.
-- The checked-in bridge remains loopback-only and does not issue a LAN TLS leaf certificate or enrollment token. A full firmware-to-bridge WSS session is blocked on issue #7; this change does not weaken the bridge listener or bypass TLS validation.
-- Development NVS is not encrypted in the CI build. Production still requires Secure Boot, flash encryption, encrypted NVS, and per-device provisioning validation.
-- No KiCad carrier, BOM, datasheet bundle, ERC/DRC, or fabrication output is claimed; those remain issue #8 scope.
-- **Current implementation blocker:** physical bench and end-to-end LAN WSS validation require hardware plus the issue #7 bridge listener/pairing prerequisite. Automated/static implementation is ready for PR review.
+- No physical Waveshare module was available. Touch targets, keyboard ergonomics, displayed context/deadline legibility, disconnect timing, Wi-Fi/RF, TLS, and real approve/deny flows are **not physically validated**; `firmware/BRINGUP.md` records the required unchecked matrix.
+- No live Codex, Claude Code, or Copilot account was exercised; provider JSON is based on current first-party documentation and synthetic tests.
+- Copilot CLI itself documents hook timeouts as fail-open. AgentPing returns explicit deny before the default timeout for expected failures, but cannot make an externally killed/hung hook process a sole fail-closed policy boundary.
+- Non-loopback LAN TLS certificate issuance and interactive pairing remain issue #7 scope.

@@ -7,6 +7,8 @@
 #include <cstdint>
 #include <string>
 #include <string_view>
+#include <unordered_map>
+#include <utility>
 
 namespace agentping {
 
@@ -20,11 +22,55 @@ enum class UiState {
 };
 
 struct ViewModel {
+  ViewModel() = default;
+  ViewModel(UiState initial_state, std::string initial_title,
+            std::string initial_detail, std::uint64_t initial_revision)
+      : state(initial_state), title(std::move(initial_title)),
+        detail(std::move(initial_detail)), revision(initial_revision) {}
+
   UiState state = UiState::disconnected;
   std::string title = "Disconnected";
   std::string detail = "Provision or reconnect";
   std::uint64_t revision = 0;
+  std::string provider;
+  std::string session_id;
+  std::string attention_id;
+  std::string presented_message_id;
+  std::string response_deadline_at;
+  std::int64_t response_deadline_epoch = 0;
+  bool destructive = false;
+  bool allow_approve = false;
+  bool allow_deny = false;
+  bool allow_reply = false;
+  bool allow_cancel = false;
+  bool allow_acknowledge = false;
 };
+
+enum class ActionPreparationStatus {
+  ready,
+  confirmation_required,
+  not_allowed,
+  expired,
+  invalid,
+};
+
+struct PreparedAction {
+  ActionPreparationStatus status = ActionPreparationStatus::invalid;
+  std::string message_type;
+  std::string action;
+  std::string reason;
+  std::string text;
+  std::string attention_id;
+  std::string presented_message_id;
+  std::string canonical_prompt;
+  std::uint64_t expected_revision = 0;
+  bool destructive = false;
+};
+
+std::string action_context(const ViewModel& view);
+PreparedAction prepare_action(const ViewModel& view, std::string_view action,
+                              std::string_view text, bool confirmed,
+                              std::int64_t now_epoch);
 
 enum class ParseError {
   none,
@@ -79,6 +125,17 @@ struct Envelope {
   std::string title;
   std::string detail;
   std::uint64_t revision = 0;
+  std::string provider;
+  std::string session_id;
+  std::string attention_id;
+  std::string response_deadline_at;
+  std::int64_t response_deadline_epoch = 0;
+  bool destructive = false;
+  bool allow_approve = false;
+  bool allow_deny = false;
+  bool allow_reply = false;
+  bool allow_cancel = false;
+  bool allow_acknowledge = false;
   CapabilityPayload capability;
 };
 
@@ -97,6 +154,9 @@ class ProtocolState {
   void restore_resume_state(std::uint64_t sequence, const ViewModel& view) {
     resume_sequence_ = sequence;
     retained_view_ = view;
+    if (!view.session_id.empty() && !view.provider.empty()) {
+      session_providers_[view.session_id] = view.provider;
+    }
   }
 
  private:
@@ -108,6 +168,7 @@ class ProtocolState {
   std::uint64_t snapshot_checkpoint_ = 0;
   bool negotiated_ = false;
   bool snapshot_in_progress_ = false;
+  std::unordered_map<std::string, std::string> session_providers_;
   ViewModel view_;
   ViewModel retained_view_;
 };
