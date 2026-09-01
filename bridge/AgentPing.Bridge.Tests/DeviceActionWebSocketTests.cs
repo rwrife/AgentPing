@@ -35,6 +35,7 @@ public sealed class DeviceActionWebSocketTests : IDisposable
         {
             builder.UseSetting("Bridge:PersistencePath", Path.Combine(root, "state.json"));
             builder.UseSetting("Bridge:DeviceTokensPath", tokensPath);
+            builder.UseSetting("Bridge:AllowLegacyDevelopmentTokenFile", "true");
             builder.UseSetting("Bridge:MaxHistory", "16");
             builder.ConfigureTestServices(services =>
             {

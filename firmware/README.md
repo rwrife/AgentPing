@@ -75,7 +75,7 @@ Rules:
 - logs never print the SSID, Wi-Fi password, token, certificate, reply text, or received protocol payload.
 - the initial UTC time permits certificate validation; SNTP refresh runs after Wi-Fi association and a checkpoint is retained for restart fallback.
 
-Current repository limitation: the bridge still binds to loopback by default and has no LAN TLS certificate/enrollment issuer. Do not expose its checked-in HTTP listener directly. A real WSS device connection requires the future authenticated LAN listener/pairing work tracked by issue #7 (or an independently secured, explicitly configured development termination layer).
+The bridge still binds to loopback by default. Its enrollment endpoint and Windows companion require an operator-configured RFC1918 HTTPS/WSS Kestrel endpoint and matching leaf-certificate fingerprint before a pairing window can open; AgentPing does not generate that listener or certificate automatically. Do not expose the checked-in HTTP listener directly. Real WSS interoperability remains physical bring-up evidence, not a CI claim.
 
 ## Credential storage limitation
 

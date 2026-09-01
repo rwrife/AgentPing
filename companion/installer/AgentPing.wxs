@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <!-- Signing is an explicit release step; this file does not sign or claim a signature. -->
+  <Package Name="AgentPing Companion" Manufacturer="AgentPing" Version="1.0.0" UpgradeCode="A9791743-EE32-4D03-94E7-92DE56AC45EC" Scope="perUser">
+    <MajorUpgrade DowngradeErrorMessage="A newer AgentPing Companion is already installed." Schedule="afterInstallInitialize" />
+    <MediaTemplate EmbedCab="yes" />
+    <StandardDirectory Id="LocalAppDataFolder"><Directory Id="INSTALLFOLDER" Name="AgentPing" /></StandardDirectory>
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Directory Id="AgentPingProgramMenuFolder" Name="AgentPing">
+        <Component Id="StartMenuShortcut" Guid="9E042F58-C4A4-46E0-9E42-AF67CD76A1A9">
+          <Shortcut Id="AgentPingStartMenuShortcut" Name="AgentPing Companion" Description="AgentPing desk-side agent inbox companion" Target="[INSTALLFOLDER]AgentPing.Companion.exe" WorkingDirectory="INSTALLFOLDER" />
+          <RemoveFolder Id="RemoveAgentPingProgramMenuFolder" On="uninstall" />
+          <RegistryValue Root="HKCU" Key="Software\AgentPing" Name="CompanionInstalled" Type="integer" Value="1" KeyPath="yes" />
+        </Component>
+      </Directory>
+    </StandardDirectory>
+    <ComponentGroup Id="ApplicationFiles" Directory="INSTALLFOLDER"><Files Include="$(var.PublishDir)\**" /></ComponentGroup>
+    <Feature Id="Main" Title="AgentPing Companion"><ComponentGroupRef Id="ApplicationFiles" /><ComponentRef Id="StartMenuShortcut" /></Feature>
+  </Package>
+</Wix>

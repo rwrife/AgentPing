@@ -13,6 +13,11 @@ public sealed class BridgeOptions
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
         "AgentPing",
         "device-tokens.json");
+    public bool AllowLegacyDevelopmentTokenFile { get; set; }
+
+    public string DeviceCredentialsPath { get; set; } = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "AgentPing", "device-credentials.json");
 
     public int MaxHistory { get; set; } = ProtocolV1.MaxReplayWindowMessages;
     public int StaleSessionSeconds { get; set; } = 300;
@@ -22,6 +27,7 @@ public sealed class BridgeOptions
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(PersistencePath);
         ArgumentException.ThrowIfNullOrWhiteSpace(DeviceTokensPath);
+        ArgumentException.ThrowIfNullOrWhiteSpace(DeviceCredentialsPath);
         ArgumentOutOfRangeException.ThrowIfLessThan(MaxHistory, 1);
         ArgumentOutOfRangeException.ThrowIfGreaterThan(MaxHistory, ProtocolV1.MaxReplayWindowMessages);
         ArgumentOutOfRangeException.ThrowIfLessThan(StaleSessionSeconds, 1);

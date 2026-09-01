@@ -16,7 +16,7 @@ provider process -> adapter -> bridge policy/state -> authenticated WSS -> displ
 
 The bridge binds to `127.0.0.1:8742` by default. `/health` is liveness; `/api/status` reports non-secret protocol-v1 counts and sequence state. `/api/events` and `/api/attentions` accept strict bounded protocol envelopes, enforce contiguous sequence ordering per provider connection, normalize and transactionally persist state, suppress duplicates, and publish only committed changes. Authenticated `/ws` connections negotiate capability, validate heartbeat ordering, replay bounded history or send a fresh snapshot after a missed window, and receive live session/attention updates.
 
-Device credentials are currently provisioned out of band as SHA-256 digests on the bridge and as a full-entropy token plus exact leaf-certificate trust anchor on the display. The firmware WSS client, display/touch/LVGL layer, persistent resume handling, and serial provisioning are implemented with compile/host-test evidence. Interactive pairing, Windows protected credential storage, token issuance/rotation, bridge-side non-loopback TLS certificate provisioning, physical device validation, and approval dispatch are not implemented yet. Provider hook ingestion is loopback-only, default-off, bounded, and secret-redacted. The checked-in HTTP listener must remain loopback-only.
+The bridge owns device enrollment and credential lifecycle. On Windows it persists DPAPI-protected token/key material plus a keyed lookup digest. Enrollment is HTTPS-only, single-use, capped at five minutes and five attempts. The operator must separately configure the RFC1918 Kestrel HTTPS/WSS endpoint and certificate. Physical-device and live-LAN validation remain unperformed.
 
 ## Trust boundaries
 
@@ -26,3 +26,7 @@ Device credentials are currently provisioned out of band as SHA-256 digests on t
 - **Device boundary:** compromise of one device token must not expose provider credentials or authorize another device. Revocation closes connections and clears pending actions.
 
 See [`protocol.md`](protocol.md) for versioning, message flow, threat model, pairing, resume, and fail-closed approval rules.
+
+## Windows companion boundary
+
+`AgentPing.Bridge` owns pairing and credentials. `AgentPing.Companion.Core` supplies a typed loopback management client, listener policy, redacted logs, startup preference, and projections. The Windows UI verifies the configured TLS certificate fingerprint before opening discovery and pairing.

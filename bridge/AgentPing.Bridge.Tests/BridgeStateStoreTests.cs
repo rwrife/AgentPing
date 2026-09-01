@@ -274,7 +274,7 @@ public sealed class BridgeStateStoreTests
         { SentAt = now });
         var hub = new DeviceConnectionHub();
         hub.InitializeLastPublishedSequence((await store.GetSnapshotAsync()).LastServerSequence);
-        await using var subscription = hub.Subscribe();
+        await using var subscription = hub.Subscribe("test-device");
         var monitor = new StaleSessionMonitor(store, hub, TimeSpan.FromSeconds(30));
         clock.Advance(TimeSpan.FromMinutes(6));
 

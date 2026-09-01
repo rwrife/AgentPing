@@ -26,6 +26,7 @@ public sealed class BridgeEndpointsTests : IClassFixture<WebApplicationFactory<P
         {
             builder.UseSetting("Bridge:PersistencePath", Path.Combine(stateDirectory, "state.json"));
             builder.UseSetting("Bridge:DeviceTokensPath", _deviceTokensPath);
+            builder.UseSetting("Bridge:AllowLegacyDevelopmentTokenFile", "true");
             builder.UseSetting("Bridge:MaxHistory", "2");
             builder.ConfigureTestServices(services =>
             {
@@ -664,6 +665,7 @@ public sealed class BridgeEndpointsTests : IClassFixture<WebApplicationFactory<P
         {
             builder.UseSetting("Bridge:PersistencePath", statePath);
             builder.UseSetting("Bridge:DeviceTokensPath", tokensPath);
+            builder.UseSetting("Bridge:AllowLegacyDevelopmentTokenFile", "true");
         });
         var client = factory.Server.CreateWebSocketClient();
         client.ConfigureRequest = request => request.Headers.Authorization = $"Bearer {token}";

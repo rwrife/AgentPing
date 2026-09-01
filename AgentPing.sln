@@ -9,6 +9,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AgentPing.Bridge", "bridge\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AgentPing.Bridge.Tests", "bridge\AgentPing.Bridge.Tests\AgentPing.Bridge.Tests.csproj", "{131A0D7F-BE18-4A16-BA50-1D54C6029351}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AgentPing.Companion.Core", "companion\AgentPing.Companion.Core\AgentPing.Companion.Core.csproj", "{1CBB47BB-EC6E-4D77-9360-6696054D9D5E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AgentPing.Companion.Core.Tests", "companion\AgentPing.Companion.Core.Tests\AgentPing.Companion.Core.Tests.csproj", "{40491018-341C-42A9-A80B-CC082A8D9FC7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AgentPing.Companion.Windows", "companion\AgentPing.Companion.Windows\AgentPing.Companion.Windows.csproj", "{E0407E40-0B72-44A2-B5E1-A781F8D5D626}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -43,6 +49,16 @@ Global
 		{131A0D7F-BE18-4A16-BA50-1D54C6029351}.Release|x64.Build.0 = Release|Any CPU
 		{131A0D7F-BE18-4A16-BA50-1D54C6029351}.Release|x86.ActiveCfg = Release|Any CPU
 		{131A0D7F-BE18-4A16-BA50-1D54C6029351}.Release|x86.Build.0 = Release|Any CPU
+		{1CBB47BB-EC6E-4D77-9360-6696054D9D5E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1CBB47BB-EC6E-4D77-9360-6696054D9D5E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1CBB47BB-EC6E-4D77-9360-6696054D9D5E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1CBB47BB-EC6E-4D77-9360-6696054D9D5E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{40491018-341C-42A9-A80B-CC082A8D9FC7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{40491018-341C-42A9-A80B-CC082A8D9FC7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{40491018-341C-42A9-A80B-CC082A8D9FC7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{40491018-341C-42A9-A80B-CC082A8D9FC7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E0407E40-0B72-44A2-B5E1-A781F8D5D626}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E0407E40-0B72-44A2-B5E1-A781F8D5D626}.Release|Any CPU.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
