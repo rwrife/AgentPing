@@ -1,6 +1,6 @@
 # Current executor run — issue #7 (2026-09-01)
 
-- **Updated (UTC):** 2026-09-01T20:01:10Z
+- **Updated (UTC):** 2026-09-01T20:02:32Z
 - **Repository:** `rwrife/AgentPing`
 - **Starting main:** `22154e7d2e445a2cdbee142c05263f16dd0e4037`
 - **Starting queue:** 0 open PRs; open issues #7, #8, and #9.
@@ -9,7 +9,7 @@
 - **Selection rationale:** #1–#6 are closed; #7 is the earliest unblocked dependency and precedes hardware design (#8) and release validation (#9).
 - **Branch:** `feat/issue-7-windows-companion-20260901T191630Z`
 - **Worktree:** `/home/rwrife/repos/AgentPing-worktrees/issue-7-windows-companion-20260901T191630Z`
-- **Implementation PR:** pending creation after the verified implementation commit.
+- **Implementation PR:** [#19 — feat: add secure Windows companion and packaging](https://github.com/rwrife/AgentPing/pull/19)
 - **Implemented scope:** Windows Forms tray and live management UI; packaged bridge lifecycle; private-interface TLS fingerprint validation and bounded UDP discovery; single-use five-minute/five-attempt enrollment; DPAPI-protected device credential persistence with keyed lookup digests; loopback plus non-simple-header management guard; token rotation/revocation with selected-session/queue invalidation; redacted logs, opt-in background startup, `.resx` localization points, troubleshooting docs, WiX per-user installer/start-menu entry, and unsigned x64/arm64 artifact workflow.
 - **Files changed:** bridge credential/pairing/management/connection code and tests; new companion core, Windows UI, installer, tests, and workflow; solution/package locks; security, protocol, firmware, architecture, troubleshooting, and root documentation.
 - **Verification actually performed:** pinned SDK 10.0.300 locked restore and Release solution build (0 warnings/errors); 94 bridge and 12 companion tests passed; exact canonical `./scripts/verify.sh` passed including both bridge process smokes and ESP-IDF build; `dotnet format --verify-no-changes`, NuGet direct/transitive advisory scans, protocol/relay/native firmware checks, workflow YAML parse, immutable action SHA API checks, `git diff --check`, and secret-pattern scan passed. Self-contained `win-x64` and `win-arm64` companion/bridge publishes passed with executable artifact checks.
