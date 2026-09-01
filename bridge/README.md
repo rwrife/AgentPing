@@ -19,7 +19,7 @@ The WebSocket requires a schema-valid `capability` message at sequence 1, negoti
 
 ## Safe defaults and configuration
 
-The checked-in listener remains `http://127.0.0.1:8742`. Do not expose this HTTP listener to a LAN. A LAN listener requires HTTPS/WSS certificate provisioning and explicit interface selection; that pairing UI/provisioning work remains in issue #7.
+The checked-in listener remains `http://127.0.0.1:8742`. Do not expose this HTTP listener to a LAN. Enrollment is accepted only on an explicitly configured private IPv4 HTTPS listener; the Windows companion verifies its certificate fingerprint before opening bounded discovery and pairing. AgentPing does not generate the Kestrel certificate or listener automatically.
 
 Standard .NET configuration keys are supported through `appsettings.json`, environment variables, or command-line configuration:
 
@@ -28,6 +28,8 @@ Standard .NET configuration keys are supported through `appsettings.json`, envir
 | `Kestrel__Endpoints__Http__Url` | `http://127.0.0.1:8742` |
 | `Bridge__PersistencePath` | user local app data + `AgentPing/bridge-state.json` |
 | `Bridge__DeviceTokensPath` | user local app data + `AgentPing/device-tokens.json` |
+| `Bridge__AllowLegacyDevelopmentTokenFile` | `false` |
+| `Bridge__DeviceCredentialsPath` | user local app data + `AgentPing/device-credentials.json` |
 | `Bridge__MaxHistory` | `256` (maximum `256`) |
 | `Bridge__StaleSessionSeconds` | `300` |
 | `Bridge__StaleSweepSeconds` | `30` |
@@ -37,9 +39,9 @@ Provider adapters are independently enabled with `Adapters__Manual__Enabled`, `A
 
 State transitions use copy-on-write commit semantics: state is written through a temporary file and atomic replacement before the in-memory transition becomes authoritative. A lifetime-held lock file enforces one bridge writer per persistence path. Serialization, cancellation, or filesystem failure rolls back session, history, sequence, and deduplication changes so a retry is not falsely classified as a duplicate. Corrupt or inaccessible persisted state, or a second writer using the same path, fails startup rather than silently discarding ordering or deduplication history.
 
-## Development device credential file
+## Legacy development device credential file
 
-Pairing and protected credential provisioning are not implemented yet. For integration development, provision the configured token file out of band with only a SHA-256 digest of a full-entropy token:
+The authoritative credential store uses protected token/key material plus a keyed digest. On Windows protection is current-user DPAPI. The old SHA-256 file is disabled by default; enable it only for development with `Bridge:AllowLegacyDevelopmentTokenFile=true`:
 
 ```json
 {
@@ -53,9 +55,9 @@ Pairing and protected credential provisioning are not implemented yet. For integ
 }
 ```
 
-Send the original token only with the WebSocket Bearer authorization scheme. Query-string credentials are not accepted. The bridge reloads the digest file for every handshake, so setting `revoked` to `true` denies new connections immediately. Never commit the token file or original token.
+Legacy records cannot be managed or rotated and should be replaced through enrollment. Send tokens only with the WebSocket Bearer authorization scheme. Never commit credential files or original tokens.
 
-Production Windows protected storage, token issuance/rotation, connection termination on revocation, and pairing UX remain issue #7 scope.
+The Windows companion manages protected enrollment, token rotation, revocation, and active-session invalidation through the loopback-only management API. The legacy file remains development-only and cannot be managed or rotated.
 
 ## Verification
 
@@ -70,3 +72,7 @@ docker build --file bridge/AgentPing.Bridge/Dockerfile --tag agentping-bridge:lo
 ```
 
 The automated evidence covers HTTP validation, deterministic state transitions, attention queueing, action deadline/prompt binding, restart idempotency, bounded history, atomic recovery, stale-session handling, digest authentication, capability negotiation, replay/live fan-out, heartbeat/action handling, provider decision rendering, and process/container startup. It does not prove live provider accounts, LAN TLS, physical-device connectivity, pairing, Windows protected storage, tray behavior, or bench validation.
+
+## Companion ownership
+
+The Windows tray process may start and stop the bridge executable and display its non-secret status. It does not alter provider ingestion or protocol-v1 payload contracts. Default bridge binding remains loopback. Any companion LAN exposure is explicit, RFC1918-interface-specific, and TLS-only; rejection is the fail-closed outcome. Device rotation/revocation must terminate sessions and discard queued actions.

@@ -21,6 +21,13 @@ AgentPing is a buildable foundation for a Windows/.NET bridge and a Waveshare ES
 - integration tests, process-level smoke coverage, and a reproducible Docker image build
 - default-off, loopback-only adapters for Codex CLI, Claude Code, and Copilot CLI hooks, with bounded secret-redacted mapping, durable approve/deny outcomes, and synthetic fixtures
 
+### Windows companion
+
+- Windows Forms tray controls and live bridge/device/adapter/attention status
+- explicit private-interface TLS pairing, bounded discovery, token rotation/revocation, and redacted log export
+- current-user DPAPI credential protection, opt-in startup, high-DPI/accessibility metadata, and `.resx` localization extension points
+- signed-ready WiX packaging plus explicitly unsigned `win-x64` and `win-arm64` CI artifacts
+
 ### Firmware
 
 - pinned PlatformIO 6.1.18 / ESP-IDF 5.5.0 ESP32-C6 project with locked managed components
@@ -36,7 +43,7 @@ AgentPing is a buildable foundation for a Windows/.NET bridge and a Waveshare ES
 - LAN threat model and full-entropy token pairing/rotation/revocation design
 - golden valid/fail-closed fixtures consumed by Python validation and bridge serialization tests
 
-The firmware implementation is compile-tested and its pure protocol/action logic is host-tested, but no physical module was available to validate pixels, touch, Wi-Fi/RF, or TLS on device. The bridge still does **not** implement token issuance/rotation, a non-loopback LAN TLS listener, or tray/pairing UI, so the checked-in stack does not yet provide a complete live device connection. Provider permission decisions are synthetic-test validated against documented hook contracts but were not exercised with live provider accounts. Device credentials remain out-of-band development inputs; Windows protected storage and pairing UX are issue #7 scope. See the open issues for dependency-ordered implementation work.
+The firmware is compile/host-tested, but no physical module was available. The bridge implements protected credential lifecycle and TLS-only enrollment; operators must separately configure the RFC1918 Kestrel HTTPS/WSS endpoint and certificate. Provider permission decisions were not exercised with live provider accounts.
 
 ## Repository layout
 
@@ -96,7 +103,7 @@ The container listens on `0.0.0.0:8742` inside its isolated network namespace so
 
 ## Architecture and protocol
 
-The ESP32 remains a thin client; GitHub/OpenAI/Anthropic credentials stay on the PC. Its transport accepts only RFC1918-literal WSS endpoints, a provisioned leaf-certificate trust anchor, and a revocable device token. The bridge binds to loopback by default and authenticates `/ws` with token digests, but non-loopback HTTPS/WSS certificate provisioning and interactive pairing remain deferred, so the checked-in HTTP listener must not be exposed to the LAN.
+The ESP32 remains a thin client; provider credentials stay on the PC. The bridge binds to loopback by default. LAN pairing requires a separately configured RFC1918 HTTPS/WSS endpoint and certificate; the default HTTP listener must never be exposed to the LAN.
 
 - [`docs/architecture.md`](docs/architecture.md) describes current and planned boundaries.
 - [`docs/protocol.md`](docs/protocol.md) specifies protocol v1, secure pairing, compatibility, ordering, resume, and fail-closed action rules.

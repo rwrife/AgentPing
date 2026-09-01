@@ -28,14 +28,23 @@ builder.WebHost.ConfigureKestrel(options =>
     options.Limits.MaxRequestBodySize = ProtocolV1.MaxMessageBytes;
 });
 builder.Services.AddSingleton(TimeProvider.System);
-builder.Services.AddSingleton(serviceProvider =>
+builder.Services.AddSingleton<ISecretProtector, WindowsDpapiSecretProtector>();
+builder.Services.AddSingleton<ICredentialPersistence>(serviceProvider =>
 {
     var options = serviceProvider.GetRequiredService<IOptions<BridgeOptions>>().Value;
     options.Validate();
-    return new DeviceTokenStore(
-        options.DeviceTokensPath,
-        serviceProvider.GetRequiredService<ILogger<DeviceTokenStore>>());
+    return new FileCredentialPersistence(options.DeviceCredentialsPath);
 });
+builder.Services.AddSingleton(serviceProvider =>
+{
+    var options = serviceProvider.GetRequiredService<IOptions<BridgeOptions>>().Value;
+    return new LegacyDevelopmentTokenAuthenticator(options.DeviceTokensPath, options.AllowLegacyDevelopmentTokenFile);
+});
+builder.Services.AddSingleton<IDeviceLifecycleInvalidator>(serviceProvider => serviceProvider.GetRequiredService<DeviceConnectionHub>());
+builder.Services.AddSingleton<DeviceCredentialManager>();
+builder.Services.AddSingleton<PairingWindowService>();
+builder.Services.AddSingleton<IManagementAccessPolicy, RemoteIpManagementAccessPolicy>();
+builder.Services.AddSingleton<IEnrollmentAccessPolicy, PrivateHttpsEnrollmentAccessPolicy>();
 builder.Services.AddSingleton(serviceProvider =>
 {
     var options = serviceProvider.GetRequiredService<IOptions<BridgeOptions>>().Value;
@@ -116,6 +125,59 @@ app.MapGet("/api/status", async (
         LastServerSequence: snapshot.LastServerSequence,
         Adapters: adapters.GetStatuses()));
 }).WithName("GetBridgeStatus");
+
+var management = app.MapGroup("/management");
+management.AddEndpointFilter(async (context, next) =>
+{
+    var http = context.HttpContext;
+    return http.RequestServices.GetRequiredService<IManagementAccessPolicy>().IsLoopback(http)
+        ? await next(context)
+        : Results.Problem("Management API is loopback-only.", statusCode: StatusCodes.Status403Forbidden);
+});
+management.MapGet("/status", async (BridgeStateStore store, ProviderAdapterDispatcher adapters, DeviceCredentialManager credentials, PairingWindowService pairing, CancellationToken ct) =>
+{
+    var snapshot = await store.GetSnapshotAsync(ct);
+    return Results.Ok(new ManagementStatusResponse("running", adapters.GetStatuses(),
+        snapshot.Attentions.TakeLast(100).Select(a => new AttentionSummary(a.AttentionId, a.Title, a.Category, a.ResponseDeadlineAt)).ToArray(),
+        await credentials.ListAsync(ct), await pairing.GetStatusAsync(ct)));
+});
+management.MapPost("/pairing-window", async (OpenPairingWindowRequest request, PairingWindowService pairing, CancellationToken ct) =>
+{
+    if (!Uri.TryCreate(request.TlsEndpoint, UriKind.Absolute, out var endpoint) || endpoint.Scheme != Uri.UriSchemeHttps
+        || !System.Net.IPAddress.TryParse(endpoint.Host, out var address) || !IsPrivate(address)
+        || request.CertificateSha256 is not { Length: 64 } certificateSha256
+        || !certificateSha256.All(Uri.IsHexDigit)
+        || request.LifetimeSeconds is < 1 or > 300)
+        return Results.ValidationProblem(new Dictionary<string, string[]> { ["configuration"] = ["A private IPv4 HTTPS endpoint and SHA-256 certificate fingerprint are required."] });
+    var opened = await pairing.OpenAsync(TimeSpan.FromSeconds(request.LifetimeSeconds), ct);
+    return Results.Ok(new PairingProvisioningBundle(endpoint.AbsoluteUri, certificateSha256.ToLowerInvariant(), opened.EnrollmentSecret, opened.ExpiresUtc));
+});
+management.MapDelete("/pairing-window", async (PairingWindowService pairing, CancellationToken ct) => { await pairing.CancelAsync(ct); return Results.NoContent(); });
+management.MapPost("/devices/{deviceId}/rotate", async Task<IResult> (string deviceId, DeviceCredentialManager credentials, CancellationToken ct) =>
+{
+    try { return Results.Ok(new DeviceTokenResponse(Base64Url.Encode(await credentials.RotateAsync(deviceId, ct)))); }
+    catch (KeyNotFoundException) { return Results.NotFound(); }
+    catch (ArgumentException) { return Results.ValidationProblem(new Dictionary<string, string[]> { ["deviceId"] = ["Device ID is invalid."] }); }
+});
+management.MapDelete("/devices/{deviceId}", async Task<IResult> (string deviceId, DeviceCredentialManager credentials, CancellationToken ct) =>
+{
+    try { await credentials.RevokeAsync(deviceId, ct); return Results.NoContent(); }
+    catch (KeyNotFoundException) { return Results.NotFound(); }
+    catch (ArgumentException) { return Results.ValidationProblem(new Dictionary<string, string[]> { ["deviceId"] = ["Device ID is invalid."] }); }
+});
+
+app.MapPost("/enroll", async Task<IResult> (EnrollmentRequest request, HttpContext context, PairingWindowService pairing, DeviceCredentialManager credentials, IEnrollmentAccessPolicy access, CancellationToken ct) =>
+{
+    if (!context.Request.IsHttps) return Results.Problem("Enrollment requires HTTPS.", statusCode: StatusCodes.Status426UpgradeRequired);
+    if (!access.IsAllowed(context)) return Results.Problem("Enrollment requires a selected private IPv4 listener.", statusCode: StatusCodes.Status403Forbidden);
+    try
+    {
+        var token = await pairing.EnrollAsync(request.EnrollmentSecret, request.DeviceId, credentials, ct);
+        return token is null ? Results.Unauthorized() : Results.Ok(new DeviceTokenResponse(Base64Url.Encode(token)));
+    }
+    catch (ArgumentException) { return Results.ValidationProblem(new Dictionary<string, string[]> { ["deviceId"] = ["Device ID is invalid."] }); }
+    catch (PlatformNotSupportedException) { return Results.Problem("Protected credential storage is unavailable.", statusCode: 503); }
+});
 
 app.MapPost("/api/adapters/{provider}", async Task<IResult> (
     string provider,
@@ -288,7 +350,7 @@ app.MapPost("/api/attentions", async Task<IResult> (
 
 app.MapGet("/ws", async (
     HttpContext context,
-    DeviceTokenStore tokens,
+    DeviceCredentialManager tokens,
     WebSocketSessionHandler sessionHandler,
     ILogger<WebSocketSessionHandler> transportLogger,
     CancellationToken cancellationToken) =>
@@ -342,6 +404,13 @@ static string? GetBearerToken(string? authorizationHeader)
     return token.Length > 0 && !token.Contains(' ') ? token : null;
 }
 
+static bool IsPrivate(System.Net.IPAddress address)
+{
+    if (address.AddressFamily != System.Net.Sockets.AddressFamily.InterNetwork) return false;
+    var b = address.GetAddressBytes();
+    return b[0] == 10 || b[0] == 172 && b[1] is >= 16 and <= 31 || b[0] == 192 && b[1] == 168;
+}
+
 public sealed record BridgeStatus(
     string Service,
     string Status,
@@ -354,5 +423,12 @@ public sealed record BridgeStatus(
     IReadOnlyList<ProviderAdapterStatus> Adapters);
 
 public sealed record EventIngestResponse(bool Duplicate, ulong LastServerSequence);
+
+public sealed record OpenPairingWindowRequest(string TlsEndpoint, string CertificateSha256, int LifetimeSeconds = 300);
+public sealed record PairingProvisioningBundle(string TlsEndpoint, string CertificateSha256, string EnrollmentSecret, DateTimeOffset ExpiresUtc);
+public sealed record EnrollmentRequest(string EnrollmentSecret, string DeviceId);
+public sealed record DeviceTokenResponse(string Token);
+public sealed record AttentionSummary(string AttentionId, string Title, string Category, DateTimeOffset ResponseDeadlineAt);
+public sealed record ManagementStatusResponse(string Bridge, IReadOnlyList<ProviderAdapterStatus> Adapters, IReadOnlyList<AttentionSummary> RecentAttentions, IReadOnlyList<DeviceCredentialSummary> Devices, PairingWindowStatus Pairing);
 
 public partial class Program;

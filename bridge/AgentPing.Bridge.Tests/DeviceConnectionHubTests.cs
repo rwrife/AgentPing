@@ -12,7 +12,7 @@ public sealed class DeviceConnectionHubTests
     {
         var hub = new DeviceConnectionHub();
         hub.InitializeLastPublishedSequence(0);
-        await using var subscription = hub.Subscribe();
+        await using var subscription = hub.Subscribe("test-device");
         var first = HistoryItem(1, "session-1");
         var second = HistoryItem(2, "session-2");
 

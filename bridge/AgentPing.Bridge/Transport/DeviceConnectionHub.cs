@@ -4,9 +4,9 @@ using AgentPing.Bridge.Core;
 
 namespace AgentPing.Bridge.Transport;
 
-public sealed class DeviceConnectionHub
+public sealed class DeviceConnectionHub : Security.IDeviceLifecycleInvalidator
 {
-    private readonly ConcurrentDictionary<Guid, Channel<BridgeHistoryItem>> _connections = new();
+    private readonly ConcurrentDictionary<Guid, Connection> _connections = new();
     private readonly SortedDictionary<ulong, BridgeHistoryItem> _pending = [];
     private readonly object _publishGate = new();
     private ulong _lastPublishedServerSequence;
@@ -26,7 +26,7 @@ public sealed class DeviceConnectionHub
         }
     }
 
-    public DeviceSubscription Subscribe()
+    public DeviceSubscription Subscribe(string deviceId)
     {
         lock (_publishGate)
         {
@@ -44,12 +44,13 @@ public sealed class DeviceConnectionHub
             SingleWriter = false,
             AllowSynchronousContinuations = false,
         });
-        if (!_connections.TryAdd(id, channel))
+        var cancellation = new CancellationTokenSource();
+        if (!_connections.TryAdd(id, new Connection(deviceId, channel, cancellation)))
         {
             throw new InvalidOperationException("Could not register device connection.");
         }
 
-        return new DeviceSubscription(id, channel.Reader, this);
+        return new DeviceSubscription(id, channel.Reader, cancellation.Token, this);
     }
 
     public void Publish(BridgeHistoryItem item)
@@ -80,28 +81,41 @@ public sealed class DeviceConnectionHub
     {
         foreach (var connection in _connections)
         {
-            if (!connection.Value.Writer.TryWrite(item)
-                && _connections.TryRemove(connection.Key, out var channel))
+            if (!connection.Value.Channel.Writer.TryWrite(item)
+                && _connections.TryRemove(connection.Key, out var removed))
             {
-                channel.Writer.TryComplete(new InvalidOperationException("Device outbound queue exceeded 256 messages."));
+                removed.Cancellation.Cancel();
+                removed.Channel.Writer.TryComplete(new InvalidOperationException("Device outbound queue exceeded 256 messages."));
             }
         }
     }
 
     private void Unsubscribe(Guid id)
     {
-        if (_connections.TryRemove(id, out var channel))
+        if (_connections.TryRemove(id, out var connection))
         {
-            channel.Writer.TryComplete();
+            connection.Cancellation.Cancel();
+            connection.Channel.Writer.TryComplete();
+            connection.Cancellation.Dispose();
         }
     }
 
+    public Task InvalidateAsync(string deviceId, CancellationToken cancellationToken = default)
+    {
+        foreach (var pair in _connections.Where(pair => StringComparer.Ordinal.Equals(pair.Value.DeviceId, deviceId)).ToArray())
+            Unsubscribe(pair.Key);
+        return Task.CompletedTask;
+    }
+
+    private sealed record Connection(string DeviceId, Channel<BridgeHistoryItem> Channel, CancellationTokenSource Cancellation);
+
     public sealed class DeviceSubscription(
         Guid id,
-        ChannelReader<BridgeHistoryItem> reader,
+        ChannelReader<BridgeHistoryItem> reader, CancellationToken invalidated,
         DeviceConnectionHub owner) : IAsyncDisposable
     {
         public ChannelReader<BridgeHistoryItem> Reader { get; } = reader;
+        public CancellationToken Invalidated { get; } = invalidated;
 
         public ValueTask DisposeAsync()
         {

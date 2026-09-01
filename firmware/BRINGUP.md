@@ -14,7 +14,7 @@ This checklist separates reproducible software evidence from physical bench evid
 | AMOLED pixels/brightness/burn-in movement | **not performed in CI** | requires visual inspection |
 | FT6146 touch coordinates | **not performed in CI** | requires physical touch |
 | Wi-Fi association/SNTP/RF | **not performed in CI** | requires local network and RF bench |
-| Pinned-certificate WSS to AgentPing Bridge | **blocked in the checked-in stack** | bridge LAN TLS/enrollment is issue #7 scope |
+| Pinned-certificate WSS to AgentPing Bridge | **not performed in CI** | requires operator-configured RFC1918 TLS listener/certificate and physical device |
 
 ## Equipment
 

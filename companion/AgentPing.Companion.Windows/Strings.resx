@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms</value></resheader>
+  <data name="ApplicationTitle" xml:space="preserve"><value>AgentPing Companion</value></data>
+  <data name="BridgeStopped" xml:space="preserve"><value>Stopped</value></data>
+  <data name="BridgeRunningLoopback" xml:space="preserve"><value>Running (loopback only)</value></data>
+  <data name="OverviewTab" xml:space="preserve"><value>Overview</value></data>
+  <data name="DevicesTab" xml:space="preserve"><value>Devices &amp; pairing</value></data>
+  <data name="ActivityTab" xml:space="preserve"><value>Activity &amp; support</value></data>
+</root>

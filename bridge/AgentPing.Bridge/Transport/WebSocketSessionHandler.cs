@@ -47,7 +47,7 @@ public sealed class WebSocketSessionHandler(
         }
 
         var inboundConnectionId = capability!.ConnectionId;
-        await using var subscription = connectionHub.Subscribe();
+        await using var subscription = connectionHub.Subscribe(authenticatedDevice.DeviceId);
         var snapshot = await stateStore.GetSnapshotAsync(cancellationToken);
         var resumeFromSequence = capability!.Payload.ResumeFromSequence;
         if (resumeFromSequence > snapshot.LastServerSequence)
@@ -134,7 +134,7 @@ public sealed class WebSocketSessionHandler(
         };
         var processedHeartbeatOrder = new Queue<Guid>();
         ulong expectedInboundSequence = 2;
-        using var sessionCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        using var sessionCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, subscription.Invalidated);
         var receiveTask = ReceiveMessageAsync(socket, sessionCancellation.Token);
         var outboundTask = subscription.Reader.ReadAsync(sessionCancellation.Token).AsTask();
         try
@@ -328,6 +328,11 @@ public sealed class WebSocketSessionHandler(
 
                 receiveTask = ReceiveMessageAsync(socket, sessionCancellation.Token);
             }
+        }
+        catch (OperationCanceledException) when (subscription.Invalidated.IsCancellationRequested)
+        {
+            if (socket.State is WebSocketState.Open or WebSocketState.CloseReceived)
+                await socket.CloseOutputAsync(WebSocketCloseStatus.PolicyViolation, "Device credential invalidated.", CancellationToken.None);
         }
         finally
         {

@@ -1,6 +1,6 @@
 # AgentPing device protocol v1
 
-Status: **bridge transport is integration-tested on loopback; firmware WSS/replay logic is implemented, host-tested, and compile-tested; LAN TLS provisioning, pairing UI, and physical device validation are not implemented yet**.
+Status: **bridge transport, enrollment, and management are integration-tested; firmware WSS/replay logic is host/compile-tested; real LAN/device pairing and physical-device validation are not performed**.
 
 The canonical contract is [`protocol/v1/agentping.schema.json`](../protocol/v1/agentping.schema.json), a JSON Schema Draft 2020-12 document. Golden valid and fail-closed fixtures live beside it. Protocol messages never carry coding-provider credentials, Wi-Fi passwords, device enrollment secrets, or bridge private keys.
 
@@ -79,12 +79,12 @@ The display reconnects with exponential backoff and jitter (1 second minimum, 60
 Pairing is a provisioning operation, not a protocol message:
 
 1. The user explicitly opens a five-minute pairing window on the PC. This is the only time an unauthenticated enrollment endpoint may exist.
-2. The bridge creates a single-use 256-bit enrollment secret and TLS certificate fingerprint. They are transferred through a secure local channel (USB serial is the v1 baseline; a future QR channel may carry the same full-entropy bundle). Short numeric PIN-only LAN pairing is forbidden.
+2. The bridge creates a single-use 256-bit enrollment secret. The companion verifies the operator-configured TLS endpoint and leaf-certificate fingerprint, then presents both with the secret for transfer through a secure local channel (USB serial is the v1 baseline; a future QR channel may carry the same full-entropy bundle). Short numeric PIN-only LAN pairing is forbidden.
 3. The display pins the fingerprint and submits the enrollment secret plus its generated device ID over TLS. The bridge permits at most five failures per window and invalidates the secret after the first success.
 4. The bridge returns a different 256-bit device token exactly once. The enrollment secret is erased. Each device receives a distinct token and least-privilege record.
 5. Windows stores token material protected with DPAPI; the display uses ESP-IDF NVS encryption where production flash encryption is enabled. Server-side lookup uses a keyed digest rather than plaintext token storage.
 
-Rotation creates a replacement token on an already authenticated channel, commits it on both sides, and accepts the prior token only for a bounded 60-second handoff. Revocation immediately disables the device record, closes its sockets, clears queued actions, and requires fresh physical provisioning. Factory reset erases the display token and certificate pin. No provider credential ever crosses this boundary.
+Rotation commits a replacement through loopback management and immediately invalidates the prior token/session; provision the replacement over USB or another secure channel. Revocation immediately disables the record and invalidates its sessions/queues.
 
 ## Approval safety
 
@@ -103,7 +103,7 @@ Any missing, stale, malformed, ambiguous, disconnected, timed-out, or policy-rej
 
 ## Bridge implementation status
 
-The bridge enforces the 16 KiB limit on HTTP and WebSocket input, strictly deserializes protocol envelopes, enforces contiguous provider/device sequence ordering, rolls back in-memory transitions when durable commit fails, authenticates display upgrades against revocable token digests, requires display capability at sequence 1, validates contiguous heartbeats, persists bounded replay/action-deduplication history, and replays server-sequence entries newer than `resumeFromSequence` or sends fresh state snapshots when the retained window is insufficient. Device actions are bound to the exact pending attention message and revision, committed before provider notification, and returned idempotently after retry or bridge restart. HTTP provider ingestion and action waiting remain loopback-only. Firmware implements bounded parsing, touch controls, two-step destructive confirmation, reply entry, action serialization, persistent resume/snapshot reduction, authenticated WSS framing, heartbeat, and reconnect behavior. This has compile, host-test, and synthetic integration evidence only. Bridge-side HTTPS/WSS certificate provisioning for LAN use, token issuance/rotation, live provider-account validation, and physical-device validation remain deferred.
+The bridge enforces the 16 KiB limit on HTTP and WebSocket input, strictly deserializes protocol envelopes, enforces contiguous provider/device sequence ordering, rolls back in-memory transitions when durable commit fails, authenticates display upgrades against revocable token digests, requires display capability at sequence 1, validates contiguous heartbeats, persists bounded replay/action-deduplication history, and replays server-sequence entries newer than `resumeFromSequence` or sends fresh state snapshots when the retained window is insufficient. Device actions are bound to the exact pending attention message and revision, committed before provider notification, and returned idempotently after retry or bridge restart. HTTP provider ingestion and management remain loopback-only. The bridge now implements bounded enrollment plus token issuance, rotation, and revocation; the Windows companion drives those APIs. Firmware implements bounded parsing, touch controls, two-step destructive confirmation, reply entry, action serialization, persistent resume/snapshot reduction, authenticated WSS framing, heartbeat, and reconnect behavior. This has compile, host-test, and synthetic integration evidence only. Automatic HTTPS/WSS certificate/listener provisioning, live provider-account validation, and physical-device validation remain deferred.
 
 ## Verification
 
@@ -114,3 +114,7 @@ python3 protocol/validate.py
 ```
 
 The validator checks the schema itself, every valid message kind, fail-closed fixtures (including credential smuggling and missing destructive confirmation), the wire-size canary, and firmware generated constants. Bridge tests deserialize and round-trip the same valid fixture corpus and reject unknown payload fields.
+
+## Bridge enrollment and companion setup
+
+The bridge implements 32-byte enrollment secrets, a single-use five-minute/five-attempt window, device-specific 32-byte tokens, keyed lookup digests, and Windows current-user DPAPI. The companion requires an explicit RFC1918 interface, HTTPS endpoint, and matching live certificate fingerprint before requesting a window and starting bounded UDP discovery. Certificate/listener creation is not automatic.
