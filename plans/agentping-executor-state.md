@@ -9,7 +9,7 @@
 - **Selection rationale:** #1 and #5 are closed; #8 is the earliest open, unblocked issue and #9 depends on it.
 - **Branch:** `feat/issue-8-kicad-carrier-20260902T191645Z`
 - **Worktree:** `/home/rwrife/repos/AgentPing-worktrees/issue-8-kicad-carrier-20260902T191645Z`
-- **Implementation PR:** pending push and creation.
+- **Implementation PR:** [#20 — feat(hardware): add KiCad carrier fabrication package](https://github.com/rwrife/AgentPing/pull/20).
 - **Implemented scope:** an optional 70 x 60 mm low-voltage, two-layer Waveshare carrier with USB-C power-only input, TVS/PPTC/reverse-current protection, module sockets, fail-off GPIO6 haptic output, test pads, conservative enforceable module/RF keepouts, M2/M3 mounting, exact MPN/datasheet properties, a generated BOM, fabrication snapshot, mechanical sources, and assembly/bring-up constraints.
 - **Files changed:** `.gitignore`; `hardware/README.md`, `hardware/verify.sh`; KiCad project, schematic, PCB, and regeneration/export helpers; schematic-derived BOM; manufacturer evidence and manifest; Rev A0 fabrication artifacts; reproducible ERC/DRC reports.
 - **Verification actually performed:** KiCad CLI 9.0.9 reran ERC with 0 violations and PCB DRC with 0 violations, 0 unconnected pads, and 0 footprint errors. The schematic-derived BOM freshness check passed in an isolated environment using `kicad-sch-api==0.5.6`. Rev A0 snapshot SHA-256 checks passed. A fresh KiCad export generated Gerbers, drill files/maps/report, front position CSV, board STEP, and IPC-2581; the fresh position CSV SHA-256 exactly matches the committed Rev A0 snapshot.
