@@ -20,5 +20,8 @@ firmware/sdkconfig.*
 .idea/
 .DS_Store
 
+# KiCad workstation state
+*.kicad_prl
+
 # Runtime/log output
 *.log
