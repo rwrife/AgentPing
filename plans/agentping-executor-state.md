@@ -1,3 +1,22 @@
+# Current executor run — issue #8 (2026-09-03)
+
+- **Updated (UTC):** 2026-09-03T19:14:49Z
+- **Repository:** `rwrife/AgentPing`
+- **Starting main:** `c9e725e19599cc1462dd577d277df6201969ed12`
+- **Starting queue:** 0 open PRs; open issues #8 and #9.
+- **PR actions:** no starting PR required repair, merge, or auto-merge.
+- **Selected issue:** [#8 — Create editable KiCad carrier, schematic-backed BOM, and fabrication package](https://github.com/rwrife/AgentPing/issues/8)
+- **Selection rationale:** #1 and #5 are closed; #8 is the earliest open, unblocked issue and #9 depends on it.
+- **Branch:** `feat/issue-8-kicad-carrier-20260902T191645Z`
+- **Worktree:** `/home/rwrife/repos/AgentPing-worktrees/issue-8-kicad-carrier-20260902T191645Z`
+- **Implementation PR:** pending push and creation.
+- **Implemented scope:** an optional 70 x 60 mm low-voltage, two-layer Waveshare carrier with USB-C power-only input, TVS/PPTC/reverse-current protection, module sockets, fail-off GPIO6 haptic output, test pads, conservative enforceable module/RF keepouts, M2/M3 mounting, exact MPN/datasheet properties, a generated BOM, fabrication snapshot, mechanical sources, and assembly/bring-up constraints.
+- **Files changed:** `.gitignore`; `hardware/README.md`, `hardware/verify.sh`; KiCad project, schematic, PCB, and regeneration/export helpers; schematic-derived BOM; manufacturer evidence and manifest; Rev A0 fabrication artifacts; reproducible ERC/DRC reports.
+- **Verification actually performed:** KiCad CLI 9.0.9 reran ERC with 0 violations and PCB DRC with 0 violations, 0 unconnected pads, and 0 footprint errors. The schematic-derived BOM freshness check passed in an isolated environment using `kicad-sch-api==0.5.6`. Rev A0 snapshot SHA-256 checks passed. A fresh KiCad export generated Gerbers, drill files/maps/report, front position CSV, board STEP, and IPC-2581; the fresh position CSV SHA-256 exactly matches the committed Rev A0 snapshot.
+- **Explicitly unperformed / blockers:** no physical PCB, assembly, USB-C, current/inrush, haptic, temperature, enclosure, RF/antenna, display/touch, or firmware-on-carrier test. BOM costs are estimates only; stock and lifecycle were not queried. The local KiCad 9.0.9 export lacked legacy 3D-model variables, so its candidate STEP omitted affected component bodies; the supplied Waveshare STEP remains the mechanical reference. Schematic regeneration requires a KiCad 9 symbol-library installation not present in this environment.
+
+---
+
 # Current executor run — issue #7 (2026-09-01)
 
 - **Updated (UTC):** 2026-09-01T20:08:31Z
