@@ -1,3 +1,28 @@
+# Current executor run — issue #9 (2026-09-05)
+
+- **Updated (UTC):** 2026-09-05T19:25:18Z
+- **Repository:** `rwrife/AgentPing`
+- **Starting main:** `5ff2f323dd044d203e6f38d420f1c71cb187048d`
+- **Starting queue:** 0 open PRs; open issue #9 only.
+- **PR actions:** no starting PR required repair, merge, or auto-merge.
+- **Selected issue:** [#9 — Add end-to-end simulation, validation, and release automation](https://github.com/rwrife/AgentPing/issues/9)
+- **Selection rationale:** only open issue remaining; directly advances required simulation/validation closure work.
+- **Branch:** `feat/issue-9-e2e-simulator-20260905T191722Z`
+- **Worktree:** `/home/rwrife/repos/AgentPing-worktrees/issue-9-e2e-simulator-20260905T191722Z`
+- **Implementation PR:** not opened yet (this entry captures the in-progress slice).
+- **Implemented scope so far:** added an end-to-end bridge simulation test harness that drives manual provider events through authenticated WebSocket display approvals, covers reconnect replay/action continuation, and asserts a fail-closed wait-for-action misuse path (`409 Conflict`). Added a dedicated simulator smoke command and updated integration docs so maintainers can run this flow without hardware or live provider credentials.
+- **Files changed so far:** `bridge/AgentPing.Bridge.Tests/BridgeEndToEndSimulationTests.cs`; `integration/smoke-e2e-simulator.sh`; `integration/README.md`.
+- **Verification actually performed:**
+  - `python3 -m unittest discover -s tools/tests -v` → 7/7 PASS.
+  - `firmware/tests/run_host_tests.sh` → PASS (`protocol_core: all tests passed`).
+  - `python3 protocol/validate.py` → PASS (9 valid kinds, 6 fail-closed fixtures).
+  - Containerized pinned SDK (`mcr.microsoft.com/dotnet/sdk:10.0.300`): `dotnet restore AgentPing.sln --locked-mode`, `dotnet build AgentPing.sln --configuration Release --no-restore`, `dotnet test AgentPing.sln --configuration Release --no-build` → PASS (`AgentPing.Bridge.Tests` 96/96, `AgentPing.Companion.Core.Tests` 12/12).
+  - `./integration/smoke-e2e-simulator.sh` in the same SDK container → PASS (2/2 simulation tests).
+  - `./integration/smoke-bridge.sh` and `./integration/smoke-provider-adapters.sh` in SDK container after installing `python3`/`curl` inside the ephemeral container → PASS (`SMOKE_RESULT=PASS`, `ADAPTER_SMOKE_RESULT=PASS`).
+- **Explicitly unperformed / blockers:** host machine lacks `dotnet`, so .NET checks were run in the pinned SDK container. Full issue #9 scope is still open (release automation workflow + remaining validation closure), and no PR has been opened yet.
+
+---
+
 # Current executor run — issue #8 (2026-09-03)
 
 - **Updated (UTC):** 2026-09-03T19:14:49Z
