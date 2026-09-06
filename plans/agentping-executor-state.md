@@ -1,3 +1,31 @@
+# Current executor run — issue #9 release automation (2026-09-06)
+
+- **Updated (UTC):** 2026-09-06T19:25:02Z
+- **Repository:** `rwrife/AgentPing`
+- **Starting main:** `b3dfb27862fa5d1fdd17f94189370e8b6b18225b`
+- **Starting queue:** 0 open PRs; open issue #9 only.
+- **PR actions:** no starting PR required repair, merge, or auto-merge.
+- **Selected issue:** [#9 — Add end-to-end simulation, validation, and release automation](https://github.com/rwrife/AgentPing/issues/9)
+- **Selection rationale:** only open issue remaining; this branch closes the release-automation/documentation portion after the simulator slice landed.
+- **Branch:** `feat/issue-9-release-automation-20260906T191533Z`
+- **Worktree:** `/home/rwrife/repos/AgentPing-worktrees/feat-issue-9-release-automation-20260906T191533Z`
+- **Implementation PR:** pending (open after commit/push)
+- **Implemented scope:** added a release workflow that gates publication on canonical verification, stages firmware/hardware/protocol docs + dependency/license inventories, packages unsigned Windows companion artifacts for `win-x64`/`win-arm64`, and publishes versioned release bundles with checksums on `v*` tags. Added generated protocol reference tooling/checks, release runbook/security/privacy review/dependency-license inventory/rollback-recovery docs, and a root changelog. Wired canonical CI/verify to enforce protocol-doc freshness and execute the e2e simulator smoke target.
+- **Files changed:** `.github/workflows/release.yml`; `.github/workflows/ci.yml`; `scripts/verify.sh`; `protocol/generate_reference.py`; `docs/generated/protocol-v1-reference.md`; `protocol/README.md`; `README.md`; `CHANGELOG.md`; `docs/release/mvp-release-runbook.md`; `docs/release/security-privacy-review.md`; `docs/release/dependency-license-inventory.md`; `docs/release/rollback-recovery.md`; `plans/agentping-executor-state.md`.
+- **Verification actually performed:**
+  - `python3 protocol/validate.py` → PASS (schema Draft 2020-12; 9 valid kinds; 6 fail-closed fixtures).
+  - `python3 protocol/generate_reference.py` and `python3 protocol/generate_reference.py --check` → PASS.
+  - `python3 -m py_compile protocol/generate_reference.py` → PASS.
+  - `./scripts/verify.sh` (host) → PARTIAL: Python/protocol checks passed, then failed because host lacks `dotnet` (`dotnet: command not found`).
+  - Containerized pinned SDK (`mcr.microsoft.com/dotnet/sdk:10.0.300`): `dotnet restore/build/test AgentPing.sln` → PASS (`AgentPing.Bridge.Tests` 96/96; `AgentPing.Companion.Core.Tests` 12/12).
+  - Containerized SDK + `python3` install: `./integration/smoke-bridge.sh`, `./integration/smoke-provider-adapters.sh`, `./integration/smoke-e2e-simulator.sh` → PASS (`SMOKE_RESULT=PASS`, `ADAPTER_SMOKE_RESULT=PASS`, simulator tests 2/2).
+  - `python3 -m platformio run -d firmware` with pinned requirements → PASS (ESP-IDF build success; firmware binaries emitted under `.pio/build/waveshare_esp32_c6_touch_amoled_1_64/`).
+  - `docker build -f bridge/AgentPing.Bridge/Dockerfile .` → PASS (image `sha256:0014d37e76df3c9b3c86a79a1fd6283e46c5a99205682a99890d5fa79d7d4e9b`).
+  - Workflow YAML parse (`ci.yml`, `release.yml`, `windows-companion.yml`) via `pyyaml` → PASS.
+- **Explicitly unperformed / blockers:** no physical bench, LAN TLS enrollment, RF/touch validation, or Authenticode signing was performed; these remain explicitly out-of-band from CI/simulation.
+
+---
+
 # Current executor run — issue #9 (2026-09-05)
 
 - **Updated (UTC):** 2026-09-05T19:25:18Z
