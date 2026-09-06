@@ -107,7 +107,9 @@ The ESP32 remains a thin client; provider credentials stay on the PC. The bridge
 
 - [`docs/architecture.md`](docs/architecture.md) describes current and planned boundaries.
 - [`docs/protocol.md`](docs/protocol.md) specifies protocol v1, secure pairing, compatibility, ordering, resume, and fail-closed action rules.
+- [`docs/generated/protocol-v1-reference.md`](docs/generated/protocol-v1-reference.md) is generated directly from the canonical schema.
 - [`docs/provider-adapters.md`](docs/provider-adapters.md) documents default-off Codex CLI, Claude Code, Copilot CLI, and manual/test hook ingestion.
+- [`docs/release/mvp-release-runbook.md`](docs/release/mvp-release-runbook.md), [`docs/release/security-privacy-review.md`](docs/release/security-privacy-review.md), [`docs/release/dependency-license-inventory.md`](docs/release/dependency-license-inventory.md), and [`docs/release/rollback-recovery.md`](docs/release/rollback-recovery.md) define MVP release gates and operations.
 - [`hardware/README.md`](hardware/README.md) states the current hardware evidence and future KiCad scope.
 
 ## Contributing and security
