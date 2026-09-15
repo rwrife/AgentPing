@@ -57,6 +57,13 @@ integration/  process-level integration tooling
 scripts/      canonical local verification command
 ```
 
+## Pixel Pal portrait simulator
+
+Preview the imported Meshy FBX and dynamic face states locally at the device's
+280 × 456 portrait resolution. Run `npm ci` then `npm run dev` from `simulator/`
+and open `http://127.0.0.1:5173`. See [simulator/README.md](simulator/README.md)
+for controls, validation, asset provenance, and the strategy for moving to hardware.
+
 ## Build and test the bridge
 
 Requires the .NET 10 SDK.
