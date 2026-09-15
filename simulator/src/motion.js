@@ -42,8 +42,8 @@ export function characterPose(state,age,time,reduced=false){
 
 export function viewTarget(state,full=false){
   const bubble=state==='waiting'||state==='error';
-  return {x:0,height:bubble?.57:full?3.8:['startup','idle','host_waiting'].includes(state)?3.65:2.8,
-    center:bubble?.59:-.1,viewport:bubble?228:456,bubble:bubble?1:0};
+  return {x:0,height:bubble?.72:full?3.8:['startup','idle','host_waiting'].includes(state)?3.65:2.8,
+    center:bubble?.49:-.1,viewport:bubble?228:456,bubble:bubble?1:0};
 }
 
 export function roamingView(base,state,age,reduced=false){

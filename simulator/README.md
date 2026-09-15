@@ -61,7 +61,7 @@ Meshy generation/download terms with any distributed asset pack.
 
 ## Device display policy
 
-Only the moving robot and temporary bubbles are drawn on black. Branding, status captions, indicators, decorative backgrounds, and guides are excluded from the device framebuffer. Slow camera movement spreads the robot across more of the display during non-critical states. This is a visual mitigation, not physical burn-in validation.
+The moving robot and temporary bubbles sit on a faint blue-black gradient that drifts during non-critical states. Branding, status captions, indicators, scanlines, and guides are excluded from the device framebuffer. Slow camera movement spreads the robot across more of the display during non-critical states. This is a visual mitigation, not physical burn-in validation.
 
 ## Dynamic face implementation
 

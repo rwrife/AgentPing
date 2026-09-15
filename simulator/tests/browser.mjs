@@ -72,7 +72,7 @@ try{
   await page.locator('#resolve').click();assert.equal(await page.evaluate(()=>pal.state),'running');
   await page.locator('[data-state=idle]').click();await page.evaluate(()=>pal.renderAt(pal.time+1.5));
   const topRow=await page.locator('#screen').evaluate(c=>Array.from(c.getContext('2d').getImageData(0,0,280,30).data));
-  assert.ok(topRow.every((value,index)=>index%4===3?value===255:value===0),'no static header, indicator, or background graphics');
+  assert.ok(topRow.every((value,index)=>index%4===3?value===255:value<=34),'header area contains only the faint background, with no branding or indicators');
   await page.screenshot({path:'test-results/showcase.png',fullPage:true});
   await page.locator('#framing').selectOption('full');await page.evaluate(()=>pal.renderAt(pal.time+1.5));
   await page.locator('#screen').screenshot({path:'test-results/full-character.png'});

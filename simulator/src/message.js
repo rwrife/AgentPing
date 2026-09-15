@@ -28,6 +28,8 @@ export function messagePages(text, measure, width = 220, linesPerPage = 5) {
 
 export function drawMessage(ctx, {state, agentName, text, color, page}) {
   ctx.save();
+  // Match the 14 px side margins: move the original 36 px top edge up by 22 px.
+  ctx.translate(0,-22);
   ctx.fillStyle = '#08121e'; ctx.strokeStyle = color; ctx.lineWidth = 1.5;
   ctx.beginPath(); ctx.moveTo(32,36); ctx.lineTo(248,36);
   ctx.quadraticCurveTo(266,36,266,54); ctx.lineTo(266,192);
@@ -36,7 +38,7 @@ export function drawMessage(ctx, {state, agentName, text, color, page}) {
   ctx.quadraticCurveTo(14,210,14,192); ctx.lineTo(14,54);
   ctx.quadraticCurveTo(14,36,32,36); ctx.closePath();ctx.fill();ctx.stroke();
   ctx.textAlign='left';ctx.font='bold 12px sans-serif';ctx.fillStyle=color;
-  ctx.fillText(`${agentName} · ${state === 'error' ? 'ERROR' : 'NEEDS YOU'}`,30,58);
+  ctx.fillText(agentName,30,58);
   ctx.font='16px sans-serif';ctx.fillStyle='#f4f8ff';
   const pages=messagePages(text,t=>ctx.measureText(t).width);
   const index=Math.min(page,pages.length-1);

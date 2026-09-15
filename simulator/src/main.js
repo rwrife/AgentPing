@@ -5,7 +5,9 @@ import * as THREE from 'three';
 import {FBXLoader} from 'three/addons/loaders/FBXLoader.js';
 import {STATES,AGENTS,SEQUENCE,sequenceState} from './states.js';
 import {drawFace} from './face.js';
+import {loadAgentLogos} from './agent-logos.js';
 import {DEFAULT_MESSAGES,hasMessage,drawMessage} from './message.js';
+import {drawBackground} from './background.js';
 import {ease,mixPose,characterPose,viewTarget,roamingView} from './motion.js';
 
 const $=id=>document.getElementById(id);
@@ -16,6 +18,7 @@ let agent='codex';
 let view=viewTarget('startup'),viewFrom={...view},viewStart=0;
 let pose=characterPose('startup',0,0,reduced),poseFrom={...pose},poseStart=0;
 let bubbleContent=null;
+let backgroundTime=0;
 let bubbleVisible=false,bubbleDeadline=0;
 function showBubble(){
   if(!hasMessage(state))return;
@@ -108,7 +111,8 @@ $('reset').onclick=()=>{$('yaw').value=0;$('speed').value=1;$('framing').value='
 // Only the moving robot and temporary messages belong in the device framebuffer.
 const output=$('screen').getContext('2d');
 function compose(){
-  output.fillStyle='#000000';output.fillRect(0,0,280,456);
+  if(!reduced && !hasMessage(state))backgroundTime=time;
+  drawBackground(output,backgroundTime);
   output.drawImage(renderer.domElement,0,0,280,456);
   if(hasMessage(state)&&bubbleVisible)bubbleContent={state,agentName:AGENTS[agent].name,text:messages[state],color:STATES[state].color,page:messagePage};
   if(view.bubble>0 && bubbleContent){
@@ -123,6 +127,7 @@ $('capture').disabled=true;
 $('capture').onclick=()=>{const link=document.createElement('a');link.download=`pixel-pal-${state}-280x456.png`;link.href=$('screen').toDataURL('image/png');link.click();};
 async function init(){
   try{
+    await loadAgentLogos();
     renderer=new THREE.WebGLRenderer({alpha:true,antialias:true,preserveDrawingBuffer:true});renderer.setClearColor(0x000000,0);renderer.setPixelRatio(1);renderer.setSize(280,456);renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;
     const loader=new THREE.TextureLoader();
     const [model,base,normal,roughness,metalness]=await Promise.all([new FBXLoader().loadAsync(stem+'.fbx'),loader.loadAsync(stem+'.png'),loader.loadAsync(stem+'_normal.png'),loader.loadAsync(stem+'_roughness.png'),loader.loadAsync(stem+'_metallic.png')]);

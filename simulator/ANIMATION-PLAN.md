@@ -2,8 +2,8 @@
 
 ## AMOLED visual direction
 
-Only the robot and temporary chat bubbles belong on the device screen. Use black
-behind them; no branding, status captions, dots, guides, scanlines, glow, or borders.
+Only the robot and temporary chat bubbles belong over a faint blue-black gradient
+that drifts during non-critical states; no branding, status captions, dots, guides, scanlines, or borders.
 Keep the face screen black. Keep the shell
 light with its blue shading so its silhouette reads clearly. Use vivid cyan for
 startup/idle/thinking, blue for host listening/disconnection, amber for attention,
@@ -107,11 +107,11 @@ Implemented: eight selectable visual states, a startup face that transitions to
 host listening after three animation seconds, playful idle movement, thinking,
 a smoothly reversible attention/error zoom over 1.2 seconds into the lower half, a paginated speech bubble
 in the upper half with editable sample messages, stable front-facing agent identity, three distinct
-labeled prototype badges, and explicit simulated resolution. The demo runs
+locally bundled agent logos, and explicit simulated resolution. The demo runs
 startup → listening → idle → thinking → attention and stops there. Reduced motion
 starts paused and applies attention framing immediately.
 
-Still to implement: skeletal wave/arms-down poses, official software icons, real
+Still to implement: skeletal wave/arms-down poses, real
 host event ingestion and pending-request queue, request detail/actions UX,
 occasional reminder choreography, authored transitions, and hardware asset baking.
 The current model has no rig; the preview does not claim to demonstrate a wave.
