@@ -1,0 +1,32 @@
+[
+  {
+    "file": "Meshy_AI_Pixel_Pal_biped_Animation_Idle_11_withSkin.fbx",
+    "bytes": 19381292,
+    "sha256": "ead927ed5c7d055b1539a84e002efe06d9f30d987940fcf8a85924c1e71c6a64"
+  },
+  {
+    "file": "Meshy_AI_Pixel_Pal_biped_Character_output.fbx",
+    "bytes": 3692204,
+    "sha256": "0db1b31c30b0454c0c45ecb338b2bc4b7218dfb8c6a04692049cafbf35635c7f"
+  },
+  {
+    "file": "Meshy_AI_Pixel_Pal_biped_texture_0_metallic.png",
+    "bytes": 23366,
+    "sha256": "9f4c3e360cb59e3c5700ba0eeb7cd4d606f41c58bfb712cb0a37220f46857747"
+  },
+  {
+    "file": "Meshy_AI_Pixel_Pal_biped_texture_0_normal.png",
+    "bytes": 4089166,
+    "sha256": "fbb1df57091959e6afb33ebd117a5df6ed47f091eabaaaff116f7c293f39479e"
+  },
+  {
+    "file": "Meshy_AI_Pixel_Pal_biped_texture_0_roughness.png",
+    "bytes": 1447994,
+    "sha256": "4b88f93da7e8a66126b2fd28783d83d33b33f8541192fc6e45d015c23711c614"
+  },
+  {
+    "file": "Meshy_AI_Pixel_Pal_biped_texture_0.png",
+    "bytes": 5175705,
+    "sha256": "4c3c1949eb7171b025c8c4ceb554d64dfb5de6f6304279c8136e8fde1665cc84"
+  }
+]

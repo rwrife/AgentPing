@@ -1,0 +1,20 @@
+[
+  {
+    "key": "walk",
+    "source": "Meshy_AI_Pixel_Pal_biped_Animation_Walking_frame_rate_25.fbx",
+    "duration": 1.0399999618530273,
+    "tracks": 99
+  },
+  {
+    "key": "run",
+    "source": "Meshy_AI_Pixel_Pal_biped_Animation_Running_frame_rate_25.fbx",
+    "duration": 0.6399999856948853,
+    "tracks": 99
+  },
+  {
+    "key": "wave",
+    "source": "Meshy_AI_Pixel_Pal_biped_Animation_Wave_for_Help_4_frame_rate_25.fbx",
+    "duration": 4.760000228881836,
+    "tracks": 99
+  }
+]

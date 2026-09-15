@@ -34,17 +34,26 @@ See [ANIMATION-PLAN.md](ANIMATION-PLAN.md) for startup, host listening, playful 
   bridge connection or the firmware's state reducer.
 - Play a little workday reaches attention after 16 seconds and holds there. Selecting a state cancels the demo. Simulate resolved returns attention to thinking.
 - Pause freezes animation time. Reduced-motion preference starts paused.
+  Play animations or Play a little workday explicitly enables full motion, including
+  smooth camera zooms. Animation motion also lets you select full, reduced, or system motion.
 - Activate the character by click, Enter, or Space for a small body greeting.
 - Playful stage varies the camera during non-critical states. Full character shows the entire
-  source T-pose. Outstretched arms are intentionally cropped in portrait.
+  character. The original unrigged T-pose remains available in Animation lab.
 - Native size is 280 × 456 CSS pixels where the window permits. Enlarged mode
   fits the available space up to 2×; the measured scale appears below the display.
 - The render buffer and saved PNG are always **280 × 456**, regardless of zoom
   or browser device-pixel ratio. This models pixel layout, not physical size in mm.
 - Animation lab provides ±35° yaw, playback speed, original/dynamic face,
-  reset, and desktop preview fps.
+  reset, desktop preview fps, model selection, and a reversible 0–12° stance correction (default 6°).
 
-## Imported asset
+## Rigged character
+
+The default model is the supplied Meshy rig with its 1.96-second idle clip.
+Attention adds an authored Meshy wave, blended with the idle. See
+[RIG-NOTES.md](RIG-NOTES.md) for asset provenance, stance findings, and refinements.
+Select Original T-pose in Animation lab to compare with the earlier asset.
+
+## Original imported asset
 
 Source supplied by the user:
 `C:\Users\ryrife\Downloads\Meshy_AI_Pixel_Pal_0915023021_texture_fbx\Meshy_AI_Pixel_Pal_0915023021_texture_fbx`.
@@ -61,7 +70,7 @@ Meshy generation/download terms with any distributed asset pack.
 
 ## Device display policy
 
-The moving robot and temporary bubbles sit on a faint blue-black gradient that drifts during non-critical states. Branding, status captions, indicators, scanlines, and guides are excluded from the device framebuffer. Slow camera movement spreads the robot across more of the display during non-critical states. This is a visual mitigation, not physical burn-in validation.
+The moving robot and temporary bubbles sit on a faint blue-black gradient that drifts during non-critical states. A fixed connection caption appears at the bottom during Listening. Branding, other status captions, indicators, scanlines, and guides are excluded from the device framebuffer. Slow camera movement spreads the robot across more of the display during non-critical states. This is a visual mitigation, not physical burn-in validation.
 
 ## Dynamic face implementation
 
@@ -77,8 +86,9 @@ Projection dimensions are calibrated specifically to this asset; replacing the
 FBX requires recalibration. This method is not a substitute for an explicit face
 UV island on a production rig.
 
-Current motion consists of procedural breathing, gentle turns, an attention zoom,
-and a completion hop. No arm waving, skeletal animation, or physics is implied.
+The rigged model uses the supplied skeletal idle plus an authored Meshy wave.
+Boot combines procedural skeletal motion with an offscreen jump; completion uses a whole-character hop. The face
+projection uses bind-pose coordinates so it follows the skinned head.
 
 ## Strategy for the physical device
 
@@ -121,6 +131,9 @@ npm test
 npm run build
 # With npm run dev running in another terminal; requires installed Microsoft Edge:
 npm run test:browser
+npm run test:rig
+node tests/startup-browser.mjs
+node tests/idle-variety.mjs
 ```
 
 Browser checks load the real FBX, verify eight distinct rendered states and three agent badges, freeze time,

@@ -6,7 +6,8 @@
     "dev": "vite --host 127.0.0.1 --port 5173 --strictPort",
     "build": "vite build",
     "test": "node --test tests/states.test.mjs",
-    "test:browser": "node tests/browser.mjs"
+    "test:browser": "node tests/browser.mjs",
+    "test:rig": "node tests/rig-browser.mjs"
   },
   "dependencies": {
     "@fontsource/plus-jakarta-sans": "5.2.6",

@@ -43,7 +43,7 @@ test('view interpolation preserves continuity when interrupted and reaches exact
 test('non-critical camera roams broadly but reading and reduced motion remain stable',()=>{
   const base=viewTarget('idle');
   const samples=[0,12,24,36,48,60].map(t=>roamingView(base,'idle',t));
-  assert.ok(Math.max(...samples.map(v=>v.center))-Math.min(...samples.map(v=>v.center))>1.4);
+  assert.ok(Math.max(...samples.map(v=>v.center))-Math.min(...samples.map(v=>v.center))>.5);
   assert.ok(new Set(samples.map(v=>v.x)).size>3);
   assert.deepEqual(roamingView(base,'waiting',20),base);
   assert.deepEqual(roamingView(base,'idle',20,true),base);

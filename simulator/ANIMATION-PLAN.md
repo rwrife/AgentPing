@@ -111,10 +111,13 @@ locally bundled agent logos, and explicit simulated resolution. The demo runs
 startup → listening → idle → thinking → attention and stops there. Reduced motion
 starts paused and applies attention framing immediately.
 
-Still to implement: skeletal wave/arms-down poses, real
+The supplied Meshy rig now provides a relaxed skeletal idle. The authored Meshy
+wave repeats every 12 seconds while attention remains active, with a 0.5-second
+blend between state poses. A reversible stance correction widens the idle.
+
+Still to implement: authored gesture clips, real
 host event ingestion and pending-request queue, request detail/actions UX,
-occasional reminder choreography, authored transitions, and hardware asset baking.
-The current model has no rig; the preview does not claim to demonstrate a wave.
+authored transitions, and hardware asset baking. See [RIG-NOTES.md](RIG-NOTES.md).
 
 For the ESP32-C6, bake body/gesture frames on the PC and animate the face/icon
 separately through LVGL. Export per-frame face placement/masks when the head
@@ -130,11 +133,12 @@ landing and a small squash/stretch. Idle and host listening use lateral drifting
 turns, leaning, and occasional hops; thinking uses quieter motion. Attention
 combines two small root-motion bounces and a rocking gesture with the zoom, then
 settles for reading, with a brief reminder approximately every ten seconds.
-This is root motion on the unrigged mesh, not skeletal walking or arm waving.
+These whole-character motions accompany the skeletal idle and attention wave.
+Walking and a jointed jump/landing still need authored clips.
 
 Camera scale, camera position, and the lower-half viewport interpolate together
 for 1.2 seconds. Bubble visibility follows that transition. Body poses blend for
 0.5 seconds and faces crossfade for 0.3 seconds. An interrupted transition starts
 from its currently displayed pose and camera instead of snapping to an endpoint.
 Pause freezes these timelines. Reduced motion skips animated transitions and
-physical motion. The rigged wave remains the next asset milestone.
+physical motion. Refined skin weights and authored gestures are the next asset milestone.

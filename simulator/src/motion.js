@@ -11,12 +11,12 @@ export function characterPose(state,age,time,reduced=false){
   if(reduced)return {...REST};
   const pose={...REST};
   if(state==='startup'){
-    const enter=ease(age/1.15);
-    const settle=Math.max(0,age-1.15);
-    pose.y=-3.4*(1-enter)+(age>1.15?Math.sin(settle*10)*Math.exp(-settle*6)*.12:Math.sin(enter*Math.PI)*.2);
-    pose.x=.25*(1-enter);pose.roll=-.2*(1-enter);
-    const squash=age>1.15?Math.sin(settle*10)*Math.exp(-settle*6)*.09:0;
-    pose.scaleX=1+squash;pose.scaleY=1-squash;
+    // Rise from below the display, crest above rest, then absorb the landing.
+    const enter=ease(age/.85);
+    const drop=ease((age-.85)/.5);
+    const landing=Math.sin(Math.PI*Math.max(0,Math.min((age-1.35)/.55,1)));
+    pose.y=age<.85?-3.4+3.85*enter:.45*(1-drop)-.1*landing;
+    pose.x=.25*(1-ease(age/1.35));pose.roll=-.12*(1-ease(age/1.35));
   }else if(state==='idle' || state==='host_waiting'){
     const energy=state==='idle'?1:.4;
     pose.x=Math.sin(time*.6)*.11*energy;
@@ -41,16 +41,17 @@ export function characterPose(state,age,time,reduced=false){
 }
 
 export function viewTarget(state,full=false){
-  const bubble=state==='waiting'||state==='error';
-  return {x:0,height:bubble?.72:full?3.8:['startup','idle','host_waiting'].includes(state)?3.65:2.8,
+  const bubble=['waiting','error','running'].includes(state);
+  return {x:0,height:bubble?.72:full?3.8:state==='idle'?2.5:['startup','host_waiting'].includes(state)?3.65:2.8,
     center:bubble?.49:-.1,viewport:bubble?228:456,bubble:bubble?1:0};
 }
 
 export function roamingView(base,state,age,reduced=false){
-  if(reduced || ['startup','waiting','error'].includes(state))return base;
+  if(reduced || ['startup','waiting','error','running'].includes(state))return base;
   const envelope=ease(age/5);
-  const height=Math.max(base.height,3.65)+.55*(.5-.5*Math.cos(age*.11))*envelope;
-  const margin=Math.max(0,height*280/456/2-1.12);
+  const closeIdle=state==='idle' && base.height<3;
+  const height=(closeIdle?base.height:Math.max(base.height,3.65))+(closeIdle?.2:.55)*(.5-.5*Math.cos(age*.11))*envelope;
+  const margin=Math.max(0,height*280/456/2-(closeIdle?.6:1.12));
   return {...base,height,x:Math.sin(age*.19)*margin*envelope,
-    center:base.center+Math.sin(age*.13)*.88*envelope};
+    center:base.center+Math.sin(age*.13)*(closeIdle||state==='host_waiting'?.3:.88)*envelope};
 }
