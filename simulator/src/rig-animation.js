@@ -135,6 +135,24 @@ export function createRigAnimation(model,clips=[]){
         }
         bone('Spine1')?.rotateX(.12*crouch);
       }
+      if(state==='completed' && !reduced && preview==='auto'){
+        const weight=ease(age/.25)*(1-ease((age-1.25)/.65));
+        for(const [side,sign] of [['Left',1],['Right',-1]]){
+          const arm=bone(`${side}Arm`),forearm=bone(`${side}ForeArm`),hand=bone(`${side}Hand`);
+          if(!arm||!forearm||!hand)continue;
+          const joints=[arm,forearm,hand],original=joints.map(b=>b.quaternion.clone());
+          model.updateWorldMatrix(true,true);
+          const shoulder=arm.getWorldPosition(new THREE.Vector3());
+          aimAt(arm,forearm,shoulder.clone().add(new THREE.Vector3(sign*.18,.32,.06)));
+          const elbow=forearm.getWorldPosition(new THREE.Vector3());
+          aimAt(forearm,hand,elbow.add(new THREE.Vector3(sign*.07,.3,.02)));
+          joints.forEach((b,i)=>b.quaternion.slerpQuaternions(original[i],b.quaternion.clone(),weight));
+          const tuck=Math.sin(Math.PI*Math.max(0,Math.min((age-.2),1)))*.25;
+          bone(`${side}UpLeg`)?.rotateX(-tuck*.5);
+          bone(`${side}Leg`)?.rotateX(tuck);
+          bone(`${side}Foot`)?.rotateX(-tuck*.5);
+        }
+      }
       if(state==='error' && !reduced && preview==='auto'){
         const phase=age%12;
         const weight=ease(phase/.5)*(1-ease((phase-3)/.6));

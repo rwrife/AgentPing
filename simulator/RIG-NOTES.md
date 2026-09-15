@@ -58,3 +58,19 @@ Thinking uses a procedural hand-under-chin pose with the opposite arm hanging na
 Idle variety now includes jumping jacks, a full twirl, and side bounces alongside
 the three arm dances. Root movement and skeleton gestures share the same schedule.
 All six play once per shuffled cycle, with quiet intervals and attention interruption.
+
+Nailed it plays a single procedural celebration jump with both arms raised, a
+small airborne knee tuck, and a soft landing before returning to the idle pose.
+
+## Optimized browser assets
+
+The default runtime now uses `optimized/robot.glb` (1,000,032 bytes) and four
+512-square PNG maps (900,200 bytes combined). The skeleton, geometry and idle
+clip are retained; the helper mesh, embedded texture payloads and unused clip
+are excluded. Separate walk/run/wave clips add 265,221 bytes.
+
+Rebuild from the simulator directory with `node scripts/optimize-character.mjs`
+and `python scripts/resize-textures.py` (Pillow required). Original FBXs and
+textures remain available for authoring and the original-model comparison;
+they still occupy repository and static build space. The smaller runtime
+payload does not imply the ESP32-C6 can render this 3D model directly.

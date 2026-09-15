@@ -2,6 +2,7 @@ import './style.css';
 import '@fontsource/plus-jakarta-sans/400.css';
 import '@fontsource/plus-jakarta-sans/700.css';
 import * as THREE from 'three';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {FBXLoader} from 'three/addons/loaders/FBXLoader.js';
 import {STATES,AGENTS,SEQUENCE,sequenceState} from './states.js';
 import {drawFace} from './face.js';
@@ -13,8 +14,8 @@ import {createRigAnimation} from './rig-animation.js';
 
 const $=id=>document.getElementById(id);
 const useRig=new URLSearchParams(location.search).get('model')!=='original';
-const stem=useRig?'/character/rigged/Meshy_AI_Pixel_Pal_biped_texture_0':'/character/Meshy_AI_Pixel_Pal_0915023021_texture';
-const modelUrl=useRig?'/character/rigged/Meshy_AI_Pixel_Pal_biped_Animation_Idle_11_withSkin.fbx':stem+'.fbx';
+const stem=useRig?'/character/optimized/texture':'/character/Meshy_AI_Pixel_Pal_0915023021_texture';
+const modelUrl=useRig?'/character/optimized/robot.glb':stem+'.fbx';
 let rig=null;
 const systemReduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
 let reduced=systemReduced;
@@ -166,7 +167,7 @@ async function init(){
     await loadAgentLogos();
     renderer=new THREE.WebGLRenderer({alpha:true,antialias:true,preserveDrawingBuffer:true});renderer.setClearColor(0x000000,0);renderer.setPixelRatio(1);renderer.setSize(280,456);renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;
     const loader=new THREE.TextureLoader();
-    const [model,base,normal,roughness,metalness]=await Promise.all([new FBXLoader().loadAsync(modelUrl),loader.loadAsync(stem+'.png'),loader.loadAsync(stem+'_normal.png'),loader.loadAsync(stem+'_roughness.png'),loader.loadAsync(stem+'_metallic.png')]);
+    const [model,base,normal,roughness,metalness]=await Promise.all([(useRig?new GLTFLoader().loadAsync(modelUrl).then(gltf=>{gltf.scene.animations=gltf.animations;return gltf.scene;}):new FBXLoader().loadAsync(modelUrl)),loader.loadAsync(stem+'.png'),loader.loadAsync(stem+'_normal.png'),loader.loadAsync(stem+'_roughness.png'),loader.loadAsync(stem+'_metallic.png')]);
     base.colorSpace=THREE.SRGBColorSpace;material.map=base;material.normalMap=normal;material.normalScale.set(.5,.5);material.roughnessMap=roughness;material.metalnessMap=metalness;material.metalness=.3;material.needsUpdate=true;
     root=model;
     // Meshy includes an unrelated helper sphere in the animation FBX.

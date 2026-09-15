@@ -1,7 +1,7 @@
 # Pixel Pal portrait simulator
 
 A local visual prototype for the Waveshare ESP32-C6 Touch AMOLED 1.64.
-The imported FBX is rendered by Three.js; a live canvas texture replaces the
+The optimized rigged GLB is rendered by Three.js; a live canvas texture replaces the
 front screen region of the robot's head. No hardware connection is needed.
 
 ## Run on Windows
@@ -48,7 +48,7 @@ See [ANIMATION-PLAN.md](ANIMATION-PLAN.md) for startup, host listening, playful 
 
 ## Rigged character
 
-The default model is the supplied Meshy rig with its 1.96-second idle clip.
+The default model is an optimized GLB of the supplied Meshy rig with its 1.96-second idle clip. Model, 512-square textures, and additional clips total about 2.17 MB; authoring originals remain in the repository.
 Attention adds an authored Meshy wave, blended with the idle. See
 [RIG-NOTES.md](RIG-NOTES.md) for asset provenance, stance findings, and refinements.
 Select Original T-pose in Animation lab to compare with the earlier asset.

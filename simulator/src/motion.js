@@ -35,7 +35,11 @@ export function characterPose(state,age,time,reduced=false){
   }else if(state==='running'){
     pose.y=Math.sin(time*2)*.016;pose.roll=Math.sin(time*.9)*.018;pose.yaw=Math.sin(time*.7)*.08;
   }else if(state==='completed'){
-    pose.y=(1-Math.cos(age*6))*.045;pose.roll=Math.sin(age*3)*.04;
+    const jump=Math.max(0,Math.min((age-.2)/1.0,1));
+    pose.y=Math.sin(jump*Math.PI)*.32;
+    const land=Math.max(0,Math.min((age-1.2)/.45,1));
+    pose.y-=Math.sin(land*Math.PI)*.06;
+    pose.roll=Math.sin(jump*Math.PI*2)*.04;
   }else pose.y=Math.sin(time)*.005;
   return pose;
 }
