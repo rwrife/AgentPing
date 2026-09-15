@@ -1,15 +1,14 @@
 import {STATES,AGENTS} from './states.js';
+import {drawAgentLogo} from './agent-logos.js';
 export function drawFace(ctx,state,time,agent='codex',age=0){
   const {width:w,height:h}=ctx.canvas;
   ctx.clearRect(0,0,w,h);ctx.fillStyle='#000000';ctx.fillRect(0,0,w,h);
   ctx.strokeStyle=ctx.fillStyle=STATES[state].color;ctx.lineWidth=9;ctx.lineCap='round';ctx.lineJoin='round';
   if(state==='waiting'){
-    // Deliberately labeled prototype badges, not approximations of official logos.
-    ctx.lineWidth=4;ctx.beginPath();ctx.roundRect(77,59,102,102,24);ctx.stroke();
-    ctx.font='bold 42px sans-serif';ctx.textAlign='center';ctx.fillText(AGENTS[agent].mark,128,126);
+    drawAgentLogo(ctx,agent,78,60,100);
+    ctx.textAlign='center';
     ctx.font='bold 20px sans-serif';ctx.fillText(AGENTS[agent].name,128,191);
-    ctx.beginPath();ctx.arc(189,64,13,0,Math.PI*2);ctx.fill();
-    ctx.fillStyle='#000000';ctx.font='bold 20px sans-serif';ctx.fillText('!',189,71);return;
+    return;
   }
   if(state==='startup'){
     ctx.lineWidth=7;ctx.beginPath();ctx.arc(128,108,34,-Math.PI*.35,Math.PI*1.35);ctx.stroke();

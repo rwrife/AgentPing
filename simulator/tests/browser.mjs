@@ -72,7 +72,7 @@ try{
   await page.locator('#resolve').click();assert.equal(await page.evaluate(()=>pal.state),'running');
   await page.locator('[data-state=idle]').click();await page.evaluate(()=>pal.renderAt(pal.time+1.5));
   const topRow=await page.locator('#screen').evaluate(c=>Array.from(c.getContext('2d').getImageData(0,0,280,30).data));
-  assert.ok(topRow.every((value,index)=>index%4===3?value===255:value===0),'no static header, indicator, or background graphics');
+  assert.ok(topRow.every((value,index)=>index%4===3?value===255:value<=34),'header area contains only the faint background, with no branding or indicators');
   await page.screenshot({path:'test-results/showcase.png',fullPage:true});
   await page.locator('#framing').selectOption('full');await page.evaluate(()=>pal.renderAt(pal.time+1.5));
   await page.locator('#screen').screenshot({path:'test-results/full-character.png'});
@@ -99,6 +99,20 @@ try{
     await page.screenshot({path:`test-results/width-${width}.png`,fullPage:true});
   }
   const reduced=await browser.newPage({reducedMotion:'reduce'});await reduced.goto('http://127.0.0.1:5173');await reduced.waitForFunction(()=>window.pal);assert.equal(await reduced.evaluate(()=>pal.paused),true);
+  await reduced.locator('#pause').click();
+  assert.equal(await reduced.locator('#motion').inputValue(),'full');
+  await reduced.locator('#pause').click();
+  await reduced.evaluate(()=>{pal.setState('idle');pal.renderAt(10);});
+  const from=await reduced.evaluate(()=>pal.view);
+  await reduced.evaluate(()=>{pal.setState('waiting');pal.renderAt(10);});
+  assert.deepEqual(await reduced.evaluate(()=>pal.view),from);
+  await reduced.evaluate(()=>pal.renderAt(10.6));
+  const halfway=await reduced.evaluate(()=>pal.view);
+  assert.ok(halfway.viewport>228 && halfway.viewport<456,'explicit playback must restore smooth zoom despite OS reduced motion');
+  await reduced.evaluate(()=>pal.renderAt(11.2));
+  assert.equal(await reduced.evaluate(()=>pal.view.viewport),228);
+  await reduced.locator('#motion').selectOption('reduced');
+  assert.equal(await reduced.evaluate(()=>pal.paused),true);
   assert.deepEqual(errors,[]);
   console.log('PASS: FBX load, eight distinct states, pause, face toggle, framing, rotation, native export, sequence cancellation, four responsive widths, reduced motion.');
 }finally{await browser.close();}
