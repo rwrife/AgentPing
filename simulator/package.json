@@ -1,0 +1,19 @@
+{
+  "name": "agentping-simulator",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1 --port 5173 --strictPort",
+    "build": "vite build",
+    "test": "node --test tests/states.test.mjs",
+    "test:browser": "node tests/browser.mjs"
+  },
+  "dependencies": {
+    "@fontsource/plus-jakarta-sans": "5.2.6",
+    "three": "0.180.0",
+    "vite": "6.4.3"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.56.1"
+  }
+}

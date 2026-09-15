@@ -1,0 +1,27 @@
+[
+  {
+    "file": "Meshy_AI_Pixel_Pal_0915023021_texture_metallic.png",
+    "bytes": 23366,
+    "sha256": "9F4C3E360CB59E3C5700BA0EEB7CD4D606F41C58BFB712CB0A37220F46857747"
+  },
+  {
+    "file": "Meshy_AI_Pixel_Pal_0915023021_texture_normal.png",
+    "bytes": 4089166,
+    "sha256": "FBB1DF57091959E6AFB33EBD117A5DF6ED47F091EABAAAFF116F7C293F39479E"
+  },
+  {
+    "file": "Meshy_AI_Pixel_Pal_0915023021_texture_roughness.png",
+    "bytes": 1447994,
+    "sha256": "4B88F93DA7E8A66126B2FD28783D83D33B33F8541192FC6E45D015C23711C614"
+  },
+  {
+    "file": "Meshy_AI_Pixel_Pal_0915023021_texture.fbx",
+    "bytes": 8412396,
+    "sha256": "564C987CC0FDE7D2B3FC110A955EF03952680A178947D1EE7BA982386592FB7D"
+  },
+  {
+    "file": "Meshy_AI_Pixel_Pal_0915023021_texture.png",
+    "bytes": 5175705,
+    "sha256": "4C3C1949EB7171B025C8C4CEB554D64DFB5DE6F6304279C8136E8FDE1665CC84"
+  }
+]

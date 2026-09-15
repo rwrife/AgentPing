@@ -25,3 +25,8 @@ firmware/sdkconfig.*
 
 # Runtime/log output
 *.log
+
+# Character simulator
+simulator/node_modules/
+simulator/dist/
+simulator/test-results/
