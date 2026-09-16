@@ -46,6 +46,10 @@ def normalize(provider: str, payload: dict, event: str | None = None) -> str | N
     if provider not in PROVIDERS or not isinstance(payload, dict):
         raise ValueError("invalid provider or payload")
     event = event or payload.get("hook_event_name") or payload.get("hookEventName") or payload.get("type")
+    # Interactive questions can open before awaitingUserInput is emitted.
+    # Observe only the tool name; never inspect or forward its question/arguments.
+    if provider == "copilot" and event in ("preToolUse", "PreToolUse"):
+        return "attention" if payload.get("toolName", payload.get("tool_name")) in ("ask_user", "AskUserQuestion") else None
     # Copilot checks permissions even for already-approved tools. Only its
     # actual input/permission notifications should interrupt with a wave.
     if provider == "copilot" and event in ("userPromptSubmitted", "permissionRequest", "postToolUse"):

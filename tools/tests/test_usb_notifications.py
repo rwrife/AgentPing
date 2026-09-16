@@ -10,6 +10,15 @@ from install_usb_hooks import merge_hooks, configs
 
 
 class UsbNotificationsTests(unittest.TestCase):
+    def test_copilot_question_requests_attention_before_tool_runs(self):
+        hooks = configs(Path("python.exe"), Path("hook.py"))["copilot"]["hooks"]
+        self.assertIn("preToolUse", hooks)
+        self.assertEqual("attention", normalize("copilot", {"toolName": "ask_user"}, "preToolUse"))
+        self.assertEqual("attention", normalize("copilot", {"tool_name": "AskUserQuestion"}, "PreToolUse"))
+        for tool in ("bash", "view", "edit", "web_search", None):
+            self.assertIsNone(normalize("copilot", {"toolName": tool}, "preToolUse"))
+        self.assertIsNone(normalize("claude", {"toolName": "ask_user"}, "preToolUse"))
+
     def test_thinking_cooldown_drops_repeats_without_sliding_deadline(self):
         gate = ThinkingCooldown()
         self.assertTrue(gate.allows("thinking", 0))
