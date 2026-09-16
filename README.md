@@ -173,7 +173,7 @@ The Teams icon is a demo graphic; these commands do not connect to Teams.
 
 ```powershell
 .\companion\robot.cmd dance chicken
-.\companion\robot.cmd dance hiphop
+.\companion\robot.cmd dance twist
 .\companion\robot.cmd dance twist
 .\companion\robot.cmd reset
 .\companion\robot.cmd joint right_shoulder --z -90 --duration-ms 1000

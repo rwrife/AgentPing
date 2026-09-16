@@ -8,7 +8,6 @@
 #include "../assets/idle_motion.h"
 #include "../assets/thinking_motion.h"
 #include "../assets/error_motion.h"
-#include "../assets/hiphop_motion.h"
 #include "../assets/twist_motion.h"
 #include "../assets/chicken_motion.h"
 #include "notification_command.h"
@@ -49,7 +48,6 @@ int width=0,height=0,depth_rows=0;
 int model_top=0,previous_top=0,projected_bottom=0;
 int buffer_width=0,buffer_height=0,pixel_scale=1;
 bool small_texture=false;
-uint16_t* texture64=nullptr;
 lv_image_dsc_t descriptor{};
 lv_obj_t* picture=nullptr;
 UsbMotion motion;
@@ -58,7 +56,7 @@ CustomIcon custom_icon;
 int sequence=0;
 int last_dance=-1;
 int64_t dance_at=0;
-bool dancing(){return sequence>=6&&sequence<=8;}
+bool dancing(){return sequence==7||sequence==8;}
 float camera_focus=0;
 int64_t camera_at=0;
 lv_obj_t* bubble=nullptr;
@@ -115,7 +113,6 @@ void start_sequence(int state,bool transition=true) {
   else if(state==3)motion.stored(thinking_motion::keys,thinking_motion::count,thinking_motion::rate,thinking_motion::roots,false,transition,1);
   else if(state==4)motion.stored(wave_motion::keys,wave_motion::count,wave_motion::rate,nullptr,true,transition,2.0f/3.0f);
   else if(state==5)motion.stored(error_motion::keys,error_motion::count,error_motion::rate,error_motion::roots,false,transition,2.0f/3.0f);
-  else if(state==6)motion.stored(hiphop_motion::keys,hiphop_motion::count,hiphop_motion::rate,hiphop_motion::roots,false,transition,1);
   else if(state==7)motion.stored(twist_motion::keys,twist_motion::count,twist_motion::rate,twist_motion::roots,false,transition,1);
   else if(state==8)motion.stored(chicken_motion::keys,chicken_motion::count,chicken_motion::rate,chicken_motion::roots,false,transition,1);
   else motion.stored(idle_motion::keys,idle_motion::count,idle_motion::rate,idle_motion::roots,true,transition,1);
@@ -126,8 +123,7 @@ void start_sequence(int state,bool transition=true) {
   printf("STARTUP ENTER state=%s blend_ms=%lld\n",sequence_name(),motion.transition_us/1000);
 }
 void random_dance() {
-  int choice=6+esp_random()%(last_dance<6?3:2);
-  if(last_dance>=6&&choice>=last_dance)++choice;
+  int choice=last_dance==7?8:last_dance==8?7:7+esp_random()%2;
   start_sequence(choice);
 }
 void show_state(int state,const char* message,int provider=-1) {
@@ -204,12 +200,12 @@ void pose(float t) {
       static_cast<int16_t>(std::clamp<int32_t>(16000-p[2],0,32000))};
     min_y=std::min(min_y,int(projected[i].y));max_y=std::max(max_y,int(projected[i].y));
   }
-  // Lower framing by 10% of screen height, then lift it 20 display pixels.
+  // Lower framing by 10% of screen height, then lift it 25 display pixels.
   // A fixed floor lets
   // the stand-up pose grow upward instead of recentering it as it gets taller.
   const float progress=sequence==0?motion.frame_position/(motion.count-1):1;
   const float eased=progress*progress*(3-2*progress);
-  const float lift=20.0f/pixel_scale;
+  const float lift=25.0f/pixel_scale;
   const float floor=height*0.88f-lift;
   const int entrance=lroundf((floor+12)*(1-eased));
   const float full_shift=sequence>=0&&sequence<=2?floor-max_y:height*0.60f-lift-(min_y+max_y)/2.0f;
@@ -278,7 +274,7 @@ void rasterize() {
           const int corner_x=std::max(0,std::abs(sx-31)-23),corner_y=std::max(0,std::abs(sy-31)-23);
           const bool on_screen=face_triangle&&sx>=0&&sx<64&&sy>=0&&sy<64&&corner_x*corner_x+corner_y*corner_y<=64;
           const uint16_t color=on_screen?face_pixels[sy*64+sx]:small_texture?
-            texture64[(63-std::clamp(v>>9,0,63))*64+std::clamp(u>>9,0,63)]:
+            live_model::texture64[(63-std::clamp(v>>9,0,63))*64+std::clamp(u>>9,0,63)]:
             live_model::texture[(127-std::clamp(v>>8,0,127))*128+std::clamp(u>>8,0,127)];
           pixels[offset]=color;
           if(pixel_scale==2){pixels[offset+1]=color;pixels[offset+buffer_width]=color;pixels[offset+buffer_width+1]=color;}
@@ -391,7 +387,7 @@ void run_live3d() {
           if(!strcmp(line,"idle")){desktop_signal();start_sequence(2);used=0;continue;}
           if(!strcmp(line,"dance")){random_dance();used=0;continue;}
           if(!strncmp(line,"dance ",6)) {
-            const int state=!strcmp(line+6,"hiphop")?6:!strcmp(line+6,"twist")?7:!strcmp(line+6,"chicken")?8:-1;
+            const int state=!strcmp(line+6,"twist")?7:!strcmp(line+6,"chicken")?8:-1;
             if(state<0)printf("PAL ERROR unknown dance\n");else start_sequence(state);
             used=0;continue;
           }
@@ -420,13 +416,8 @@ void run_live3d() {
           else if(!strcmp(line,"max"))ok=resolution(208,338);
           else if(!strcmp(line,"native"))ok=resolution(280,456);
           else if(!strcmp(line,"fast"))ok=resolution(140,228,true);
-          else if(!strcmp(line,"tex64")) {
-            if(!texture64&&esp_get_free_heap_size()>=24576+8192)
-              texture64=static_cast<uint16_t*>(heap_caps_malloc(8192,MALLOC_CAP_INTERNAL|MALLOC_CAP_8BIT));
-            if(texture64){memcpy(texture64,live_model::texture64,8192);small_texture=true;}
-            else printf("LIVE3D REJECT texture cache allocation\n");
-          }
-          else if(!strcmp(line,"tex128")){small_texture=false;free(texture64);texture64=nullptr;}
+          else if(!strcmp(line,"tex64"))small_texture=true;
+          else if(!strcmp(line,"tex128"))small_texture=false;
           else {
             changed=false;
             if(!strcmp(line,"pause")){if(!paused)paused_at=esp_timer_get_time();paused=true;}

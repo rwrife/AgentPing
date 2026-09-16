@@ -58,11 +58,11 @@ there is no collision solver. Manual pose holds until another state is selected.
 ```
 
 Retargets a Mixamo FBX onto the Pixel Pal rig and uploads it into device RAM,
-then plays it. MCP exposes `robot_play_motion(path, fps=12, start_seconds=0)`.
+then plays it. MCP exposes `robot_play_motion(path, fps=10, start_seconds=0)`.
 A `.json` clip already produced by `simulator/scripts/export-motion.mjs` is
 accepted directly and skips conversion.
 
-`--fps` sets the sample rate; the renderer runs near 11 FPS, so values above 12
+`--fps` defaults to 10 and sets the sample rate; the renderer runs near 11 FPS, so values above 12
 add keyframes the display never shows. `--start` skips into a longer clip.
 
 Converting an FBX requires the simulator's Node dependencies and the retargeter's
@@ -70,12 +70,17 @@ model, so run `npm install` in `simulator/` and
 `node simulator/scripts/export-live3d.mjs <pixel-pal.fbx>` once per checkout.
 
 The clip lives in RAM, not flash, so its length is bounded by free device
-memory. The CLI reads the robot's reported free heap and uploads as many
+memory. The CLI converts the new clip, returns to idle to release the previous
+upload, then reads the robot's reported free heap and uploads as many
 keyframes as fit beside the renderer's reserve, trimming the clip when needed;
 the reply reports the frames, rate, and seconds actually played. A 1.64" panel
 at native resolution currently fits about 167 keyframes, or 13.8 seconds at
-12 FPS. Lowering the render resolution frees considerably more. Uploaded clips
+12 FPS (about 16.6 seconds at the 10 FPS default). Lowering the render resolution frees considerably more. Uploaded clips
 are discarded when another state or dance is selected.
+
+The body texture defaults to 128×128 and is sampled directly from flash. Switching
+to the optional 64×64 texture no longer allocates an 8 KB RAM cache. The dynamic face retains
+its existing resolution.
 
 ## MCP configuration
 
@@ -178,3 +183,7 @@ incomplete uploads do not replace the displayed icon. The included heart is
 original sample artwork; no image library is needed to send packed bitmaps.
 
 Error icons always render red on the device, overriding the uploaded color (including provider logos). Use `robot.cmd icon --file assets/icons/heart-48.bin --color '#00ff00' --state error --message 'Something went wrong'` or MCP `robot_icon(..., state='error')`. Attention icons retain their requested color.
+
+Built-in idle dances are Chicken Dance and Twist Dance. Twist has 114 keyframes
+versus Hip Hop's 205, so Hip Hop is no longer linked into the firmware. Other
+dances can still be uploaded with `robot.cmd motion`.

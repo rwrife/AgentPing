@@ -26,12 +26,12 @@ def collect(seconds,stop_dance=False):
             match=pattern.search(line)
             if match:
                 rows.append((match[1],float(match[2]),int(match[3]),int(match[4])))
-                if stop_dance and rows[-1][0] in ('hiphop','twist','chicken'):return rows
+                if stop_dance and rows[-1][0] in ('twist','chicken'):return rows
             elif 'FPS' in line or 'STARTUP ENTER' in line: print(line,flush=True)
     return rows
 with usb:
     usb.write(b'resume\nidle\n');collect(1)
-    for name in ('hiphop','twist','chicken'):
+    for name in ('twist','chicken'):
         usb.write(f'dance {name}\n'.encode());rows=collect(1)
         assert rows[-1][0]==name,rows[-1]
         assert any(r[3] for r in rows),'Missing pose transition'
@@ -48,7 +48,7 @@ with usb:
     rows=collect(29)
     assert all(r[0]=='idle' for r in rows),'Dance started before 30 seconds'
     rows=collect(33,stop_dance=True)
-    assert rows[-1][0] in ('hiphop','twist','chicken'),'No automatic dance after 60 seconds'
+    assert rows[-1][0] in ('twist','chicken'),'No automatic dance after 60 seconds'
     assert 29<time.monotonic()-began<63,'Idle delay outside expected range'
     assert rows[-1][0]!=last,'Automatic selection repeated last dance'
     rows=collect(19)
