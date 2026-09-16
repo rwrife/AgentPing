@@ -13,9 +13,11 @@
 #include "../assets/chicken_motion.h"
 #include "notification_command.h"
 #include "../assets/face_lookup.h"
+#include "../assets/agent_logos.h"
 #include "board.h"
 #include "usb_motion.h"
 #include "manual_pose.h"
+#include "custom_icon.h"
 #include "esp_heap_caps.h"
 #include "esp_system.h"
 #include "esp_random.h"
@@ -51,6 +53,7 @@ lv_image_dsc_t descriptor{};
 lv_obj_t* picture=nullptr;
 UsbMotion motion;
 ManualPose manual;
+CustomIcon custom_icon;
 int sequence=0;
 int last_dance=-1;
 int64_t dance_at=0;
@@ -65,12 +68,22 @@ const char* thoughts[]={"Teaching my neurons to cooperate...","Consulting my ima
 unsigned thought_index=0;
 uint16_t face_pixels[64*64];
 int last_face=-1;
+int face_provider=-1;
 void update_face(int64_t now) {
   const bool blink=(now%4200000)>4020000;
-  const int state=sequence==0?0:sequence==1?1:sequence==3?4:sequence==5?5:blink?3:2;
-  if(state==last_face)return;
-  last_face=state;
+  const int state=custom_icon.active&&(sequence==4||sequence==5)?20:face_provider>=0&&(sequence==4||sequence==5)?10+face_provider:sequence==0?0:sequence==1?1:sequence==3?4:sequence==5?5:blink?3:2;
+  const int face_key=state+(sequence==5?32:0);
+  if(face_key==last_face)return;
+  last_face=face_key;
   for(int y=0;y<64;y++)for(int x=0;x<64;x++) {
+    if(state>=10) {
+      const int sx=x-8,sy=y-8,index=sy*48+sx;
+      const auto* mask=state==20?custom_icon.pixels:agent_logos::masks[state-10];
+      const bool ink=sx>=0&&sx<48&&sy>=0&&sy<48&&(mask[index>>3]&(1<<(index&7)));
+      const uint16_t colors[]={0xbfff,0xfbea,0xad5f};
+      face_pixels[y*64+x]=ink?(sequence==5?0xf800:state==20?custom_icon.color:colors[state-10]):0x0022;
+      continue;
+    }
     const int dx=std::min(std::abs(x-20),std::abs(x-44)),dy=std::abs(y-26);
     const int eye_height=state==3?1:state==1||state==4?3:8;
     const bool eye=dx*dx*eye_height*eye_height+dy*dy*25<=25*eye_height*eye_height;
@@ -94,6 +107,7 @@ void desktop_signal() {
 const char* sequence_name(){return sequence==0?"fall":sequence==1?"stand":sequence==2?"idle":sequence==3?"thinking":sequence==4?"attention":sequence==5?"error":sequence==6?"hiphop":sequence==7?"twist":sequence==8?"chicken":sequence==9?"manual":"custom";}
 void start_sequence(int state,bool transition=true) {
   manual.active=false;
+  if(state<3||state>5){face_provider=-1;custom_icon.active=false;}
   sequence=state;
   if(state==0)motion.stored(fall_motion::keys,fall_motion::count,fall_motion::rate,fall_motion::roots,false,transition,1.5f);
   else if(state==1)motion.stored(stand_motion::keys,stand_motion::count,stand_motion::rate,stand_motion::roots,false,transition,1);
@@ -115,9 +129,11 @@ void random_dance() {
   if(last_dance>=6&&choice>=last_dance)++choice;
   start_sequence(choice);
 }
-void show_state(int state,const char* message) {
+void show_state(int state,const char* message,int provider=-1) {
   desktop_signal();
   start_sequence(state);
+  face_provider=provider;
+  custom_icon.active=false;
   const auto now=esp_timer_get_time();
   random_thought=state==3&&!*message;
   if(random_thought){thought_index=esp_random()%(sizeof(thoughts)/sizeof(thoughts[0]));message=thoughts[thought_index];}
@@ -168,8 +184,8 @@ void pose(float t) {
   camera_at=camera_now;
   const float target=sequence>=3&&sequence<=5?1.0f:0.0f;
   camera_focus+=(target-camera_focus)*(1-expf(-dt/0.32f));
-  // Enlarge the full-body view while retaining the established close-up framing.
-  const int scale=lroundf(width*(0.51f+0.203f*camera_focus));
+  // Frame the robot 10% larger throughout the eased full-body/close-up transition.
+  const int scale=lroundf(width*1.10f*(0.51f+0.203f*camera_focus));
   int min_y=32767,max_y=-32768;
   for(unsigned i=0;i<kVertices;i++) {
     const auto& v=live_model::vertices[i];int32_t p[3]={};
@@ -342,9 +358,23 @@ void run_live3d() {
       if(ch=='\n'||ch=='\r') {
         if(used&&!overflow) {
           line[used]=0;bool changed=true,ok=true;
+          if(!strncmp(line,"icondata ",9)) {
+            printf(custom_icon.stage(line)?"PAL ICON READY\n":"PAL ERROR invalid icon data\n");used=0;continue;
+          }
+          if(!strcmp(line,"iconshow")||!strncmp(line,"iconshow ",9)||!strcmp(line,"iconerror")||!strncmp(line,"iconerror ",10)) {
+            const bool error_icon=!strncmp(line,"iconerror",9);
+            const int prefix=error_icon?9:8;
+            const char* message=line[prefix]?line+prefix+1:"";
+            bool valid=strlen(message)<=192;
+            for(const char* c=message;*c;c++)if(*c<32||*c>126)valid=false;
+            if(!valid||!custom_icon.commit()){custom_icon.expires=0;printf("PAL ERROR invalid or expired icon\n");used=0;continue;}
+            show_state(error_icon?5:4,message);custom_icon.active=true;last_face=-1;
+            if(!*message)lv_obj_add_flag(bubble,LV_OBJ_FLAG_HIDDEN);
+            printf("PAL ICON OK\n");used=0;continue;
+          }
           const int joint_command=manual.command(line,motion);
           if(joint_command) {
-            if(joint_command>0){desktop_signal();sequence=9;dance_at=0;bubble_until=0;lv_obj_add_flag(bubble,LV_OBJ_FLAG_HIDDEN);lv_obj_add_flag(thought_dot,LV_OBJ_FLAG_HIDDEN);}
+            if(joint_command>0){desktop_signal();face_provider=-1;custom_icon.active=false;sequence=9;dance_at=0;bubble_until=0;lv_obj_add_flag(bubble,LV_OBJ_FLAG_HIDDEN);lv_obj_add_flag(thought_dot,LV_OBJ_FLAG_HIDDEN);}
             used=0;continue;
           }
           if(!strcmp(line,"boot")){first_frame=true;start_sequence(0,false);used=0;continue;}
@@ -366,11 +396,11 @@ void run_live3d() {
               strcpy(last_event,event.id);
               const char* providers[]={"Codex","Claude Code","GitHub Copilot"};
               char message[128];snprintf(message,sizeof(message),"%s\n%s",providers[event.provider],event.kind==2?"Something went wrong. Check your agent.":event.kind==1?"Finished the task.":"Ready for your input.");
-              show_state(event.kind==2?5:4,message);
+              show_state(event.kind==2?5:4,message,event.provider);
             }
             printf("PAL EVENT %s OK\n",event.id);used=0;continue;
           }
-          if(!strcmp(line,"viewstatus")){printf("VIEW state=%s zoom=%.3f bubble=%d thought=%d heap=%u\n",sequence_name(),double(camera_focus),!lv_obj_has_flag(bubble,LV_OBJ_FLAG_HIDDEN),!lv_obj_has_flag(thought_dot,LV_OBJ_FLAG_HIDDEN),unsigned(esp_get_free_heap_size()));used=0;continue;}
+          if(!strcmp(line,"viewstatus")){printf("VIEW state=%s zoom=%.3f bubble=%d thought=%d heap=%u provider=%d icon=%d color=%04x\n",sequence_name(),double(camera_focus),!lv_obj_has_flag(bubble,LV_OBJ_FLAG_HIDDEN),!lv_obj_has_flag(thought_dot,LV_OBJ_FLAG_HIDDEN),unsigned(esp_get_free_heap_size()),face_provider,custom_icon.active,custom_icon.color);used=0;continue;}
           if(!strcmp(line,"host")){desktop_signal();printf("PAL HOST OK\n");used=0;continue;}
           if(!strcmp(line,"startupstatus")){printf("STARTUP STATUS state=%s frame=%.2f waiting=%d blend=%d bottom=%d\n",sequence_name(),double(motion.frame_position),!lv_obj_has_flag(connection_label,LV_OBJ_FLAG_HIDDEN),esp_timer_get_time()-motion.started<motion.transition_us,projected_bottom);used=0;continue;}
           if(motion.command(line)){if(!strncmp(line,"motion ",7)||!strcmp(line,"play"))sequence=-1;used=0;continue;}

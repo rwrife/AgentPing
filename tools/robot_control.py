@@ -1,6 +1,8 @@
 """Validated demo commands shared by the desktop worker, CLI and MCP server."""
 from __future__ import annotations
 import json
+import base64
+import re
 import math
 from pathlib import Path
 import time
@@ -16,9 +18,22 @@ def command(action: str, args: dict) -> tuple[bytes, bytes]:
     if not isinstance(args, dict):
         raise ValueError("arguments must be an object")
     allowed = {"status": set(), "state": {"state", "message"}, "dance": {"name"},
-               "joint": {"joint", "x", "y", "z", "duration_ms"}, "reset": set(), "stop": set()}
+               "joint": {"joint", "x", "y", "z", "duration_ms"}, "reset": set(), "stop": set(), "icon": {"data_hex", "color", "message", "state"}}
     if action not in allowed or set(args) - allowed[action]:
         raise ValueError("unknown command or argument")
+    if action == "icon":
+        data, color, message = args.get("data_hex"), args.get("color", "#50dfff"), args.get("message", "")
+        if not isinstance(data, str) or not re.fullmatch(r"[0-9a-fA-F]{576}", data):
+            raise ValueError("icon must be exactly 288 bytes (576 hex digits) for a 48x48 1-bit image")
+        if not isinstance(color, str) or not re.fullmatch(r"#?[0-9a-fA-F]{6}", color):
+            raise ValueError("color must be a six-digit RGB hex value, such as #ff8800")
+        state = args.get("state", "attention")
+        if state not in ("attention", "error"):
+            raise ValueError("icon state must be attention or error")
+        command("state", {"state": state, "message": message})
+        show = "iconerror" if state == "error" else "iconshow"
+        encoded = base64.b64encode(bytes.fromhex(data)).decode("ascii")
+        return f"icondata {color.lstrip('#')} {encoded}\n{show} {message}\n".encode("ascii"), b"PAL ICON OK"
     if action == "stop":
         return b"", b""
     if action == "status":

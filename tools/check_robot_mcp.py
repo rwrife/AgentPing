@@ -16,7 +16,7 @@ async def main():
         async with ClientSession(read, write) as session:
             await session.initialize()
             tools = await session.list_tools()
-            assert {t.name for t in tools.tools} == {"robot_status", "robot_message", "robot_animation", "robot_dance", "robot_move_joint", "robot_reset"}
+            assert {t.name for t in tools.tools} == {"robot_status", "robot_message", "robot_animation", "robot_dance", "robot_move_joint", "robot_reset", "robot_icon"}
 
             async def call(name, args=None):
                 result = await session.call_tool(name, args or {})
@@ -42,13 +42,23 @@ async def main():
             await call("robot_dance", {"name": "chicken"})
             stdout, _ = await process.communicate()
             assert process.returncode == 0 and json.loads(stdout)["ok"]
+            icon = (Path(__file__).resolve().parents[1] / "assets/icons/heart-48.bin").read_bytes().hex()
+            await call("robot_icon", {"data_hex": icon, "color": "#ff8800", "message": "Custom icon from MCP"})
+            status = (await call("robot_status"))["reply"]
+            assert "icon=1" in status and "color=fc40" in status and "bubble=1" in status
+            await call("robot_icon", {"data_hex": icon, "color": "#00ff00"})
+            status = (await call("robot_status"))["reply"]
+            assert "icon=1" in status and "color=07e0" in status and "bubble=0" in status
+            invalid = await session.call_tool("robot_icon", {"data_hex": "00", "color": "#00ff00"})
+            assert invalid.isError, "Invalid bitmap was accepted"
             await call("robot_animation", {"state": "thinking"})
             await call("robot_reset")
-            assert "state=idle" in (await call("robot_status"))["reply"]
+            status = (await call("robot_status"))["reply"]
+            assert "state=idle" in status and "icon=0" in status
     output = Path("test-results/robot-control")
     output.mkdir(parents=True, exist_ok=True)
     (output / "mcp-hardware.json").write_text(json.dumps(records, indent=2))
-    print("PASS: MCP initialization, six tools, joint limits, messages, animation, CLI coexistence and reset")
+    print("PASS: MCP initialization, seven tools, joint limits, messages, animation, CLI coexistence and reset")
 
 
 if __name__ == "__main__":

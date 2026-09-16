@@ -58,6 +58,11 @@ def serve_mcp(root: Path) -> None:
         return request(root, "state", {"state": state, "message": message})
 
     @mcp.tool()
+    def robot_icon(data_hex: str, color: str = "#50dfff", message: str = "", state: Literal["attention", "error"] = "attention") -> dict:
+        """Show a custom 48x48 1-bit face icon: exactly 576 hex digits (288 bytes), row-major top-to-bottom, leftmost pixel in the least-significant bit. Color is #RRGGBB; set bits use that color, clear bits use the dark face background. Optional ASCII message. Error state always renders the icon red, overriding color. Returns to idle after 30 seconds."""
+        return request(root, "icon", {"data_hex": data_hex, "color": color, "message": message, "state": state})
+
+    @mcp.tool()
     def robot_animation(state: Literal["idle", "thinking", "attention", "error", "wave", "boot"]) -> dict:
         """Play a built-in robot state. Thinking selects a playful thought automatically."""
         return request(root, "state", {"state": state})
@@ -96,6 +101,13 @@ def main() -> int:
     message = sub.add_parser("message"); message.add_argument("message")
     message.add_argument("--state", choices=("thinking", "attention", "error"), default="attention")
     dance = sub.add_parser("dance"); dance.add_argument("name", choices=DANCES, nargs="?", default="random")
+    icon = sub.add_parser("icon", help="Show a 48x48 1-bit face icon with an RGB color")
+    source = icon.add_mutually_exclusive_group(required=True)
+    source.add_argument("--data-hex", help="576 hex digits, row-major, LSB first")
+    source.add_argument("--file", type=Path, help="Raw 288-byte packed bitmap")
+    icon.add_argument("--color", default="#50dfff")
+    icon.add_argument("--message", default="")
+    icon.add_argument("--state", choices=("attention", "error"), default="attention")
     joint = sub.add_parser("joint"); joint.add_argument("joint", choices=JOINTS)
     for axis in ("x", "y", "z"): joint.add_argument("--" + axis, type=float, default=0)
     joint.add_argument("--duration-ms", type=int, default=600)
@@ -107,6 +119,11 @@ def main() -> int:
         elif args.mode == "worker-status": result = worker_status(args.state_dir)
         else:
             fields = {k: v for k, v in vars(args).items() if k not in ("mode", "state_dir", "port")}
+            if args.mode == "icon":
+                path = fields.pop("file")
+                if path is not None:
+                    with path.open("rb") as stream:
+                        fields["data_hex"] = stream.read(289).hex()
             result = request(args.state_dir, "state" if args.mode == "message" else args.mode, fields)
         print(json.dumps(result))
         return 0

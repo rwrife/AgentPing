@@ -71,7 +71,7 @@ replacing the repository path as needed:
 Start the USB worker using `robot.cmd start` before invoking tools. The MCP
 server does not change client configuration or launch the worker implicitly.
 It exposes `robot_status`, `robot_message`, `robot_animation`, `robot_dance`,
-`robot_move_joint`, and `robot_reset`. For example: “Show a thinking message,
+`robot_move_joint`, `robot_icon`, and `robot_reset`. For example: “Show a thinking message,
 then turn the robot's head 25 degrees and reset it.”
 
 ## Delivery and compatibility
@@ -105,13 +105,42 @@ Hardware/MCP smoke checks require a connected device, current firmware, and a
 running worker. They exercise the real MCP stdio handshake and acknowledgments.
 
 Validated on the connected ESP32-C6: CLI head/elbow controls, actual stdio MCP
-initialization and all six tools, invalid joint rejection, message/animation
+initialization and all seven tools, invalid joint rejection, message/animation
 commands, concurrent CLI access, and reset to idle. A device framebuffer was
 inspected for the head turn and elbow bend. Free heap remained above 28 KB.
-Six queue/validation tests and four existing notification tests passed, with
+Eight queue/validation tests and four existing notification tests passed, with
 25 repeated concurrent-client tests after resolving Windows file-sharing races.
 Run the hardware smoke check with:
 
 ```powershell
 .\.venv-robot\Scripts\python.exe tools/check_robot_mcp.py
 ```
+
+## Custom 1-bit face icons
+
+```powershell
+.\companion\robot.cmd icon --file assets/icons/heart-48.bin --color "#ff8800" --message "Hello world"
+```
+
+Use `--data-hex` instead of `--file` to supply the bitmap directly. MCP exposes
+`robot_icon(data_hex, color="#50dfff", message="")`. Both accept exactly 288
+bytes (576 hexadecimal digits) representing a 48 x 48 bitmap. Rows run top to
+bottom; pixels run left to right, with the leftmost pixel of each byte in bit 0
+(least-significant bit). Each row occupies six bytes. For pixel `(x, y)` set
+`data[y * 6 + x // 8] |= 1 << (x % 8)`.
+
+Set bits use the supplied six-digit RGB color (`#RRGGBB` or `RRGGBB`), quantized
+to the device's RGB565 output. Clear bits use the dark face background. The
+icon replaces the eyes/mouth and uses the attention wave and close-up. Omit
+`--message` for an icon without a bubble; either form returns to idle after
+30 seconds. A new message, provider notification, animation, or reset replaces
+it. Icons are held in RAM and do not write flash.
+
+The desktop converts hex to Base64 for two bounded serial lines: `icondata
+RRGGBB <384 Base64 characters>` stages a validated bitmap, then `iconshow
+<optional message>` publishes it. The worker sends the pair together and waits
+for `PAL ICON OK`. Pending uploads expire after five seconds. Malformed or
+incomplete uploads do not replace the displayed icon. The included heart is
+original sample artwork; no image library is needed to send packed bitmaps.
+
+Error icons always render red on the device, overriding the uploaded color (including provider logos). Use `robot.cmd icon --file assets/icons/heart-48.bin --color '#00ff00' --state error --message 'Something went wrong'` or MCP `robot_icon(..., state='error')`. Attention icons retain their requested color.

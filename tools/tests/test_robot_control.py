@@ -1,4 +1,5 @@
 import json
+import base64
 from pathlib import Path
 import sys
 import tempfile
@@ -13,6 +14,32 @@ from robot_control import atomic_json, command, process_requests, request
 
 
 class RobotControlTests(unittest.TestCase):
+    def test_icon_roundtrip_color_and_line_bounds(self):
+        pixels = bytes(range(256)) + bytes(range(32))
+        wire, ack = command("icon", {"data_hex": pixels.hex(), "color": "#ff8800", "message": "Custom icon"})
+        upload, show = wire.decode().splitlines()
+        self.assertEqual(ack, b"PAL ICON OK")
+        self.assertEqual(upload.split()[1], "ff8800")
+        self.assertEqual(base64.b64decode(upload.split()[2], validate=True), pixels)
+        self.assertEqual(show, "iconshow Custom icon")
+        self.assertLess(len(upload), 512)
+        self.assertLess(len(show), 512)
+
+    def test_error_icon_preserves_uploaded_color_but_selects_error_rendering(self):
+        wire, ack = command("icon", {"data_hex": "ff" * 288, "color": "#00ff00", "state": "error", "message": "Oops"})
+        self.assertTrue(wire.startswith(b"icondata 00ff00 "))
+        self.assertTrue(wire.endswith(b"\niconerror Oops\n"))
+        self.assertEqual(ack, b"PAL ICON OK")
+        with self.assertRaises(ValueError):
+            command("icon", {"data_hex": "ff" * 288, "state": "idle"})
+
+    def test_icon_rejects_bad_sizes_colors_and_message_injection(self):
+        valid = {"data_hex": "00" * 288, "color": "#abcdef"}
+        for field, value in (("data_hex", "ff" * 287), ("data_hex", "ff" * 289),
+                             ("data_hex", "gg" * 288), ("color", "#abc"),
+                             ("color", "ffffff\nboot"), ("message", "hi\nidle")):
+            with self.assertRaises(ValueError): command("icon", {**valid, field: value})
+
     def test_commands_and_joint_limits(self):
         self.assertEqual(command("state", {"state": "attention", "message": "Hello!"})[0], b"attention Hello!\n")
         self.assertEqual(command("joint", {"joint": "head", "y": 30})[0], b"joint head 0.000 30.000 0.000 600\n")
