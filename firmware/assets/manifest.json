@@ -1,7 +1,7 @@
 {
   "width": 240,
   "height": 384,
-  "encoded_bytes": 2684088,
+  "encoded_bytes": 5455660,
   "decoded_frame_bytes": 184320,
   "clips": [
     {
@@ -12,6 +12,16 @@
     {
       "name": "wave",
       "first": 24,
+      "count": 36
+    },
+    {
+      "name": "wave-claude",
+      "first": 60,
+      "count": 36
+    },
+    {
+      "name": "wave-copilot",
+      "first": 96,
       "count": 36
     }
   ]

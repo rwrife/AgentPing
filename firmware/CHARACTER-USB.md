@@ -4,9 +4,10 @@ This dedicated `character_usb` firmware profile plays baked Pixel Pal idle and
 wave clips using LVGL. It does not start Wi-Fi, TLS, provisioning, or the existing
 network transport. This is display/USB bring-up, not the final agent protocol.
 
-The 240 x 384 RGB565 frame buffer occupies 184,320 bytes. Sixty frames are stored
+The 240 x 384 RGB565 frame buffer occupies 184,320 bytes. 132 frames are stored
 as 16-bit run-length/color pairs in flash (see `assets/manifest.json`). The face
-is baked for this first test; dynamic messages and per-agent faces come later.
+is baked, including a wave variant for each provider. Notification bubbles are
+drawn at runtime. See [USB notifications](../docs/usb-notifications.md) for setup.
 
 Build and upload from the repository root:
 
@@ -67,3 +68,13 @@ The larger build uploaded successfully on COM5: application 3,194,453 bytes
 of 6,291,456 available; static RAM 77,572 bytes. Runtime idle reports 59 frames
 per five seconds and 154,756 bytes free heap. USB state changes acknowledge.
 The intermittent touch I2C read error is still present; display playback continues.
+
+## Provider notification build
+
+The notification build uses 5,989,697 bytes of the 6 MB app partition, including
+5,455,660 bytes of animation runs. It adds host heartbeats, validated provider
+notifications, provider-specific logos, and 30-second bubbles. Static RAM stays
+at 77,572 bytes and observed free heap is 154,756 bytes. All 132 frames passed
+encoding round-trip and image-edge checks. Further animation expansion should
+improve encoding or move assets into a dedicated partition; this app partition
+is now 95.2% full, though the device has 16 MB flash overall.

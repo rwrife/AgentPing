@@ -2,6 +2,7 @@
 #ifdef AGENTPING_CHARACTER_DEMO
 #include "../assets/pal_frames.h"
 #include "board.h"
+#include "notification_command.h"
 #include "esp_heap_caps.h"
 #include "esp_log.h"
 #include "esp_timer.h"
@@ -33,10 +34,23 @@ void run_character_demo() {
   lv_obj_set_style_text_color(label,lv_color_hex(0x99bbdd),0);
   lv_obj_set_style_text_align(label,LV_TEXT_ALIGN_CENTER,0);
   lv_obj_align(label,LV_ALIGN_BOTTOM_MID,0,-20);
+  auto* bubble=lv_label_create(screen);
+  lv_obj_set_width(bubble,board::kWidth-32);
+  lv_obj_align(bubble,LV_ALIGN_TOP_MID,0,16);
+  lv_obj_set_style_pad_all(bubble,12,0);
+  lv_obj_set_style_radius(bubble,14,0);
+  lv_obj_set_style_bg_color(bubble,lv_color_hex(0x132232),0);
+  lv_obj_set_style_bg_opa(bubble,LV_OPA_COVER,0);
+  lv_obj_set_style_text_color(bubble,lv_color_hex(0xf3f8ff),0);
+  lv_obj_set_style_text_font(bubble,&lv_font_montserrat_20,0);
+  lv_label_set_text(bubble,"");
+  lv_obj_add_flag(bubble,LV_OBJ_FLAG_HIDDEN);
   setvbuf(stdin,nullptr,_IONBF,0);
   fcntl(STDIN_FILENO,F_SETFL,fcntl(STDIN_FILENO,F_GETFL,0)|O_NONBLOCK);
   unsigned first=0,count=24,frame=0,period=82;bool paused=false;bool dirty=true;
-  char line[32]{};unsigned used=0;bool overflow=false;
+  char line[96]{};unsigned used=0;bool overflow=false;
+  char last_event[17]{};
+  int64_t bubble_until=0,host_until=0;
   auto next=esp_timer_get_time();auto next_stats=next+5000000;unsigned frames_played=0;
   ESP_LOGI("pal","READY USB-only character demo; commands: idle, wave, pause, resume, status");
   while(true){
@@ -45,6 +59,27 @@ void run_character_demo() {
       if(ch=='\n'||ch=='\r'){
         if(used&&!overflow){
           line[used]=0;
+          if(!strcmp(line,"host")) {
+            host_until=esp_timer_get_time()+15000000;
+            lv_label_set_text(label,"");
+            printf("PAL HOST OK\n");used=0;continue;
+          }
+          if(!strncmp(line,"notify ",7)) {
+            NotificationCommand event{};
+            if(!parse_notification(line,event)){printf("PAL ERROR invalid notification\n");used=0;continue;}
+            if(strcmp(last_event,event.id)) {
+              strcpy(last_event,event.id);
+              const char* names[]={"Codex","Claude Code","GitHub Copilot"};
+              const char* messages[]={"Your input is needed.","Your task is complete.","Something needs a look."};
+              lv_label_set_text_fmt(bubble,"%s\n%s",names[event.provider],messages[event.kind]);
+              lv_obj_remove_flag(bubble,LV_OBJ_FLAG_HIDDEN);
+              lv_obj_align(image,LV_ALIGN_CENTER,0,8);
+              lv_label_set_text(label,"");
+              first=24+event.provider*36;count=36;period=132;frame=0;paused=false;dirty=true;
+              bubble_until=esp_timer_get_time()+30000000;
+            }
+            printf("PAL EVENT %s OK\n",event.id);used=0;continue;
+          }
           if(!strcmp(line,"idle")){first=0;count=24;period=82;frame=0;paused=false;dirty=true;lv_label_set_text(label,"");}
           else if(!strcmp(line,"wave")){first=24;count=36;period=132;frame=0;paused=false;dirty=true;lv_label_set_text(label,"");}
           else if(!strcmp(line,"pause"))paused=true;
@@ -57,6 +92,14 @@ void run_character_demo() {
       else overflow=true;
     }
     const auto now=esp_timer_get_time();
+    if(bubble_until && now>=bubble_until){
+      bubble_until=0;lv_obj_add_flag(bubble,LV_OBJ_FLAG_HIDDEN);
+      lv_obj_align(image,LV_ALIGN_CENTER,0,-22);
+      first=0;count=24;period=82;frame=0;paused=false;dirty=true;
+    }
+    if(host_until && now>=host_until){
+      host_until=0;lv_label_set_text(label,"Trying to connect to\nthe host agent...");
+    }
     if(dirty||(!paused&&now>=next)){
       unsigned dest=0;const unsigned index=first+frame;
       for(unsigned i=pal_assets::offsets[index];i<pal_assets::offsets[index+1];i+=2){

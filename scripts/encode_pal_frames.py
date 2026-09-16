@@ -5,8 +5,8 @@ root=Path(__file__).resolve().parents[1]
 frames=root/'simulator/test-results/firmware-frames'
 out=root/'firmware/assets';out.mkdir(exist_ok=True)
 data=[];offsets=[];stats=[]
-for name in ['idle','wave']:
- paths=sorted(frames.glob(name+'-*.png'));assert paths
+for name in ['idle','wave','wave-claude','wave-copilot']:
+ paths=sorted(p for p in frames.glob(name+'-*.png') if p.stem[len(name)+1:].isdigit());assert paths
  start=len(offsets)
  for path in paths:
   image=Image.open(path).convert('RGB').quantize(colors=64).convert('RGB')
