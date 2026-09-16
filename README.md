@@ -340,7 +340,8 @@ must be running; the network bridge is not required.
 This is the separate .NET management UI for the network bridge. It does not start
 or replace the USB robot worker above. For the USB demo, use `robot.cmd`.
 
-1. Install **.NET SDK 10.0.300**, the exact version pinned in `global.json`.
+1. Install a **stable .NET 10.0 SDK**. `global.json` selects the latest installed
+   10.0 feature band or patch (10.0.100 or newer).
    Confirm it appears in `dotnet --list-sdks`.
 2. From the repository root, restore the solution and publish the app and its
    companion bridge together:
