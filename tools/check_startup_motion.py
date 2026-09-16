@@ -42,11 +42,13 @@ with usb:
     assert idle and all(row[2]==1 for row in idle),'Idle caption missing'
     assert any(b[1]<a[1] for a,b in zip(idle,idle[1:])),'Idle did not loop'
     assert any(row[3] for row in rows if row[0]=='stand'),'Stand transition not observed'
+    grounded=re.findall(r'STARTUP STATUS state=(?:stand|idle).* bottom=(-?\d+)', '\n'.join(lines))
+    assert grounded and all(abs(int(y)-356)<=1 for y in grounded),'Stand-up/idle ground level moved'
     print('PASS: off-screen boot, fall once, stand once, blended transitions, looping idle and waiting caption',flush=True)
-    usb.write(b'host\n');collect(2)
+    usb.write(b'host\nidle\n');collect(2)
     assert rows[-1][0]=='idle' and rows[-1][2]==0,'Host heartbeat did not clear waiting caption'
     collect(15)
-    assert rows[-1][0]=='idle' and rows[-1][2]==1,'Waiting caption did not return on timeout'
-    print('PASS: host connection and timeout update stationary idle status',flush=True)
+    assert rows[-1][0]=='idle' and rows[-1][2]==0,'Waiting caption returned after the first desktop signal'
+    print('PASS: first desktop signal clears waiting status permanently until restart',flush=True)
 output=Path('test-results/startup-motion');output.mkdir(parents=True,exist_ok=True)
 (output/'hardware.json').write_text(json.dumps({'lines':lines,'samples':rows},indent=2))

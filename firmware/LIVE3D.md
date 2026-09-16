@@ -3,8 +3,9 @@
 `live3d_usb` is a separate, USB-only software-rendering profile for the
 Waveshare ESP32-C6 Touch AMOLED 1.64. It transforms the skeleton and rasterizes
 the robot on the device; it does not play baked image frames or stream video
-from the PC. Startup and idle animations run locally. The full provider
-notification protocol and remaining simulator states are not yet ported.
+from the PC. Startup, idle, thinking, attention, and error animations run locally.
+USB notifications show provider names and message bubbles; provider logos and
+the remaining simulator states are not yet ported.
 
 ## Asset pipeline
 
@@ -138,7 +139,8 @@ The boot sequence is stored entirely in flash:
 | Standing Idle | 145 | 32,190 | Loop, original speed (6 seconds) |
 
 The three clips total **101,454 bytes**. The fall starts with all projected
-vertices above the display, descends to its center, and is never automatically
+vertices above the display, descends to a fixed floor at 78% of the display
+height, and is never automatically
 replayed during idle. Framing is about 21% closer than the first renderer.
 The animated silhouette stays centered, while the connection caption is a
 separate LVGL label fixed 16 pixels above the bottom edge.
@@ -151,9 +153,10 @@ smooth transitions to the stored wave and back to idle. A pending USB upload
 holds the last displayed pose until a validated clip is ready. Pause/resume
 preserves animation time.
 
-Idle immediately shows “Waiting for connection...” and the host-agent caption.
-A USB `host` heartbeat hides it; 15 seconds without another heartbeat restores
-it. USB power alone is not treated as a host-agent connection. `boot` replays
+Before the first desktop signal, idle shows “Waiting for connection...” and
+the host-agent caption.
+The first USB `host` heartbeat or desktop state message hides it for the rest
+of the boot session; silence afterward never restores it. USB power alone is not treated as a host-agent connection. `boot` replays
 startup for testing, `idle` transitions to idle, and `startupstatus` reports the
 state, key position, transition status, and caption visibility.
 
@@ -168,7 +171,7 @@ FPS in idle with the connection caption and 11.08 FPS without it. Free heap
 remained at 31,036 bytes. The application uses 757,649 bytes of flash and
 112,116 bytes of static RAM. A cold-boot test confirmed an entirely off-screen
 entrance (maximum projected Y = -12), both 400 ms transitions, looping idle,
-and caption visibility through heartbeat expiry.
+and caption visibility before/after the first desktop signal.
 
 Rebuild the assets from the repository root:
 
@@ -181,7 +184,7 @@ node simulator/scripts/export-motion.mjs 'C:/Users/ryrife/Downloads/Standing Idl
 ```
 
 The last command resets the physical device and tests the sequence, off-screen
-entrance, looping idle, connection caption, and heartbeat timeout.
+entrance, looping idle, and startup-only connection caption.
 
 ## Restore notification firmware
 
@@ -191,3 +194,96 @@ entrance, looping idle, connection caption, and heartbeat timeout.
 
 Restart the installed USB notification worker after restoring `character_usb`.
 The live renderer uses stock CPU clocks and the existing display driver.
+
+## Thinking, attention, and error states
+
+The live renderer includes Thinking.fbx (103 keys, 22,866 bytes) and Attention
+Waving.fbx (77 keys, 17,094 bytes), both with hip motion. Thinking plays at
+original speed; the error wave and existing attention wave play at two-thirds
+speed. Non-closed thinking/error clips blend back to their first pose over
+400 ms on repeat. State changes use the same bone blend.
+
+USB commands:
+
+```text
+thinking
+thinking Checking the next step...
+attention Codex is waiting for your input.
+error Claude could not complete the request.
+idle
+viewstatus
+```
+
+Thinking without text chooses a playful thought and changes it every six
+seconds. Each bubble expires 30 seconds after the command, including thinking;
+expiry blends the robot back to idle and eases the camera back out. The upper bubble is
+fixed 16 pixels from the top and sides and clips overly long messages with an
+ellipsis. Thinking adds a small thought dot. The camera eases into a face and
+shoulder view in the lower half, and eases back when returning to idle.
+
+Existing `notify <16-hex-id> <codex|claude|copilot> <attention|completed|error>`
+messages are accepted and acknowledged. They show provider names and preset
+messages; errors use the new error wave. Repeated IDs do not restart the bubble.
+Provider logos are not yet ported to the live face. The direct state commands
+above accept custom text. `host` marks the desktop as seen; the idle caption stays hidden until restart.
+
+Convert the new clips with:
+
+```powershell
+node simulator/scripts/export-motion.mjs 'C:/Users/ryrife/Downloads/Thinking.fbx' thinking_motion --root
+node simulator/scripts/export-motion.mjs 'C:/Users/ryrife/Downloads/Attention Waving.fbx' error_motion --root
+.\.venv-firmware\Scripts\python.exe tools/check_live_states.py
+```
+
+The expanded firmware is 825,561 bytes, with 112,208 bytes of static RAM.
+Live-state tests exercise eased zoom in/out, state selection, USB error
+acknowledgment, duplicate suppression, and automatic return to idle after
+30 seconds.
+
+At native resolution, the renderer invalidates the union of the current and
+previous robot regions. LVGL invalidates bubble changes separately, avoiding
+repeated repainting of the static area above the robot.
+
+Final close-up measurements were approximately 12.4-12.5 FPS with bubbles
+visible and 30,524 bytes of free heap, stable throughout the hardware check.
+
+## Idle dances
+
+After 30-60 seconds in idle, the device randomly chooses one of three stored
+Mixamo dances, excluding the dance played last. It plays once at original speed
+and blends back to idle, which starts a fresh random delay. The camera stays in
+its full-body view. Thinking, attention and error commands interrupt immediately
+with the normal pose blend and close-up camera transition. Host heartbeats do
+not reset the dance timer; pausing playback pauses the idle countdown as well.
+Before the first desktop signal, the waiting-for-connection caption remains
+visible during automatic idle dancing.
+
+| Dance | Duration | Motion bytes |
+| --- | ---: | ---: |
+| Locking Hip Hop Dance | 17 seconds | 90,798 |
+| Twist Dance | 9.42 seconds | 50,394 |
+| Chicken Dance | 4.75 seconds | 25,530 |
+
+These add 166,722 bytes in flash, with no clip allocation in RAM. For immediate
+previews use `dance`, `dance hiphop`, `dance twist`, or `dance chicken` over USB.
+Run `python tools/check_idle_dances.py --port COM5` to validate scheduling,
+non-repetition, smooth entry/exit, and interruption on the physical device.
+
+```powershell
+node simulator/scripts/export-motion.mjs 'C:/Users/ryrife/Downloads/Locking Hip Hop Dance.fbx' hiphop_motion --root
+node simulator/scripts/export-motion.mjs 'C:/Users/ryrife/Downloads/Twist Dance.fbx' twist_motion --root
+node simulator/scripts/export-motion.mjs 'C:/Users/ryrife/Downloads/Chicken Dance.fbx' chicken_motion --root
+```
+
+With all three dances included, the application is 994,065 bytes (31.6% of
+the 3 MiB app partition), with 112,224 bytes of static RAM. Hardware dance
+playback measured approximately 10.9 FPS with 30,492 bytes of free heap.
+
+Startup framing uses the same lower floor for fall, stand-up and idle. As the
+robot stands, its head rises into the idle position while its bottom stays at
+approximately pixel 356 on the 456-pixel panel. The camera no longer recenters
+the growing stand-up silhouette.
+
+Full-body framing now uses a projection scale of 51% of panel width (up from
+46%), making the robot approximately 11% larger. The fixed startup floor and
+head/shoulder close-up framing are retained.

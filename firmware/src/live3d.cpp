@@ -6,11 +6,18 @@
 #include "../assets/fall_motion.h"
 #include "../assets/stand_motion.h"
 #include "../assets/idle_motion.h"
+#include "../assets/thinking_motion.h"
+#include "../assets/error_motion.h"
+#include "../assets/hiphop_motion.h"
+#include "../assets/twist_motion.h"
+#include "../assets/chicken_motion.h"
+#include "notification_command.h"
 #include "../assets/face_lookup.h"
 #include "board.h"
 #include "usb_motion.h"
 #include "esp_heap_caps.h"
 #include "esp_system.h"
+#include "esp_random.h"
 #include "esp_timer.h"
 #include "driver/usb_serial_jtag_vfs.h"
 #include "freertos/FreeRTOS.h"
@@ -35,6 +42,7 @@ float world[kBones][16];
 int32_t skin[kBones][12];
 uint16_t *pixels=nullptr,*depth=nullptr;
 int width=0,height=0,depth_rows=0;
+int model_top=0,previous_top=0,projected_bottom=0;
 int buffer_width=0,buffer_height=0,pixel_scale=1;
 bool small_texture=false;
 uint16_t* texture64=nullptr;
@@ -42,37 +50,84 @@ lv_image_dsc_t descriptor{};
 lv_obj_t* picture=nullptr;
 UsbMotion motion;
 int sequence=0;
+int last_dance=-1;
+int64_t dance_at=0;
+bool dancing(){return sequence>=6&&sequence<=8;}
+float camera_focus=0;
+int64_t camera_at=0;
+lv_obj_t* bubble=nullptr;
+lv_obj_t* thought_dot=nullptr;
+int64_t bubble_until=0,thought_next=0;
+bool random_thought=false;
+const char* thoughts[]={"Teaching my neurons to cooperate...","Consulting my imaginary rubber duck...","Untangling a very small brain knot...","Looking under the mental sofa...","Asking my last two brain cells...","Giving this a thoughtful little squint..."};
+unsigned thought_index=0;
 uint16_t face_pixels[64*64];
 int last_face=-1;
 void update_face(int64_t now) {
   const bool blink=(now%4200000)>4020000;
-  const int state=sequence==0?0:sequence==1?1:blink?3:2;
+  const int state=sequence==0?0:sequence==1?1:sequence==3?4:sequence==5?5:blink?3:2;
   if(state==last_face)return;
   last_face=state;
   for(int y=0;y<64;y++)for(int x=0;x<64;x++) {
     const int dx=std::min(std::abs(x-20),std::abs(x-44)),dy=std::abs(y-26);
-    const int eye_height=state==3?1:state==1?3:8;
+    const int eye_height=state==3?1:state==1||state==4?3:8;
     const bool eye=dx*dx*eye_height*eye_height+dy*dy*25<=25*eye_height*eye_height;
     const bool glow=dx<9&&dy<eye_height+4;
     const int mx=x-32,my=y-44;
-    const bool mouth=state==0?(mx*mx+my*my>=9&&mx*mx+my*my<=25):std::abs(mx)<=13&&std::abs(y-(45-mx*mx/64))<=1;
+    const bool mouth=(state==0||state==5)?(mx*mx+my*my>=9&&mx*mx+my*my<=25):std::abs(mx)<=13&&std::abs(y-(45-mx*mx/64))<=1;
     unsigned r=0,g=5+(63-y)/16,b=14+(63-y)/12;
     if(glow){g+=16;b+=24;}
-    if(eye||mouth){r=65;g=235;b=255;}
+    if(eye||mouth){r=state==5?255:65;g=state==5?110:235;b=state==5?95:255;}
     face_pixels[y*64+x]=((r>>3)<<11)|((g>>2)<<5)|(b>>3);
   }
   printf("FACE state=%d\n",state);
 }
 bool first_frame=true;
 lv_obj_t* connection_label=nullptr;
-int64_t host_until=0;
-const char* sequence_name(){return sequence==0?"fall":sequence==1?"stand":sequence==2?"idle":"custom";}
+bool host_seen=false;
+void desktop_signal() {
+  host_seen=true;
+  if(connection_label)lv_obj_add_flag(connection_label,LV_OBJ_FLAG_HIDDEN);
+}
+const char* sequence_name(){return sequence==0?"fall":sequence==1?"stand":sequence==2?"idle":sequence==3?"thinking":sequence==4?"attention":sequence==5?"error":sequence==6?"hiphop":sequence==7?"twist":sequence==8?"chicken":"custom";}
 void start_sequence(int state,bool transition=true) {
   sequence=state;
   if(state==0)motion.stored(fall_motion::keys,fall_motion::count,fall_motion::rate,fall_motion::roots,false,transition,1.5f);
   else if(state==1)motion.stored(stand_motion::keys,stand_motion::count,stand_motion::rate,stand_motion::roots,false,transition,1);
+  else if(state==3)motion.stored(thinking_motion::keys,thinking_motion::count,thinking_motion::rate,thinking_motion::roots,false,transition,1);
+  else if(state==4)motion.stored(wave_motion::keys,wave_motion::count,wave_motion::rate,nullptr,true,transition,2.0f/3.0f);
+  else if(state==5)motion.stored(error_motion::keys,error_motion::count,error_motion::rate,error_motion::roots,false,transition,2.0f/3.0f);
+  else if(state==6)motion.stored(hiphop_motion::keys,hiphop_motion::count,hiphop_motion::rate,hiphop_motion::roots,false,transition,1);
+  else if(state==7)motion.stored(twist_motion::keys,twist_motion::count,twist_motion::rate,twist_motion::roots,false,transition,1);
+  else if(state==8)motion.stored(chicken_motion::keys,chicken_motion::count,chicken_motion::rate,chicken_motion::roots,false,transition,1);
   else motion.stored(idle_motion::keys,idle_motion::count,idle_motion::rate,idle_motion::roots,true,transition,1);
+  // Host heartbeats do not reset this quiet-idle timer.
+  dance_at=state==2?esp_timer_get_time()+30000000+esp_random()%30000001:0;
+  if(dancing())last_dance=state;
+  if((state<3||dancing())&&bubble){bubble_until=0;lv_obj_add_flag(bubble,LV_OBJ_FLAG_HIDDEN);lv_obj_add_flag(thought_dot,LV_OBJ_FLAG_HIDDEN);}
   printf("STARTUP ENTER state=%s blend_ms=%lld\n",sequence_name(),motion.transition_us/1000);
+}
+void random_dance() {
+  int choice=6+esp_random()%(last_dance<6?3:2);
+  if(last_dance>=6&&choice>=last_dance)++choice;
+  start_sequence(choice);
+}
+void show_state(int state,const char* message) {
+  desktop_signal();
+  start_sequence(state);
+  const auto now=esp_timer_get_time();
+  random_thought=state==3&&!*message;
+  if(random_thought){thought_index=esp_random()%(sizeof(thoughts)/sizeof(thoughts[0]));message=thoughts[thought_index];}
+  if(!*message)message=state==5?"Something went wrong. Check your agent.":"Your agent is waiting for you.";
+  // Fixed bounds keep arbitrary host messages within the upper half.
+  char bounded[193]{};snprintf(bounded,sizeof(bounded),"%.192s",message);
+  lv_label_set_text(bubble,bounded);
+  lv_obj_set_style_border_color(bubble,lv_color_hex(state==5?0xff7966:0x50dfff),0);
+  lv_obj_remove_flag(bubble,LV_OBJ_FLAG_HIDDEN);
+  if(state==3)lv_obj_remove_flag(thought_dot,LV_OBJ_FLAG_HIDDEN);
+  else lv_obj_add_flag(thought_dot,LV_OBJ_FLAG_HIDDEN);
+  bubble_until=now+30000000;thought_next=now+6000000;
+  printf("PAL STATE %s OK\n",sequence_name());
 }
 void multiply(const float* a,const float* b,float* c) {
   for(int col=0;col<4;col++)for(int row=0;row<4;row++) {
@@ -105,7 +160,13 @@ void pose(float t) {
     for(int row=0;row<3;row++)for(int col=0;col<4;col++)
       skin[b][row*4+col]=lroundf(out[col*4+row]*16384);
   }
-  const int scale=width*46/100;
+  const auto camera_now=esp_timer_get_time();
+  const float dt=camera_at?std::min(0.2f,(camera_now-camera_at)/1000000.0f):0;
+  camera_at=camera_now;
+  const float target=sequence>=3&&sequence<=5?1.0f:0.0f;
+  camera_focus+=(target-camera_focus)*(1-expf(-dt/0.32f));
+  // Enlarge the full-body view while retaining the established close-up framing.
+  const int scale=lroundf(width*(0.51f+0.203f*camera_focus));
   int min_y=32767,max_y=-32768;
   for(unsigned i=0;i<kVertices;i++) {
     const auto& v=live_model::vertices[i];int32_t p[3]={};
@@ -123,14 +184,20 @@ void pose(float t) {
       static_cast<int16_t>(std::clamp<int32_t>(16000-p[2],0,32000))};
     min_y=std::min(min_y,int(projected[i].y));max_y=std::max(max_y,int(projected[i].y));
   }
-  // Frame the animated silhouette centrally. The entrance starts with every
-  // vertex above the panel and lands at its center, independent of pose height.
+  // Ground the startup/idle poses near the lower quarter. A fixed floor lets
+  // the stand-up pose grow upward instead of recentering it as it gets taller.
   const float progress=sequence==0?motion.frame_position/(motion.count-1):1;
   const float eased=progress*progress*(3-2*progress);
-  const int half=(max_y-min_y+1)/2;
-  const int entrance=lroundf((height/2+half+12)*(1-eased));
-  const int shift=height/2-(min_y+max_y)/2-entrance;
+  const float floor=height*0.78f;
+  const int entrance=lroundf((floor+12)*(1-eased));
+  const float full_shift=sequence>=0&&sequence<=2?floor-max_y:height/2.0f-(min_y+max_y)/2.0f;
+  // Head bone plus an offset into the screen centers the face in the lower half.
+  const float head_y=world[5][13]+world[5][5]*0.22f;
+  const float close_shift=height*0.67f-(height/2.0f-head_y*scale);
+  const int shift=lroundf(full_shift*(1-camera_focus)+close_shift*camera_focus)-entrance;
   for(auto& point:projected)point.y+=shift;
+  projected_bottom=(max_y+shift)*pixel_scale;
+  model_top=std::clamp((min_y+shift)*pixel_scale,0,board::kHeight-1);
   if(first_frame){printf("STARTUP FIRST max_y=%d state=%s\n",max_y+shift,sequence_name());first_frame=false;}
 }
 int edge(const Point& a,const Point& b,int x,int y) {
@@ -215,6 +282,7 @@ bool resolution(int w,int h,bool doubled=false) {
   }
   pixels=static_cast<uint16_t*>(heap_caps_malloc(bytes,MALLOC_CAP_INTERNAL|MALLOC_CAP_8BIT));
   if(!pixels){printf("LIVE3D REJECT fragmented allocation %dx%d\n",w,h);return false;}
+  previous_top=0;
   width=w;height=h;depth_rows=rows;pixel_scale=scale;buffer_width=bw;buffer_height=bh;depth=pixels+bw*bh;
   memset(pixels,0,bw*bh*2);
   descriptor.header.magic=LV_IMAGE_HEADER_MAGIC;descriptor.header.cf=LV_COLOR_FORMAT_RGB565;
@@ -243,9 +311,26 @@ void run_live3d() {
   lv_label_set_text(connection_label,"Waiting for connection...\nTrying to connect to the host agent.");
   lv_obj_align(connection_label,LV_ALIGN_BOTTOM_MID,0,-16);
   lv_obj_add_flag(connection_label,LV_OBJ_FLAG_HIDDEN);
+  bubble=lv_label_create(screen);
+  lv_obj_set_size(bubble,board::kWidth-32,164);
+  lv_obj_align(bubble,LV_ALIGN_TOP_MID,0,16);
+  lv_obj_set_style_pad_all(bubble,12,0);
+  lv_obj_set_style_radius(bubble,18,0);
+  lv_obj_set_style_bg_color(bubble,lv_color_hex(0x102335),0);
+  lv_obj_set_style_bg_opa(bubble,LV_OPA_COVER,0);
+  lv_obj_set_style_border_width(bubble,1,0);
+  lv_obj_set_style_text_color(bubble,lv_color_hex(0xf3f8ff),0);
+  lv_obj_set_style_text_font(bubble,&lv_font_montserrat_20,0);
+  lv_label_set_long_mode(bubble,LV_LABEL_LONG_DOT);
+  thought_dot=lv_obj_create(screen);
+  lv_obj_set_size(thought_dot,10,10);lv_obj_set_pos(thought_dot,184,188);
+  lv_obj_set_style_radius(thought_dot,LV_RADIUS_CIRCLE,0);
+  lv_obj_set_style_bg_color(thought_dot,lv_color_hex(0x50dfff),0);
+  lv_obj_set_style_border_width(thought_dot,0,0);
   start_sequence(0,false);
   setvbuf(stdin,nullptr,_IONBF,0);fcntl(STDIN_FILENO,F_SETFL,fcntl(STDIN_FILENO,F_GETFL,0)|O_NONBLOCK);
   printf("LIVE3D READY vertices=%u triangles=%u bones=%u commands=low,medium,high,max,native,fast,tex64,tex128,pause,resume,status,frame\n",kVertices,unsigned(sizeof(live_model::indices)/6),kBones);
+  char last_event[17]{};
   char line[512]{};unsigned used=0;bool paused=false,overflow=false;int64_t paused_at=0;
   int64_t epoch=esp_timer_get_time(),stats=epoch;unsigned frames=0;int64_t skin_us=0,draw_us=0,screen_us=0;
   while(true) {
@@ -255,10 +340,31 @@ void run_live3d() {
         if(used&&!overflow) {
           line[used]=0;bool changed=true,ok=true;
           if(!strcmp(line,"boot")){first_frame=true;start_sequence(0,false);used=0;continue;}
-          if(!strcmp(line,"idle")){start_sequence(2);used=0;continue;}
-          if(!strcmp(line,"wave")){sequence=-1;motion.stored(wave_motion::keys,wave_motion::count,wave_motion::rate);used=0;continue;}
-          if(!strcmp(line,"host")){host_until=esp_timer_get_time()+15000000;printf("PAL HOST OK\n");used=0;continue;}
-          if(!strcmp(line,"startupstatus")){printf("STARTUP STATUS state=%s frame=%.2f waiting=%d blend=%d\n",sequence_name(),double(motion.frame_position),!lv_obj_has_flag(connection_label,LV_OBJ_FLAG_HIDDEN),esp_timer_get_time()-motion.started<motion.transition_us);used=0;continue;}
+          if(!strcmp(line,"idle")){desktop_signal();start_sequence(2);used=0;continue;}
+          if(!strcmp(line,"dance")){random_dance();used=0;continue;}
+          if(!strncmp(line,"dance ",6)) {
+            const int state=!strcmp(line+6,"hiphop")?6:!strcmp(line+6,"twist")?7:!strcmp(line+6,"chicken")?8:-1;
+            if(state<0)printf("PAL ERROR unknown dance\n");else start_sequence(state);
+            used=0;continue;
+          }
+          if(!strcmp(line,"wave")){show_state(4,"");used=0;continue;}
+          if(!strncmp(line,"thinking",8)&&(line[8]==0||line[8]==' ')){show_state(3,line[8]?line+9:"");used=0;continue;}
+          if(!strncmp(line,"attention",9)&&(line[9]==0||line[9]==' ')){show_state(4,line[9]?line+10:"");used=0;continue;}
+          if(!strncmp(line,"error",5)&&(line[5]==0||line[5]==' ')){show_state(5,line[5]?line+6:"");used=0;continue;}
+          if(!strncmp(line,"notify ",7)) {
+            NotificationCommand event{};
+            if(!parse_notification(line,event)){printf("PAL ERROR invalid notification\n");used=0;continue;}
+            if(strcmp(last_event,event.id)) {
+              strcpy(last_event,event.id);
+              const char* providers[]={"Codex","Claude Code","GitHub Copilot"};
+              char message[128];snprintf(message,sizeof(message),"%s\n%s",providers[event.provider],event.kind==2?"Something went wrong. Check your agent.":event.kind==1?"Finished the task.":"Ready for your input.");
+              show_state(event.kind==2?5:4,message);
+            }
+            printf("PAL EVENT %s OK\n",event.id);used=0;continue;
+          }
+          if(!strcmp(line,"viewstatus")){printf("VIEW state=%s zoom=%.3f bubble=%d thought=%d heap=%u\n",sequence_name(),double(camera_focus),!lv_obj_has_flag(bubble,LV_OBJ_FLAG_HIDDEN),!lv_obj_has_flag(thought_dot,LV_OBJ_FLAG_HIDDEN),unsigned(esp_get_free_heap_size()));used=0;continue;}
+          if(!strcmp(line,"host")){desktop_signal();printf("PAL HOST OK\n");used=0;continue;}
+          if(!strcmp(line,"startupstatus")){printf("STARTUP STATUS state=%s frame=%.2f waiting=%d blend=%d bottom=%d\n",sequence_name(),double(motion.frame_position),!lv_obj_has_flag(connection_label,LV_OBJ_FLAG_HIDDEN),esp_timer_get_time()-motion.started<motion.transition_us,projected_bottom);used=0;continue;}
           if(motion.command(line)){if(!strncmp(line,"motion ",7)||!strcmp(line,"play"))sequence=-1;used=0;continue;}
           if(!strcmp(line,"low"))ok=resolution(140,228);
           else if(!strcmp(line,"medium"))ok=resolution(160,260);
@@ -276,7 +382,7 @@ void run_live3d() {
           else {
             changed=false;
             if(!strcmp(line,"pause")){if(!paused)paused_at=esp_timer_get_time();paused=true;}
-            else if(!strcmp(line,"resume")){if(paused)motion.started+=esp_timer_get_time()-paused_at;paused=false;}
+            else if(!strcmp(line,"resume")){if(paused){const auto elapsed=esp_timer_get_time()-paused_at;motion.started+=elapsed;if(dance_at)dance_at+=elapsed;}paused=false;}
             else if(!strcmp(line,"frame")) {
               printf("LIVE3D FRAME %d %d\n",buffer_width,buffer_height);fflush(stdout);
               fwrite(pixels,2,buffer_width*buffer_height,stdout);fflush(stdout);
@@ -295,13 +401,24 @@ void run_live3d() {
     if(!paused) {
       // Completion is acted on only after the final pose was rendered.
       if(sequence>=0&&sequence<2&&motion.finished)start_sequence(sequence+1);
+      if(dancing()&&motion.finished)start_sequence(2);
+      if(sequence==2&&dance_at&&now>=dance_at)random_dance();
+      if((sequence==3||sequence==5)&&motion.finished)start_sequence(sequence);
+      if(bubble_until&&now>=bubble_until)start_sequence(2);
+      if(bubble_until&&sequence==3&&random_thought&&now>=thought_next){thought_index=(thought_index+1)%(sizeof(thoughts)/sizeof(thoughts[0]));lv_label_set_text(bubble,thoughts[thought_index]);thought_next=now+6000000;}
       motion.update(now);
       update_face(now);
-      if(sequence==2&&now>=host_until)lv_obj_remove_flag(connection_label,LV_OBJ_FLAG_HIDDEN);
+      if((sequence==2||dancing())&&!host_seen)lv_obj_remove_flag(connection_label,LV_OBJ_FLAG_HIDDEN);
       else lv_obj_add_flag(connection_label,LV_OBJ_FLAG_HIDDEN);
       pose((now-epoch)/1000000.0f);auto posed=esp_timer_get_time();
       rasterize();auto drawn=esp_timer_get_time();
-      lv_obj_invalidate(picture);lv_refr_now(nullptr);auto shown=esp_timer_get_time();
+      // Repaint the union of previous/current robot regions. The upper background
+      // is unchanged; LVGL independently invalidates bubbles when their text changes.
+      if(buffer_width==board::kWidth&&buffer_height==board::kHeight) {
+        lv_area_t dirty{0,std::min(previous_top,model_top),board::kWidth-1,board::kHeight-1};
+        lv_obj_invalidate_area(picture,&dirty);previous_top=model_top;
+      } else lv_obj_invalidate(picture);
+      lv_refr_now(nullptr);auto shown=esp_timer_get_time();
       skin_us+=posed-now;draw_us+=drawn-posed;screen_us+=shown-drawn;frames++;
     }
     lv_timer_handler();vTaskDelay(pdMS_TO_TICKS(1));
