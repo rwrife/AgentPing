@@ -21,7 +21,7 @@ existing settings under `~/.agentping/usb/backups`, and merges only its own hook
 - Codex: `~/.codex/hooks.json`, `PermissionRequest` and `Stop`.
 - Claude Code: `~/.claude/settings.json`, `PermissionRequest`, `Notification`,
   `Stop`, and `StopFailure`.
-- Copilot CLI: `~/.copilot/hooks/agentping-usb.json`, `permissionRequest`,
+- Copilot CLI: `~/.copilot/hooks/agentping-usb.json`, `userPromptSubmitted`, `permissionRequest`, `postToolUse`,
   `notification`, `awaitingUserInput`, `agentStop`, and `errorOccurred`.
 
 Review/trust the Codex entries in `/hooks`; untrusted hooks are skipped by Codex.
@@ -48,6 +48,14 @@ arguments, transcripts, credentials, and session IDs are never persisted by this
 path. The firmware supplies fixed messages and the provider-specific face logo.
 
 Notifications expire from the queue after 60 seconds. The queue is bounded, and
+automatic thinking notices have a **120-second cooldown across all providers**.
+The cooldown starts after a successful device acknowledgment. Repeats during
+that interval are discarded, not delayed, and do not extend the current bubble's
+30-second lifetime. Attention, error, and completion notices remain eligible
+immediately. The cooldown resets when the desktop worker restarts; explicit
+CLI/MCP demo commands bypass it.
+
+For other repeated notices,
 the worker coalesces repeated provider/kind events within three seconds. The
 firmware acknowledges each event ID and ignores a retry of its most recent ID.
 In `live3d_usb`, messages dismiss after 30 seconds and blend back to idle. The
@@ -113,3 +121,9 @@ Official hook references consulted 2026-09-16:
 
 This integration targets the CLIs and Codex surfaces that honor these lifecycle
 hooks. It does not scrape Windows toast notifications or VS Code UI state.
+
+Copilot prompt submission, routine permission checks, and successful tool completion
+map to thinking. Permission checks can run for pre-approved tools; attention is
+reserved for `awaitingUserInput` and permission/input notifications. Reinstall
+hooks and restart Copilot sessions after updating. The live firmware must include
+the thinking notification kind; pulling host code alone does not update the board.

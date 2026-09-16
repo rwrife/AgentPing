@@ -21,6 +21,20 @@ KINDS = ("attention", "completed", "error", "thinking")
 MAX_INPUT = 1024 * 1024
 TTL = 60
 MAX_PENDING = 64
+THINKING_COOLDOWN = 120
+
+
+class ThinkingCooldown:
+    """One thinking notification per display every two minutes, after ACK."""
+    def __init__(self):
+        self.last_sent = None
+
+    def allows(self, kind, now):
+        return kind != "thinking" or self.last_sent is None or now - self.last_sent >= THINKING_COOLDOWN
+
+    def delivered(self, kind, now):
+        if kind == "thinking":
+            self.last_sent = now
 
 
 def state_dir() -> Path:
@@ -32,6 +46,10 @@ def normalize(provider: str, payload: dict, event: str | None = None) -> str | N
     if provider not in PROVIDERS or not isinstance(payload, dict):
         raise ValueError("invalid provider or payload")
     event = event or payload.get("hook_event_name") or payload.get("hookEventName") or payload.get("type")
+    # Copilot checks permissions even for already-approved tools. Only its
+    # actual input/permission notifications should interrupt with a wave.
+    if provider == "copilot" and event in ("userPromptSubmitted", "permissionRequest", "postToolUse"):
+        return "thinking"
     if event in ("agentThinking", "agent_thinking", "thinking", "working", "agentWorking"):
         return "thinking"
     if event in ("PermissionRequest", "permissionRequest", "awaitingUserInput"):
@@ -101,6 +119,7 @@ def run(root: Path, port_name: str) -> None:
     connection = None
     counters = {p: 0 for p in PROVIDERS}
     recent = {}
+    thinking_cooldown = ThinkingCooldown()
     next_heartbeat = 0
     last_error = None
     last_event = None
@@ -149,10 +168,12 @@ def run(root: Path, port_name: str) -> None:
                         path.unlink(missing_ok=True)
                         continue
                     key = (event["provider"], event["kind"])
-                    if command is None or time.monotonic() - recent.get(key, -100) < 3:
+                    same_visible_event = last_event and (last_event["provider"], last_event["kind"]) == key
+                    if command is None or not thinking_cooldown.allows(event["kind"], time.monotonic()) or (same_visible_event and time.monotonic() - recent.get(key, -100) < 3):
                         path.unlink(missing_ok=True)
                         continue
                     send(command, f"PAL EVENT {event['id']} OK".encode())
+                    thinking_cooldown.delivered(event["kind"], time.monotonic())
                     recent[key] = time.monotonic()
                     counters[event["provider"]] += 1
                     last_event = {"provider": event["provider"], "kind": event["kind"], "at": time.time()}

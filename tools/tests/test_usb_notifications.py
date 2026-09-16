@@ -5,11 +5,35 @@ import tempfile
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from agentping_usb_notifications import enqueue, normalize, wire
+from agentping_usb_notifications import enqueue, normalize, wire, ThinkingCooldown
 from install_usb_hooks import merge_hooks, configs
 
 
 class UsbNotificationsTests(unittest.TestCase):
+    def test_thinking_cooldown_drops_repeats_without_sliding_deadline(self):
+        gate = ThinkingCooldown()
+        self.assertTrue(gate.allows("thinking", 0))
+        self.assertTrue(gate.allows("thinking", 1))  # No ACK yet.
+        gate.delivered("thinking", 1)
+        for now in (2, 30, 119, 120.999):
+            self.assertFalse(gate.allows("thinking", now))
+            for kind in ("attention", "error", "completed"):
+                self.assertTrue(gate.allows(kind, now))
+                gate.delivered(kind, now)
+        self.assertTrue(gate.allows("thinking", 121))
+        gate.delivered("thinking", 121)
+        self.assertFalse(gate.allows("thinking", 240))
+        self.assertTrue(gate.allows("thinking", 241))
+
+    def test_copilot_work_does_not_request_attention(self):
+        hooks = configs(Path("python.exe"), Path("hook.py"))["copilot"]["hooks"]
+        for event in ("userPromptSubmitted", "permissionRequest", "postToolUse"):
+            self.assertIn(event, hooks)
+            self.assertEqual("thinking", normalize("copilot", {}, event))
+        self.assertEqual("attention", normalize("copilot", {}, "awaitingUserInput"))
+        self.assertEqual("attention", normalize("copilot", {"notification_type":"permission_prompt"}, "notification"))
+        self.assertEqual("attention", normalize("claude", {}, "PermissionRequest"))
+
     def test_maps_real_hook_shapes_and_explicit_copilot_event(self):
         self.assertEqual("completed", normalize("codex", {"type":"agent-turn-complete"}))
         self.assertEqual("attention", normalize("codex", {"hook_event_name":"PermissionRequest"}))
