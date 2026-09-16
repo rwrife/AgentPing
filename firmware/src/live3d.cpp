@@ -397,8 +397,8 @@ void run_live3d() {
             if(strcmp(last_event,event.id)) {
               strcpy(last_event,event.id);
               const char* providers[]={"Codex","Claude Code","GitHub Copilot"};
-              char message[128];snprintf(message,sizeof(message),"%s\n%s",providers[event.provider],event.kind==2?"Something went wrong. Check your agent.":event.kind==1?"Finished the task.":"Ready for your input.");
-              show_state(event.kind==2?5:4,message,event.provider);
+              char message[128];snprintf(message,sizeof(message),"%s\n%s",providers[event.provider],event.kind==2?"Something went wrong. Check your agent.":event.kind==3?"Working on your request.":event.kind==1?"Finished the task.":"Ready for your input.");
+              show_state(event.kind==2?5:event.kind==3?3:4,message,event.provider);
             }
             printf("PAL EVENT %s OK\n",event.id);used=0;continue;
           }

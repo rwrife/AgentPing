@@ -21,7 +21,7 @@ existing settings under `~/.agentping/usb/backups`, and merges only its own hook
 - Claude Code: `~/.claude/settings.json`, `PermissionRequest`, `Notification`,
   `Stop`, and `StopFailure`.
 - Copilot CLI: `~/.copilot/hooks/agentping-usb.json`, `permissionRequest`,
-  `notification`, `agentStop`, and `errorOccurred`.
+  `notification`, `awaitingUserInput`, `agentStop`, and `errorOccurred`.
 
 Review/trust the Codex entries in `/hooks`; untrusted hooks are skipped by Codex.
 Restart the provider sessions to load updated settings. Existing Codex `notify`
@@ -37,9 +37,11 @@ the worker does not install an auto-start service.
 
 ## Detection and display
 
-Permission requests and requests for input trigger attention. Turn completion
-triggers completion, and supported failure hooks trigger an error notice. Raw
-provider payloads are read only in the short-lived hook; only a random event ID,
+Permission requests and requests for input trigger attention. Thinking/working
+signals trigger the thinking animation instead of the amber “Ready for your
+input” attention state. Turn completion triggers completion, and supported
+failure hooks trigger an error notice. Raw provider payloads are read only in
+the short-lived hook; only a random event ID,
 provider, fixed kind, and timestamp are queued. Prompts, notification text, tool
 arguments, transcripts, credentials, and session IDs are never persisted by this
 path. The firmware supplies fixed messages and the provider-specific face logo.
