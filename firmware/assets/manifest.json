@@ -1,0 +1,63 @@
+{
+  "width": 240,
+  "height": 384,
+  "encoded_bytes": 6308132,
+  "decoded_frame_bytes": 184320,
+  "anchor_sha256": "cd43de2afb1647bb0f948e06e706bf00f9a61219c9ed83d9df10cf2aac9566e7",
+  "clips": [
+    {
+      "name": "boot",
+      "first": 0,
+      "count": 24,
+      "period_ms": 104,
+      "mode": "once",
+      "entry_sha256": "2114eac70a6c88fb6304857aca56099f9697ae63b60903fe3778cd4b09aecfb0",
+      "exit_sha256": "cd43de2afb1647bb0f948e06e706bf00f9a61219c9ed83d9df10cf2aac9566e7"
+    },
+    {
+      "name": "listening",
+      "first": 24,
+      "count": 16,
+      "period_ms": 100,
+      "mode": "pingpong",
+      "entry_sha256": "cd43de2afb1647bb0f948e06e706bf00f9a61219c9ed83d9df10cf2aac9566e7",
+      "exit_sha256": "cd43de2afb1647bb0f948e06e706bf00f9a61219c9ed83d9df10cf2aac9566e7"
+    },
+    {
+      "name": "idle",
+      "first": 40,
+      "count": 16,
+      "period_ms": 100,
+      "mode": "loop",
+      "entry_sha256": "cd43de2afb1647bb0f948e06e706bf00f9a61219c9ed83d9df10cf2aac9566e7",
+      "exit_sha256": "cd43de2afb1647bb0f948e06e706bf00f9a61219c9ed83d9df10cf2aac9566e7"
+    },
+    {
+      "name": "wave-codex",
+      "first": 56,
+      "count": 36,
+      "period_ms": 136,
+      "mode": "loop",
+      "entry_sha256": "cd43de2afb1647bb0f948e06e706bf00f9a61219c9ed83d9df10cf2aac9566e7",
+      "exit_sha256": "cd43de2afb1647bb0f948e06e706bf00f9a61219c9ed83d9df10cf2aac9566e7"
+    },
+    {
+      "name": "wave-claude",
+      "first": 92,
+      "count": 36,
+      "period_ms": 136,
+      "mode": "loop",
+      "entry_sha256": "cd43de2afb1647bb0f948e06e706bf00f9a61219c9ed83d9df10cf2aac9566e7",
+      "exit_sha256": "cd43de2afb1647bb0f948e06e706bf00f9a61219c9ed83d9df10cf2aac9566e7"
+    },
+    {
+      "name": "wave-copilot",
+      "first": 128,
+      "count": 36,
+      "period_ms": 136,
+      "mode": "loop",
+      "entry_sha256": "cd43de2afb1647bb0f948e06e706bf00f9a61219c9ed83d9df10cf2aac9566e7",
+      "exit_sha256": "cd43de2afb1647bb0f948e06e706bf00f9a61219c9ed83d9df10cf2aac9566e7"
+    }
+  ]
+}

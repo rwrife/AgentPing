@@ -189,7 +189,7 @@ async function init(){
     }
     $('asset-info').textContent=`FBX imported · ${meshes} mesh · ${Math.round(triangles).toLocaleString()} triangles · ${bones} bones. ${rig?`Meshy idle: ${rig.clip.duration.toFixed(2)}s. Authored walk, run, and attention wave loaded. Stance correction is reversible.`:'Original unrigged T-pose; root motion only.'}`;
     loaded=true;stateStart=time;viewStart=time;poseStart=time;$('loading').hidden=true;$('loading').style.display='none';$('capture').disabled=false;updateCamera();
-    window.pal={rig,get state(){return state},get time(){return time},get paused(){return paused},get view(){return {...view}},get pose(){return {...pose}},get bubbleVisible(){return bubbleVisible},get bubbleDeadline(){return bubbleDeadline},get messagePages(){return messagePageCount},get messagePage(){return messagePage},setState,renderer,scene,camera,root,faceCanvas,triangles,renderAt(t,wallNow){time=t;render(wallNow);}};
+    window.pal={rig,get state(){return state},get time(){return time},get paused(){return paused},get view(){return {...view}},get pose(){return {...pose}},get bubbleVisible(){return bubbleVisible},get bubbleDeadline(){return bubbleDeadline},get messagePages(){return messagePageCount},get messagePage(){return messagePage},setState,renderer,scene,camera,root,faceCanvas,faceTexture,triangles,renderAt(t,wallNow){time=t;render(wallNow);}};
   }catch(error){console.error(error);$('loading').textContent='Your pal could not load. Check WebGL support and the local character assets, then reload.';}
 }
 function render(wallNow=performance.now()){

@@ -1,0 +1,195 @@
+"""Notification-only provider hooks and a single-owner USB worker.
+
+Only fixed provider/state identifiers leave the hook. Prompts, tool arguments,
+transcripts, and provider messages are never persisted or sent to the display.
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import os
+from pathlib import Path
+import re
+import sys
+import time
+import uuid
+
+PROVIDERS = ("codex", "claude", "copilot")
+KINDS = ("attention", "completed", "error")
+MAX_INPUT = 1024 * 1024
+TTL = 60
+MAX_PENDING = 64
+
+
+def state_dir() -> Path:
+    # Avoid Microsoft Store Python's transparent LocalAppData virtualization.
+    return Path.home() / ".agentping/usb"
+
+
+def normalize(provider: str, payload: dict, event: str | None = None) -> str | None:
+    if provider not in PROVIDERS or not isinstance(payload, dict):
+        raise ValueError("invalid provider or payload")
+    event = event or payload.get("hook_event_name") or payload.get("hookEventName") or payload.get("type")
+    if event in ("PermissionRequest", "permissionRequest"):
+        return "attention"
+    if event in ("Stop", "agentStop", "agent-turn-complete"):
+        return "completed"
+    if event in ("StopFailure", "PostToolUseFailure", "errorOccurred"):
+        return "error"
+    if event in ("Notification", "notification"):
+        kind = payload.get("notification_type")
+        if kind in ("permission_prompt", "idle_prompt", "elicitation_dialog"):
+            return "attention"
+        if kind in ("agent_completed", "agent_idle", "shell_completed", "shell_detached_completed"):
+            return "completed"
+    return None
+
+
+def enqueue(root: Path, provider: str, kind: str, now: float | None = None) -> str:
+    if provider not in PROVIDERS or kind not in KINDS:
+        raise ValueError("invalid notification")
+    now = time.time() if now is None else now
+    pending = root / "pending"
+    pending.mkdir(parents=True, exist_ok=True)
+    files = sorted(pending.glob("*.json"))
+    for path in files:
+        try:
+            if now - path.stat().st_mtime > TTL:
+                path.unlink(missing_ok=True)
+        except FileNotFoundError:
+            pass
+    if len(list(pending.glob("*.json"))) >= MAX_PENDING:
+        raise ValueError("notification queue full")
+    event_id = uuid.uuid4().hex[:16]
+    target = pending / f"{time.time_ns():020d}-{event_id}.json"
+    temporary = target.with_suffix(".tmp")
+    temporary.write_text(json.dumps({"id": event_id, "provider": provider, "kind": kind, "created": now}), encoding="utf-8")
+    temporary.replace(target)
+    return event_id
+
+
+def wire(event: dict, now: float) -> bytes | None:
+    if set(event) != {"id", "provider", "kind", "created"}:
+        raise ValueError("invalid notification fields")
+    if not isinstance(event["id"], str) or not re.fullmatch(r"[0-9a-f]{16}", event["id"]):
+        raise ValueError("invalid notification id")
+    if event["provider"] not in PROVIDERS or event["kind"] not in KINDS:
+        raise ValueError("invalid notification kind")
+    if not isinstance(event["created"], (int, float)) or not 0 <= now - event["created"] < TTL:
+        return None
+    return f"notify {event['id']} {event['provider']} {event['kind']}\n".encode("ascii")
+
+
+def run(root: Path, port_name: str) -> None:
+    import serial
+    root.mkdir(parents=True, exist_ok=True)
+    (root / "pending").mkdir(exist_ok=True)
+    # Windows releases the byte-range lock even if the process crashes.
+    import msvcrt
+    lock = (root / "worker.lock").open("a+b")
+    lock.seek(0); lock.write(b"0"); lock.flush(); lock.seek(0)
+    try:
+        msvcrt.locking(lock.fileno(), msvcrt.LK_NBLCK, 1)
+    except OSError:
+        raise SystemExit("AgentPing USB worker is already running")
+    connection = None
+    counters = {p: 0 for p in PROVIDERS}
+    recent = {}
+    next_heartbeat = 0
+    last_error = None
+    last_event = None
+    def status(connected):
+        p = root / "status.tmp"
+        p.write_text(json.dumps({"pid": os.getpid(), "updated": time.time(), "connected": connected,
+                                "port": port_name, "delivered": counters, "last_event": last_event,
+                                "error": last_error}), encoding="utf-8")
+        p.replace(root / "status.json")
+    def send(command, expected):
+        connection.write(command)
+        deadline = time.monotonic() + 2
+        buffer = b""
+        while time.monotonic() < deadline:
+            buffer = (buffer + connection.read(256))[-4096:]
+            if expected in buffer:
+                return
+        raise OSError("USB acknowledgment timeout")
+    try:
+        while True:
+            try:
+                if connection is None:
+                    connection = serial.Serial(baudrate=115200, timeout=.1, write_timeout=1)
+                    connection.dtr = False; connection.rts = False; connection.port = port_name
+                    connection.open(); connection.reset_input_buffer()
+                    next_heartbeat = 0
+                if time.monotonic() >= next_heartbeat:
+                    send(b"host\n", b"PAL HOST OK")
+                    next_heartbeat = time.monotonic() + 5
+                for path in sorted((root / "pending").glob("*.json")):
+                    try:
+                        if path.stat().st_size > 512:
+                            raise ValueError("oversize event")
+                        event = json.loads(path.read_text(encoding="utf-8"))
+                        command = wire(event, time.time())
+                    except (ValueError, TypeError, KeyError):
+                        path.unlink(missing_ok=True)
+                        continue
+                    key = (event["provider"], event["kind"])
+                    if command is None or time.monotonic() - recent.get(key, -100) < 3:
+                        path.unlink(missing_ok=True)
+                        continue
+                    send(command, f"PAL EVENT {event['id']} OK".encode())
+                    recent[key] = time.monotonic()
+                    counters[event["provider"]] += 1
+                    last_event = {"provider": event["provider"], "kind": event["kind"], "at": time.time()}
+                    path.unlink(missing_ok=True)
+                last_error = None
+                status(True)
+                time.sleep(.25)
+            except (OSError, serial.SerialException):
+                if connection:
+                    connection.close()
+                connection = None
+                last_error = "USB unavailable; retrying"
+                status(False)
+                time.sleep(2)
+    finally:
+        if connection:
+            connection.close()
+        status(False)
+        lock.close()
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--state-dir", type=Path, default=state_dir())
+    sub = parser.add_subparsers(dest="mode", required=True)
+    hook = sub.add_parser("hook")
+    hook.add_argument("--provider", choices=PROVIDERS, required=True)
+    hook.add_argument("--event")
+    hook.add_argument("payload", nargs="?")
+    worker = sub.add_parser("run")
+    worker.add_argument("--port", default="COM5")
+    sub.add_parser("status")
+    args = parser.parse_args()
+    if args.mode == "run":
+        run(args.state_dir, args.port)
+    elif args.mode == "status":
+        path = args.state_dir / "status.json"
+        print(path.read_text() if path.exists() else '{"connected": false}')
+    else:
+        try:
+            raw = args.payload.encode() if args.payload is not None else sys.stdin.buffer.read(MAX_INPUT + 1)
+            if len(raw) > MAX_INPUT:
+                raise ValueError("oversize hook input")
+            payload = json.loads(raw)
+            kind = normalize(args.provider, payload, args.event)
+            if kind:
+                enqueue(args.state_dir, args.provider, kind)
+        except (OSError, ValueError, TypeError):
+            # Notification hooks never control provider permissions or task completion.
+            print("AgentPing notification skipped; payload not logged", file=sys.stderr)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
