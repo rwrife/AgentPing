@@ -10,7 +10,7 @@ import time
 import uuid
 
 STATES = ("idle", "thinking", "attention", "error", "wave", "boot")
-DANCES = ("random", "hiphop", "twist", "chicken")
+DANCES = ("random", "twist", "chicken")
 JOINTS = ("head", "torso", "left_shoulder", "right_shoulder", "left_elbow", "right_elbow",
           "left_hip", "right_hip", "left_knee", "right_knee")
 # The renderer keeps uploaded clips in RAM: 27 bones as 16-bit quaternions.

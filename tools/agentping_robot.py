@@ -72,7 +72,11 @@ def frame_budget(root: Path) -> int:
 
 
 def play_motion(root: Path, clip: Path, fps: int, start: float) -> dict:
-    motion = load_motion(clip, fps, start, frame_budget(root))
+    # Convert/validate before interrupting the current animation. Release the old
+    # RAM clip before measuring capacity for its replacement.
+    motion = load_motion(clip, fps, start)
+    request(root, "reset", {})
+    motion["frames"] = motion["frames"][:frame_budget(root)]
     result = request(root, "motion", motion, timeout=90)
     result["clip"] = {"frames": len(motion["frames"]), "rate": motion["rate"],
                       "seconds": round((len(motion["frames"]) - 1) / motion["rate"], 2)}
@@ -134,7 +138,7 @@ def serve_mcp(root: Path) -> None:
         return request(root, "state", {"state": state})
 
     @mcp.tool()
-    def robot_dance(name: Literal["random", "hiphop", "twist", "chicken"] = "random") -> dict:
+    def robot_dance(name: Literal["random", "twist", "chicken"] = "random") -> dict:
         """Play one dance, then return to idle."""
         return request(root, "dance", {"name": name})
 
@@ -145,7 +149,7 @@ def serve_mcp(root: Path) -> None:
         return request(root, "joint", {"joint": joint, "x": x, "y": y, "z": z, "duration_ms": duration_ms})
 
     @mcp.tool()
-    def robot_play_motion(path: str, fps: int = 12, start_seconds: float = 0) -> dict:
+    def robot_play_motion(path: str, fps: int = 10, start_seconds: float = 0) -> dict:
         """Retarget a Mixamo .fbx animation (or an already exported .json clip) onto the robot and loop it from RAM. Converting an FBX needs Node.js and the simulator dependencies. The renderer keeps clips in its spare heap, so a long clip may be trimmed: fps trades smoothness against how much of the clip fits, and start_seconds chooses where the window begins. Idle or reset stops playback."""
         return play_motion(root, Path(path), fps, start_seconds)
 
@@ -184,7 +188,7 @@ def main() -> int:
     joint.add_argument("--duration-ms", type=int, default=600)
     motion = sub.add_parser("motion", help="Play a custom Mixamo animation from the renderer's RAM")
     motion.add_argument("clip", type=Path, help="Mixamo .fbx, or a .json clip already written by export-motion.mjs")
-    motion.add_argument("--fps", type=int, default=12, help="Keyframes sampled per second (1-60)")
+    motion.add_argument("--fps", type=int, default=10, help="Keyframes sampled per second (1-60)")
     motion.add_argument("--start", type=float, default=0, help="Seconds into the clip to begin the sampled window")
     args = parser.parse_args()
     try:
