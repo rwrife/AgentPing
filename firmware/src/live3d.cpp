@@ -15,6 +15,7 @@
 #include "../assets/face_lookup.h"
 #include "board.h"
 #include "usb_motion.h"
+#include "manual_pose.h"
 #include "esp_heap_caps.h"
 #include "esp_system.h"
 #include "esp_random.h"
@@ -49,6 +50,7 @@ uint16_t* texture64=nullptr;
 lv_image_dsc_t descriptor{};
 lv_obj_t* picture=nullptr;
 UsbMotion motion;
+ManualPose manual;
 int sequence=0;
 int last_dance=-1;
 int64_t dance_at=0;
@@ -89,8 +91,9 @@ void desktop_signal() {
   host_seen=true;
   if(connection_label)lv_obj_add_flag(connection_label,LV_OBJ_FLAG_HIDDEN);
 }
-const char* sequence_name(){return sequence==0?"fall":sequence==1?"stand":sequence==2?"idle":sequence==3?"thinking":sequence==4?"attention":sequence==5?"error":sequence==6?"hiphop":sequence==7?"twist":sequence==8?"chicken":"custom";}
+const char* sequence_name(){return sequence==0?"fall":sequence==1?"stand":sequence==2?"idle":sequence==3?"thinking":sequence==4?"attention":sequence==5?"error":sequence==6?"hiphop":sequence==7?"twist":sequence==8?"chicken":sequence==9?"manual":"custom";}
 void start_sequence(int state,bool transition=true) {
+  manual.active=false;
   sequence=state;
   if(state==0)motion.stored(fall_motion::keys,fall_motion::count,fall_motion::rate,fall_motion::roots,false,transition,1.5f);
   else if(state==1)motion.stored(stand_motion::keys,stand_motion::count,stand_motion::rate,stand_motion::roots,false,transition,1);
@@ -339,6 +342,11 @@ void run_live3d() {
       if(ch=='\n'||ch=='\r') {
         if(used&&!overflow) {
           line[used]=0;bool changed=true,ok=true;
+          const int joint_command=manual.command(line,motion);
+          if(joint_command) {
+            if(joint_command>0){desktop_signal();sequence=9;dance_at=0;bubble_until=0;lv_obj_add_flag(bubble,LV_OBJ_FLAG_HIDDEN);lv_obj_add_flag(thought_dot,LV_OBJ_FLAG_HIDDEN);}
+            used=0;continue;
+          }
           if(!strcmp(line,"boot")){first_frame=true;start_sequence(0,false);used=0;continue;}
           if(!strcmp(line,"idle")){desktop_signal();start_sequence(2);used=0;continue;}
           if(!strcmp(line,"dance")){random_dance();used=0;continue;}
@@ -382,7 +390,7 @@ void run_live3d() {
           else {
             changed=false;
             if(!strcmp(line,"pause")){if(!paused)paused_at=esp_timer_get_time();paused=true;}
-            else if(!strcmp(line,"resume")){if(paused){const auto elapsed=esp_timer_get_time()-paused_at;motion.started+=elapsed;if(dance_at)dance_at+=elapsed;}paused=false;}
+            else if(!strcmp(line,"resume")){if(paused){const auto elapsed=esp_timer_get_time()-paused_at;motion.started+=elapsed;if(manual.active)manual.started+=elapsed;if(dance_at)dance_at+=elapsed;}paused=false;}
             else if(!strcmp(line,"frame")) {
               printf("LIVE3D FRAME %d %d\n",buffer_width,buffer_height);fflush(stdout);
               fwrite(pixels,2,buffer_width*buffer_height,stdout);fflush(stdout);
@@ -407,6 +415,7 @@ void run_live3d() {
       if(bubble_until&&now>=bubble_until)start_sequence(2);
       if(bubble_until&&sequence==3&&random_thought&&now>=thought_next){thought_index=(thought_index+1)%(sizeof(thoughts)/sizeof(thoughts[0]));lv_label_set_text(bubble,thoughts[thought_index]);thought_next=now+6000000;}
       motion.update(now);
+      manual.update(now,motion);
       update_face(now);
       if((sequence==2||dancing())&&!host_seen)lv_obj_remove_flag(connection_label,LV_OBJ_FLAG_HIDDEN);
       else lv_obj_add_flag(connection_label,LV_OBJ_FLAG_HIDDEN);

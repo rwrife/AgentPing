@@ -14,6 +14,8 @@ import sys
 import time
 import uuid
 
+from robot_control import process_requests
+
 PROVIDERS = ("codex", "claude", "copilot")
 KINDS = ("attention", "completed", "error")
 MAX_INPUT = 1024 * 1024
@@ -98,20 +100,27 @@ def run(root: Path, port_name: str) -> None:
     next_heartbeat = 0
     last_error = None
     last_event = None
-    def status(connected):
+    def status(connected, running=True):
         p = root / "status.tmp"
-        p.write_text(json.dumps({"pid": os.getpid(), "updated": time.time(), "connected": connected,
-                                "port": port_name, "delivered": counters, "last_event": last_event,
+        p.write_text(json.dumps({"pid": os.getpid(), "updated": time.time(), "connected": connected, "running": running,
+                                "port": port_name, "control_version": 1, "delivered": counters, "last_event": last_event,
                                 "error": last_error}), encoding="utf-8")
         p.replace(root / "status.json")
     def send(command, expected):
+        if connection is None:
+            raise OSError("USB unavailable")
+        connection.reset_input_buffer()
         connection.write(command)
         deadline = time.monotonic() + 2
         buffer = b""
         while time.monotonic() < deadline:
             buffer = (buffer + connection.read(256))[-4096:]
-            if expected in buffer:
-                return
+            while b"\n" in buffer:
+                line, buffer = buffer.split(b"\n", 1)
+                if line.startswith(b"PAL ERROR"):
+                    raise OSError("Device rejected command")
+                if line.startswith(expected):
+                    return line.decode("utf-8", errors="replace")
         raise OSError("USB acknowledgment timeout")
     try:
         while True:
@@ -124,6 +133,8 @@ def run(root: Path, port_name: str) -> None:
                 if time.monotonic() >= next_heartbeat:
                     send(b"host\n", b"PAL HOST OK")
                     next_heartbeat = time.monotonic() + 5
+                if process_requests(root, send):
+                    break
                 for path in sorted((root / "pending").glob("*.json")):
                     try:
                         if path.stat().st_size > 512:
@@ -151,11 +162,13 @@ def run(root: Path, port_name: str) -> None:
                 connection = None
                 last_error = "USB unavailable; retrying"
                 status(False)
+                if process_requests(root, send):
+                    break
                 time.sleep(2)
     finally:
         if connection:
             connection.close()
-        status(False)
+        status(False, running=False)
         lock.close()
 
 

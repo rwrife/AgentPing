@@ -287,3 +287,7 @@ the growing stand-up silhouette.
 Full-body framing now uses a projection scale of 51% of panel width (up from
 46%), making the robot approximately 11% larger. The fixed startup floor and
 head/shoulder close-up framing are retained.
+
+For desktop CLI/MCP commands and smooth manual joint control, see
+[robot controls](../docs/robot-control.md). Manual joint poses blend into the
+next animation using the existing cached pose transition.
