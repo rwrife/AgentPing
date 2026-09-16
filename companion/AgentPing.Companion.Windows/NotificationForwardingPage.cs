@@ -150,7 +150,7 @@ internal sealed class NotificationForwardingPage : TabPage
     {
         try
         {
-            using var input = await notification.AppInfo.DisplayInfo.GetLogo(new global::Windows.Foundation.Size(48, 48)).OpenReadAsync();
+            using var input = await notification.AppInfo.DisplayInfo.GetLogo(new global::Windows.Foundation.Size(128, 128)).OpenReadAsync();
             using var reader = new global::Windows.Storage.Streams.DataReader(input);
             if (input.Size > 4 * 1024 * 1024) return null;
             await reader.LoadAsync((uint)input.Size);
@@ -176,9 +176,38 @@ internal sealed class NotificationForwardingPage : TabPage
                 if (c.A >= 128 && (!opaqueTile || contrast > 100))
                 { var bit = y * 48 + x; mask[bit / 8] |= (byte)(1 << (bit % 8)); }
             }
-            return mask.Any(b => b != 0) ? Convert.ToHexString(mask) : null;
+            return EnlargeIcon(mask);
         }
         catch (Exception) { return null; }
+    }
+
+    private static string? EnlargeIcon(byte[] mask)
+    {
+        bool Ink(int x, int y) => (mask[(y * 48 + x) / 8] & (1 << ((y * 48 + x) % 8))) != 0;
+        var left = 48; var top = 48; var right = -1; var bottom = -1;
+        for (var y = 0; y < 48; y++) for (var x = 0; x < 48; x++)
+        {
+            if (!Ink(x, y)) continue;
+            left = Math.Min(left, x); right = Math.Max(right, x);
+            top = Math.Min(top, y); bottom = Math.Max(bottom, y);
+        }
+        if (right < left) return null;
+        // Windows logos often contain substantial transparent padding. Fit the
+        // visible mark, preserving its aspect ratio, inside a one-pixel margin.
+        var width = right - left + 1; var height = bottom - top + 1;
+        var scale = 46.0 / Math.Max(width, height);
+        var targetWidth = Math.Max(1, (int)Math.Round(width * scale));
+        var targetHeight = Math.Max(1, (int)Math.Round(height * scale));
+        var dx = (48 - targetWidth) / 2; var dy = (48 - targetHeight) / 2;
+        var result = new byte[288];
+        for (var y = 0; y < targetHeight; y++) for (var x = 0; x < targetWidth; x++)
+        {
+            if (!Ink(left + Math.Min(width - 1, x * width / targetWidth),
+                     top + Math.Min(height - 1, y * height / targetHeight))) continue;
+            var bit = (y + dy) * 48 + x + dx;
+            result[bit / 8] |= (byte)(1 << (bit % 8));
+        }
+        return Convert.ToHexString(result);
     }
 
     private async Task SendAsync(string? icon, string message)

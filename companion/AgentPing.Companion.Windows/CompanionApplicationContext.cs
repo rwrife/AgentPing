@@ -87,30 +87,25 @@ internal sealed class MainForm : Form
 
     private TabPage BuildOverview()
     {
-        var page = Page(TextFor("OverviewTab", "Overview"));
-        page.Controls.Add(Row(new Label { Text = "Bridge", AutoSize = true }, _bridgeStatus,
-            Button("Start", async (_, _) => await StartBridgeAsync()), Button("Stop", (_, _) => StopBridge())));
-        page.Controls.Add(_adapters);
-        page.Controls.Add(_startup);
-        return page;
+        return Page(TextFor("OverviewTab", "Overview"),
+            Row(new Label { Text = "Bridge", AutoSize = true }, _bridgeStatus,
+                Button("Start", async (_, _) => await StartBridgeAsync()), Button("Stop", (_, _) => StopBridge())),
+            _startup, _adapters);
     }
 
     private TabPage BuildDevices()
     {
-        var page = Page(TextFor("DevicesTab", "Devices & pairing"));
         var explanation = new Label { AutoSize = true, MaximumSize = new Size(700, 0), Text = "LAN pairing is off by default. Enabling it requires a private IPv4 interface, TLS, a bounded single-use window, and confirmation here. Public interfaces are rejected." };
-        page.Controls.Add(explanation);
-        page.Controls.Add(Row(Button("Open pairing window…", async (_, _) => await ConfirmPairingAsync()), Button("Rotate token", async (_, _) => await RotateSelectedAsync()), Button("Revoke device", async (_, _) => await RevokeSelectedAsync())));
-        page.Controls.Add(_devices);
-        return page;
+        return Page(TextFor("DevicesTab", "Devices & pairing"), explanation,
+            Row(Button("Open pairing window…", async (_, _) => await ConfirmPairingAsync()), Button("Rotate token", async (_, _) => await RotateSelectedAsync()), Button("Revoke device", async (_, _) => await RevokeSelectedAsync())),
+            _devices);
     }
 
     private TabPage BuildActivity()
     {
-        var page = Page(TextFor("ActivityTab", "Activity & support"));
-        page.Controls.Add(_attentions);
-        page.Controls.Add(Row(Button("Export redacted logs…", async (_, _) => await ExportLogsAsync()), Button("Open troubleshooting guide", (_, _) => OpenTroubleshooting())));
-        return page;
+        return Page(TextFor("ActivityTab", "Activity & support"),
+            Row(Button("Export redacted logs…", async (_, _) => await ExportLogsAsync()), Button("Open troubleshooting guide", (_, _) => OpenTroubleshooting())),
+            _attentions);
     }
 
     public async Task StartBridgeAsync()
@@ -250,10 +245,32 @@ internal sealed class MainForm : Form
         if (File.Exists(path)) Process.Start(new ProcessStartInfo(path) { UseShellExecute = true });
     }
 
-    private static TabPage Page(string title) => new(title) { Padding = new Padding(12), AutoScroll = true };
+    private static TabPage Page(string title, params Control[] controls)
+    {
+        var page = new TabPage(title) { Padding = new Padding(12) };
+        var layout = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = controls.Length, AutoScroll = true };
+        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        for (var i = 0; i < controls.Length; i++)
+        {
+            var control = controls[i];
+            var isList = control is ListView;
+            layout.RowStyles.Add(new RowStyle(isList ? SizeType.Percent : SizeType.AutoSize, isList ? 100 : 0));
+            control.Margin = new Padding(0, 0, 0, isList ? 0 : 10);
+            control.Dock = isList ? DockStyle.Fill : DockStyle.Top;
+            if (isList) control.MinimumSize = new Size(0, 140);
+            layout.Controls.Add(control, 0, i);
+        }
+        layout.SizeChanged += (_, _) =>
+        {
+            foreach (var label in controls.OfType<Label>())
+                label.MaximumSize = new Size(Math.Max(1, layout.ClientSize.Width - label.Margin.Horizontal), 0);
+        };
+        page.Controls.Add(layout);
+        return page;
+    }
     private static string TextFor(string key, string fallback) =>
         Strings.GetString(key, CultureInfo.CurrentUICulture) ?? fallback;
-    private static FlowLayoutPanel Row(params Control[] controls) { var row = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Top, FlowDirection = FlowDirection.LeftToRight, WrapContents = true }; row.Controls.AddRange(controls); return row; }
+    private static FlowLayoutPanel Row(params Control[] controls) { var row = new FlowLayoutPanel { AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, Dock = DockStyle.Top, FlowDirection = FlowDirection.LeftToRight, WrapContents = true }; row.Controls.AddRange(controls); return row; }
     private static Button Button(string text, EventHandler handler) { var button = new Button { Text = text, AutoSize = true, UseVisualStyleBackColor = true }; button.Click += handler; return button; }
     private static ListView List(string name, params string[] columns)
     {

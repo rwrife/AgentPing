@@ -2,7 +2,7 @@ param([switch]$BuildOnly)
 $ErrorActionPreference = 'Stop'
 $repo = Split-Path $PSScriptRoot -Parent
 $output = Join-Path $env:LOCALAPPDATA 'AgentPing\NotificationCompanion'
-if (Get-Process -Name AgentPing.Companion -ErrorAction SilentlyContinue) {
+if (Get-Process -Name AgentPing.Companion -ErrorAction SilentlyContinue | Where-Object { $_.Path -eq (Join-Path $output 'AgentPing.Companion.exe') }) {
     throw 'Exit AgentPing Companion from its tray menu before updating the installed app.'
 }
 # Build an unsigned Windows 11 demo package without adding signing certificates.
