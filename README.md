@@ -12,9 +12,27 @@ The physical robot uses the `live3d_usb` firmware. This path needs **USB only**:
 
 ## Quick start: physical robot on Windows
 
-### 1. Install desktop tools
+### 1. Buy the board and prepare Windows
 
-Requirements: Git, Python 3.11 or newer (tested with 3.13), PowerShell, the supported board, and a USB data cable. Install and sign into your chosen agent CLIs separately.
+1. Get the **Waveshare ESP32-C6 Touch AMOLED 1.64** display board. Here is the
+   [Amazon purchase link supplied for this project](https://www.amazon.com/dp/B0GTDXXYV8).
+   Check that the selected listing variant matches this board; the firmware is
+   configured for its 280 × 456 AMOLED display, not a bare ESP32 development board.
+2. Have a USB **data** cable ready. The same connection powers the board and carries
+   commands; a charge-only cable will not expose a serial port.
+3. Install Git and Python 3.11 or newer (tested with 3.13), with their commands
+   available on PATH. Open a new PowerShell terminal and check:
+
+```powershell
+git --version
+python --version
+```
+
+Install and sign into your chosen agent CLIs separately. The USB Windows client
+below is a background Python application controlled by `robot.cmd`; the optional
+.NET tray application has separate instructions later in this guide.
+
+### 2. Download the project and install the Windows USB client
 
 ```powershell
 git clone https://github.com/rwrife/AgentPing.git
@@ -22,19 +40,52 @@ cd AgentPing
 .\companion\setup-robot.ps1
 ```
 
-For an existing checkout, preserve local work, then use `git switch main` and `git pull --ff-only`. Run setup once and again when Python dependencies change. All commands below run from the repository root.
+Setup creates `.venv-robot` and installs the USB and MCP dependencies. Wait for
+the `Ready` message, then check the launcher:
 
-### 2. Connect and flash the robot
+```powershell
+.\companion\robot.cmd --help
+```
 
-Skip this step if the board already has the current `live3d_usb` firmware. Otherwise:
+If PowerShell blocks the setup script, perform the same installation directly:
+
+```powershell
+python -m venv .venv-robot
+.\.venv-robot\Scripts\python.exe -m pip install -r tools/requirements-robot.txt
+```
+
+For an existing checkout, preserve local work, then use `git switch main` and
+`git pull --ff-only`. Run setup again when Python dependencies change. All commands
+below run from the repository root; virtual environment activation is unnecessary.
+
+### 3. Build the firmware
+
+Skip steps 3–4 if the board already has the current `live3d_usb` firmware.
+Create a separate build environment, install the pinned dependencies, and compile:
 
 ```powershell
 python -m venv .venv-firmware
 .\.venv-firmware\Scripts\python.exe -m pip install -r firmware/requirements-ci.txt
+.\.venv-firmware\Scripts\pio.exe run -d firmware -e live3d_usb
+```
+
+Wait for `[SUCCESS]`. The first build downloads the ESP-IDF toolchain and can take
+several minutes. The output is `firmware/.pio/build/live3d_usb/firmware.bin`.
+Use **`-e live3d_usb`** explicitly; the default network firmware is a different
+application. Model, textures, and animations are checked in, so FBX conversion,
+Node.js, and the simulator are not needed. See [live renderer details](firmware/LIVE3D.md).
+
+### 4. Connect and flash the board
+
+1. Plug the board into the PC using the USB data cable.
+2. Find its serial port in Device Manager under **Ports (COM & LPT)**, or run:
+
+```powershell
 .\.venv-robot\Scripts\python.exe -m serial.tools.list_ports
 ```
 
-Replace `COM5` below with the board's reported port. Close serial monitors and stop an existing worker before flashing:
+3. Replace `COM5` below with the reported port. Close serial monitors and stop an
+   existing robot worker before flashing:
 
 ```powershell
 # Only needed if a worker is already running:
@@ -43,9 +94,11 @@ Replace `COM5` below with the board's reported port. Close serial monitors and s
 .\.venv-firmware\Scripts\pio.exe run -d firmware -e live3d_usb -t upload --upload-port COM5
 ```
 
-The first build downloads the toolchain and can take several minutes. Use **`-e live3d_usb`** explicitly; the default network firmware is a different application. Model, textures, and animations are checked in, so FBX conversion is not needed. See [live renderer details](firmware/LIVE3D.md).
+4. Wait for the upload's `[SUCCESS]` message and automatic reset. The robot should
+   play its startup sequence and enter idle with the initial connection message.
+   If no port appears, try another data cable/USB port before retrying.
 
-### 3. Start the USB worker
+### 5. Start the Windows USB client and verify the display
 
 ```powershell
 .\companion\robot.cmd --port COM5 start
@@ -61,6 +114,17 @@ A successful live response includes `"ok": true` and `VIEW state=...`. Wait a fe
 ```
 
 Start the worker again after restarting Windows; setup does not install an automatic startup service. The initial connection caption disappears after the first desktop signal.
+
+Send the first message:
+
+```powershell
+.\companion\robot.cmd message "Hello world!"
+```
+
+Look for `PAL STATE attention OK` in the command response and a waving robot with
+a message bubble on the device. The client runs in the background, so no app window
+is expected. Continue with the [terminal demo](#terminal-demo), then
+[wire up your CLI agents](#wire-up-the-cli-agents) for automatic notices and MCP.
 
 ## Terminal demo
 
@@ -254,6 +318,37 @@ Example demo prompts:
 USB rendering, CLI/MCP control, provider logos, red error icons, and timed return to idle have been tested on the physical device. Notifications replace the visible notice; there is no on-device queue or approval-response flow.
 
 ## Optional network bridge and tray application
+
+### Build and launch the Windows tray app
+
+This is the separate .NET management UI for the network bridge. It does not start
+or replace the USB robot worker above. For the USB demo, use `robot.cmd`.
+
+1. Install **.NET SDK 10.0.300**, the exact version pinned in `global.json`.
+   Confirm it appears in `dotnet --list-sdks`.
+2. From the repository root, restore the solution and publish the app and its
+   companion bridge together:
+
+```powershell
+dotnet restore AgentPing.sln --locked-mode
+dotnet publish companion/AgentPing.Companion.Windows/AgentPing.Companion.Windows.csproj -c Release -r win-x64 --self-contained true --no-restore -o artifacts/win-x64/app
+dotnet publish bridge/AgentPing.Bridge/AgentPing.Bridge.csproj -c Release -r win-x64 --self-contained true --no-restore -o artifacts/win-x64/app/bridge
+```
+
+3. Launch the published application:
+
+```powershell
+Start-Process -FilePath .\artifacts\win-x64\app\AgentPing.Companion.exe -WindowStyle Normal
+```
+
+4. Use its management window/tray icon for bridge controls. For ARM64 Windows,
+   replace `win-x64` with `win-arm64` in all publish and launch paths.
+   Keep the complete output folder, including `bridge/`, together when moving it.
+
+Publishing self-contained includes the .NET runtime. These local builds are
+unsigned. Network device pairing requires additional TLS/provisioning setup;
+see [companion details](companion/README.md) and
+[Windows troubleshooting](docs/windows-troubleshooting.md).
 
 ### Bridge
 
