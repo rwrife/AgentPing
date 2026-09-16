@@ -208,6 +208,11 @@ Messages and custom icons dismiss after 30 seconds and return to idle. Error ico
 
 Both share the USB worker. MCP registration alone does not install notification hooks. Hooks notify you; they do not approve, deny, or resume agent tasks.
 
+Automatic thinking notices are limited to once every two minutes across all
+agents. Repeats are dropped so the message can dismiss after 30 seconds and return
+to idle. Attention and error notices still get through immediately. Explicit
+CLI/MCP demo commands bypass this cooldown.
+
 ### Automatic notifications
 
 Preview the configuration paths, then install the additive hooks for all three providers:
@@ -224,7 +229,7 @@ The installer preserves unrelated handlers and backs up existing settings under 
 | --- | --- | --- |
 | Codex | `%USERPROFILE%\.codex\hooks.json` | `PermissionRequest`, `Stop` |
 | Claude Code | `%USERPROFILE%\.claude\settings.json` | `PermissionRequest`, `Notification`, `Stop`, `StopFailure` |
-| Copilot CLI | `%USERPROFILE%\.copilot\hooks\agentping-usb.json` | `permissionRequest`, `notification`, `agentStop`, `errorOccurred` |
+| Copilot CLI | `%USERPROFILE%\.copilot\hooks\agentping-usb.json` | `userPromptSubmitted`, `permissionRequest`, `postToolUse`, `notification`, `awaitingUserInput`, `agentStop`, `errorOccurred` |
 
 Restart your CLI sessions after installation. **In Codex, open `/hooks` and review/trust the AgentPing entries**; untrusted hooks are skipped. Rerun the installer after moving the checkout, replacing its Python environment, or updating the hook implementation.
 
