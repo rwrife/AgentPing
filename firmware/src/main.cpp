@@ -1,4 +1,5 @@
 #include "board.h"
+#include "character_demo.h"
 #include "config_store.h"
 #include "transport.h"
 #include "ui.h"
@@ -47,6 +48,10 @@ extern "C" void app_main() {
 
   ESP_ERROR_CHECK(agentping::board::initialize());
   agentping::board::set_brightness(65);
+#ifdef AGENTPING_CHARACTER_DEMO
+  agentping::run_character_demo();
+  return;
+#endif
   agentping::ui::initialize();
   agentping::ui::render({});
   if (xTaskCreate(ui_task, "lvgl", 6144, nullptr, 5, nullptr) != pdPASS) {

@@ -69,6 +69,7 @@ bool color_transfer_done(esp_lcd_panel_io_handle_t, esp_lcd_panel_io_event_data_
 }
 
 void flush(lv_display_t*, const lv_area_t* area, std::uint8_t* pixels) {
+  lv_draw_sw_rgb565_swap(pixels,(area->x2-area->x1+1)*(area->y2-area->y1+1));
   const esp_err_t result = esp_lcd_panel_draw_bitmap(
       panel, area->x1, area->y1, area->x2 + 1, area->y2 + 1, pixels);
   if (result != ESP_OK) {

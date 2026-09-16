@@ -1,0 +1,18 @@
+{
+  "width": 240,
+  "height": 384,
+  "encoded_bytes": 2684088,
+  "decoded_frame_bytes": 184320,
+  "clips": [
+    {
+      "name": "idle",
+      "first": 0,
+      "count": 24
+    },
+    {
+      "name": "wave",
+      "first": 24,
+      "count": 36
+    }
+  ]
+}
