@@ -95,6 +95,7 @@ causing an actual failure:
 ```powershell
 .\companion\robot.cmd icon --file assets/icons/heart-48.bin --color "#ff8800" --message "Hello world!"
 .\companion\robot.cmd icon --file assets/icons/teams-48.bin --color "#8b88ff" --message "Teams: Your meeting starts now"
+.\companion\robot.cmd icon --file assets/icons/enghub.bin --color "#0078D4" --message "EngHub: Your review is needed"
 
 # Error state overrides the requested green/purple and renders the icon red.
 .\companion\robot.cmd icon --file assets/icons/heart-48.bin --color "#00ff00" --state error --message "Demo error: something needs fixing!"
