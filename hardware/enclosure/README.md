@@ -1,104 +1,101 @@
-# Pixel Pal monitor pod - fit-check prototype
+# Pixel Pal monitor pod - measured-board snap-fit prototype
 
-Two-piece printable enclosure for the Waveshare ESP32-C6-Touch-AMOLED-1.64.
-Dimensions are millimetres. This is an unprinted prototype, not a verified production fit.
+White PLA, two-piece edge-mounted housing for the pin-free Waveshare
+ESP32-C6-Touch-AMOLED-1.64. Dimensions are millimetres. This is an unprinted
+fit-check prototype, not a verified production fit.
 
-## Files
+## Current dimensions
 
-- `front-shell.stl`: shared shell, already oriented front-down on the print bed.
-- `back-cover.stl`: plain removable back; the same housing works on either monitor edge.
-- STEP files: individual editable solids in assembled coordinates.
-- `pixel-pal-monitor-pod.FCStd`: both parts in assembled coordinates.
-- `preview.png`: illustrative assembly; the black display and cyan face are placeholders, not printed features.
-- `build_enclosure.py`: editable dimensions and reproducible FreeCAD generator.
-- `validation.json`: solid/mesh validation and actual bounding dimensions.
+| Feature | Dimension |
+|---|---|
+| Assembled housing | 42 x 56 x 13.6 |
+| Front bezel depth | 5.6 |
+| Rear floor | 2.8 |
+| Rear exterior seam height | 8.0 |
+| Rear recessed locating lip top | 10.8 |
+| Locating lip / socket | 38 x 52 / 38.5 x 52.5 |
+| Module pocket | 29.92 x 45 |
+| Screen opening | 27.2 x 42.2 |
+| Screen clearance above measured glass | 0.3 |
+| Front retaining rim thickness | 1.2 |
+| Board mounting holes | 22 x 39 pitch, symmetric, M2 |
 
-## Size and mounting
+The user measured **9.3 mm from metal standoff feet to screen top**, confirmed
+M2 threaded standoffs and no header pins, and estimated the mounting pattern
+as 22 x 39. Hole centres are (+/-11, +/-19.5) relative to the enclosure centre.
+The standoffs sit directly on the rear floor: no tall printed spacers remain.
+Depth = 2.8 floor + 9.3 module + 0.3 glass clearance + 1.2 front rim.
+The 39 mm pitch supersedes the older drawing's 38.5 mm value; dry-fit all four
+screws without force because the user measurement is approximate.
 
-Pod: **42 wide x 56 tall x 18.8 deep**, with no tabs or wings.
-The screen faces the viewer. One flat vertical side of the housing bonds directly
-to the monitor's side bezel, perpendicular to the screen: edge-to-edge mounting.
+## Mounting and assembly
 
-Use a **12 mm deep x 30 mm tall adhesive pad** on either side wall. Position it
-in the uninterrupted flat area above the button opening, away from the rounded
-front shoulder. In model coordinates this area is x = +/-21, y = -8 to +22,
-z = 3 to 15. The 12 mm bonding width fits within the measured 19.05 mm bezel.
-The pad bonds only to the shell, so the rear cover remains removable. Set the
-front-to-back alignment to suit the monitor, allowing for adhesive thickness.
+1. Fasten the board to the rear tray through four 2.3 mm clearance holes using
+   M2 machine screws into its metal standoffs. USB points down.
+2. Rear screw-head recesses are 4.2 mm diameter x 1.3 mm deep. Check the actual
+   screw heads fit. Remaining screw grip is 1.5 mm; choose length as grip plus
+   usable thread engagement, without bottoming in the metal standoffs.
+3. Slide the thin front bezel over the recessed rear lip. Four spring catches
+   engage internal pockets. The glass must not be clamped or pressed by the bezel.
+4. Bond either flat side of the **rear tray** to the monitor edge. Use a
+   **6 x 30 mm adhesive strip**, in the uninterrupted side region x = +/-21,
+   y = -8 to +22, z = 1 to 7. The pad stays below the seam, so the front bezel
+   can be removed without removing the adhesive. This fits the 19.05 mm bezel.
+5. Rear release slots access each catch: push inward gently and ease the bezel
+   forward. Physical release access and clip force must be confirmed on a test
+   print before attaching to the monitor.
 
-The shell has a 29.92 x 45 mm internal pocket, a 27.2 x 42.2 front opening,
-a 16 x 11 mm bottom USB opening, and generous side button openings.
-No battery is included. Rear ventilation slots remain unobstructed.
+There are no mounting tabs. The screen faces the viewer; the adhesive side is
+perpendicular to the screen. A button on the bonded side may become inaccessible.
+Check the USB plug and necessary button access before permanent mounting.
 
-## Print and assembly
+## Printing
 
-Selected material: white PLA for contrast with the black display and bright face colors.
-Starting print settings: 0.2 mm layers, four walls, 20-30% infill.
-Use your PLA manufacturer's temperature profile. Keep the adhesive side away
-from hot exhaust vents; confirm that the monitor mounting area stays cool.
-Print one shell and one back cover. STL files are in print orientation and millimetres;
-check the slicer dimensions before printing. The shell's openings may require
-local support depending on bridging performance. Keep support scars off the
-front glass contact edge and adhesive face.
+White PLA, 0.2 mm layers, four walls, 20-30% infill as starting settings.
+Use the filament manufacturer's temperature profile. Keep the mounting area
+away from hot monitor exhaust. The supplied STL files are oriented for printing:
+front bezel face-down, rear tray floor-down. Local support may be needed at
+connector openings and latch pockets; inspect the slicer preview.
 
-## M2 board mounting and snap closure
+Snap beams are 1 mm thick and 8 mm tall, with 0.25 mm nominal engagement.
+The locating lip has 0.25 mm clearance per side. PLA layer adhesion and printer
+accuracy affect clip strength; print a fit check before inserting electronics.
+These catches are intended for occasional service, not frequent cycling.
 
-The user confirmed M2 threaded metal standoffs and no pin headers; the standoffs
-clear the rear components. Four 2.3 mm clearance holes in the backplate align
-with the manufacturer's 22 x 38.5 mm mounting pattern. Printed spacer pads carry
-the standoffs, keeping pressure away from the PCB and components.
+## Files and reproduction
 
-**Spacer height is provisional: 4.8 mm**, derived from the manufacturer's 9.6 mm
-pin-free drawing envelope. Measure the actual screen-front-to-standoff-foot
-height before final printing. Change STANDOFF_SPACER in the generator so the
-display sits behind the bezel without pressure on the glass. Hole-pattern fit
-also needs checking on the actual board revision.
-
-Fasten the board to the backplate using M2 machine screws, then insert the
-assembly into the front shell. Four cantilever catches engage pockets in the
-shell. Release slots beside each catch are accessible from the rear; gently push
-the catches inward while withdrawing the backplate. No shell screws are used.
-
-Screw grip through the current backplate and spacers is 7.6 mm. Choose screw
-length from that grip plus the measured usable thread engagement; do not bottom
-screws in the metal standoffs. Do not force the shell closed if the screen touches.
-
-The PLA snap beams are 1 mm thick and about 9 mm long, with a 0.2 mm nominal
-engagement. Print a fit test before installing electronics: flex and fatigue
-performance are not validated by CAD. The upright printed beams are sensitive
-to layer adhesion; adjust fit rather than forcing a tight catch. The backplate
-is a removable service part, not intended for frequent cycling.
-
-## Source and remaining checks
-
-Manufacturer source:
-https://docs.waveshare.com/ESP32-C6-Touch-AMOLED-1.64/Resources-And-Documents
-
-Drawing/STEP directory:
-https://github.com/waveshareteam/ESP32-C6-Touch-AMOLED-1.64/tree/main/hardware/dimensions
-
-The linked drawing is dated 2024-12-21 and depicts an older board layout;
-confirm connector and button positions on the actual revision. The linked STEP
-bounding box is 29.12 x 44.2 x 13.9 including rear protrusions. It informed the
-pocket and depth; measured production dimensions remain authoritative.
-
-CAD checks verify closed single solids, printable closed meshes, and no overlap
-between the assembled shell and the back. They do not validate adhesive
-strength, print tolerances, heat behaviour, or physical board retention.
-
-Regenerate with:
+- `front-shell.stl`, `back-cover.stl`: print one of each (back-cover is now a tray).
+- Matching STEP files: solids in assembled coordinates.
+- `pixel-pal-monitor-pod.FCStd`: FreeCAD assembly.
+- `preview.png`, `exploded.png`: assembled and separated views; screen/face are illustrative.
+- `build_enclosure.py`: dimensions and CAD generator.
+- `render_preview.py`, `preview.blend`: visual preview source.
+- `validation.json`: actual mesh extents and solid-check results.
 
 ```powershell
 & 'C:\Program Files\FreeCAD 1.1\bin\python.exe' hardware/enclosure/build_enclosure.py
-```
-
-Front refinement: a 3 mm outer-edge radius rolls the face into the side walls; a 0.65 mm radius softens the screen opening. The internal module pocket dimensions are retained. Regenerated STL/STEP files pass closed-solid and assembly-overlap checks.
-
-The button on the bonded side may be inaccessible once mounted; check the required
-button access before choosing the monitor side.
-
-Render the white PLA preview with Blender 5.0:
-
-```powershell
 & 'C:\Program Files\Blender Foundation\Blender 5.0\blender.exe' -b --python hardware/enclosure/render_preview.py
 ```
+
+The front has a 2 mm, 45-degree outer chamfer and a 0.5 mm, 45-degree
+chamfer around the screen opening. The outline corners remain rounded.
+CAD checks verify single valid solids, closed print meshes, and no assembled
+part overlap. They do not prove board fit, latch force, adhesive strength,
+thermal performance, or physical print tolerances.
+
+## Reference
+
+Manufacturer drawing/STEP references informed the original outline and openings:
+https://docs.waveshare.com/ESP32-C6-Touch-AMOLED-1.64/Resources-And-Documents
+https://github.com/waveshareteam/ESP32-C6-Touch-AMOLED-1.64/tree/main/hardware/dimensions
+
+The manufacturer's 2024-12-21 drawing depicts an older board layout. The user's
+9.3 mm height and symmetric 22 x 39 pattern take precedence. Confirm the
+connector/button positions on the actual board during the first physical fit.
+
+## BOOT / RESET access
+
+Plain 10 x 6 mm side openings provide direct switch access. No printed caps,
+flexures, guide pockets, or button-loading slots are used. Only the front shell
+and rear tray need printing. Confirm the openings align with your board during
+the fit check. A switch on the monitor-facing side may require detaching the pod.
