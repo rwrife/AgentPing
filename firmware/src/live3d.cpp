@@ -203,16 +203,18 @@ void pose(float t) {
       static_cast<int16_t>(std::clamp<int32_t>(16000-p[2],0,32000))};
     min_y=std::min(min_y,int(projected[i].y));max_y=std::max(max_y,int(projected[i].y));
   }
-  // Lower all camera framing by 10% of screen height. A fixed floor lets
+  // Lower framing by 10% of screen height, then lift it 20 display pixels.
+  // A fixed floor lets
   // the stand-up pose grow upward instead of recentering it as it gets taller.
   const float progress=sequence==0?motion.frame_position/(motion.count-1):1;
   const float eased=progress*progress*(3-2*progress);
-  const float floor=height*0.88f;
+  const float lift=20.0f/pixel_scale;
+  const float floor=height*0.88f-lift;
   const int entrance=lroundf((floor+12)*(1-eased));
-  const float full_shift=sequence>=0&&sequence<=2?floor-max_y:height*0.60f-(min_y+max_y)/2.0f;
+  const float full_shift=sequence>=0&&sequence<=2?floor-max_y:height*0.60f-lift-(min_y+max_y)/2.0f;
   // Head bone plus an offset into the screen centers the face in the lower half.
   const float head_y=world[5][13]+world[5][5]*0.22f;
-  const float close_shift=height*0.77f-(height/2.0f-head_y*scale);
+  const float close_shift=height*0.77f-lift-(height/2.0f-head_y*scale);
   const int shift=lroundf(full_shift*(1-camera_focus)+close_shift*camera_focus)-entrance;
   for(auto& point:projected)point.y+=shift;
   projected_bottom=(max_y+shift)*pixel_scale;
