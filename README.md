@@ -208,6 +208,11 @@ Messages and custom icons dismiss after 30 seconds and return to idle. Error ico
 
 Both share the USB worker. MCP registration alone does not install notification hooks. Hooks notify you; they do not approve, deny, or resume agent tasks.
 
+Automatic thinking notices are limited to once every two minutes across all
+agents. Repeats are dropped so the message can dismiss after 30 seconds and return
+to idle. Attention and error notices still get through immediately. Explicit
+CLI/MCP demo commands bypass this cooldown.
+
 ### Automatic notifications
 
 Preview the configuration paths, then install the additive hooks for all three providers:
@@ -224,7 +229,7 @@ The installer preserves unrelated handlers and backs up existing settings under 
 | --- | --- | --- |
 | Codex | `%USERPROFILE%\.codex\hooks.json` | `PermissionRequest`, `Stop` |
 | Claude Code | `%USERPROFILE%\.claude\settings.json` | `PermissionRequest`, `Notification`, `Stop`, `StopFailure` |
-| Copilot CLI | `%USERPROFILE%\.copilot\hooks\agentping-usb.json` | `permissionRequest`, `notification`, `agentStop`, `errorOccurred` |
+| Copilot CLI | `%USERPROFILE%\.copilot\hooks\agentping-usb.json` | `userPromptSubmitted`, `permissionRequest`, `postToolUse`, `notification`, `awaitingUserInput`, `agentStop`, `errorOccurred` |
 
 Restart your CLI sessions after installation. **In Codex, open `/hooks` and review/trust the AgentPing entries**; untrusted hooks are skipped. Rerun the installer after moving the checkout, replacing its Python environment, or updating the hook implementation.
 
@@ -317,6 +322,17 @@ Example demo prompts:
 
 USB rendering, CLI/MCP control, provider logos, red error icons, and timed return to idle have been tested on the physical device. Notifications replace the visible notice; there is no on-device queue or approval-response flow.
 
+## Forward Windows notifications
+
+The Windows companion can send new notifications from selected apps to the USB
+robot, including the app's logo and message. Open **Windows notifications** in the
+packaged companion to grant access and select apps. Messages show for 30 seconds,
+then the robot returns to idle.
+
+See [Windows notification setup](docs/windows-notifications.md) for the Windows 11
+package build/install commands, permission setup, and testing steps. The USB host
+must be running; the network bridge is not required.
+
 ## Optional network bridge and tray application
 
 ### Build and launch the Windows tray app
@@ -324,7 +340,8 @@ USB rendering, CLI/MCP control, provider logos, red error icons, and timed retur
 This is the separate .NET management UI for the network bridge. It does not start
 or replace the USB robot worker above. For the USB demo, use `robot.cmd`.
 
-1. Install **.NET SDK 10.0.300**, the exact version pinned in `global.json`.
+1. Install a **stable .NET 10.0 SDK**. `global.json` selects the latest installed
+   10.0 feature band or patch (10.0.100 or newer).
    Confirm it appears in `dotnet --list-sdks`.
 2. From the repository root, restore the solution and publish the app and its
    companion bridge together:

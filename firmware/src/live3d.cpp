@@ -24,7 +24,6 @@
 #include "esp_system.h"
 #include "esp_random.h"
 #include "esp_timer.h"
-#include "driver/usb_serial_jtag_vfs.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "lvgl.h"
@@ -147,7 +146,7 @@ void show_state(int state,const char* message,int provider=-1) {
   lv_obj_remove_flag(bubble,LV_OBJ_FLAG_HIDDEN);
   if(state==3)lv_obj_remove_flag(thought_dot,LV_OBJ_FLAG_HIDDEN);
   else lv_obj_add_flag(thought_dot,LV_OBJ_FLAG_HIDDEN);
-  bubble_until=now+30000000;thought_next=now+6000000;
+  bubble_until=now+(state==3?20000000:30000000);thought_next=now+6000000;
   printf("PAL STATE %s OK\n",sequence_name());
 }
 void multiply(const float* a,const float* b,float* c) {

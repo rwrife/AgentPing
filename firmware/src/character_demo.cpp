@@ -104,10 +104,10 @@ void run_character_demo() {
       const auto& clip=pal_assets::clips[player.clip];
       if(notification_pending && player.clip==3+queued.provider && (player.frame==0 || player.frame==clip.count-1)){
         const char* names[]={"Codex","Claude Code","GitHub Copilot"};
-        const char* messages[]={"Your input is needed.","Your task is complete.","Something needs a look."};
+        const char* messages[]={"Your input is needed.","Your task is complete.","Something needs a look.","Working on your request."};
         lv_label_set_text_fmt(bubble,"%s\n%s",names[queued.provider],messages[queued.kind]);
         lv_obj_remove_flag(bubble,LV_OBJ_FLAG_HIDDEN);
-        notification_pending=false;bubble_until=now+30000000;
+        notification_pending=false;bubble_until=now+(queued.kind==3?20000000:30000000);
       }
       lv_label_set_text(label,player.clip==1 && !host_until?"Trying to connect to\nthe host agent...":"");
       unsigned dest=0;const unsigned index=clip.first+player.frame;
