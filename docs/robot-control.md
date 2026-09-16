@@ -33,8 +33,8 @@ reads the local worker state without sending anything to the device.
 Messages accept up to 192 printable ASCII characters supported by the current
 display font. Newlines and other control characters are rejected, as are
 unknown commands and arguments. Acknowledgment means the command was accepted,
-not that the animation has finished. Message states dismiss after 30 seconds
-and return to idle. Dances play once. `state boot` replays the startup sequence.
+not that the animation has finished. Thinking dismisses after 20 seconds; other message states dismiss after
+30 seconds. Both return to idle. Dances play once. `state boot` replays the startup sequence.
 
 ## Joint controls
 

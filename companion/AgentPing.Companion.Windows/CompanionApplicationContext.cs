@@ -74,6 +74,7 @@ internal sealed class MainForm : Form
         tabs.TabPages.Add(BuildOverview());
         tabs.TabPages.Add(BuildDevices());
         tabs.TabPages.Add(BuildActivity());
+        tabs.TabPages.Add(new NotificationForwardingPage());
         Controls.Add(tabs);
         var startupPreference = new StartupPreference(new RegistryStartupRegistration());
         Shown += async (_, _) => _startup.Checked = await startupPreference.IsEnabledAsync();

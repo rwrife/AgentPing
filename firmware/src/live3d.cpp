@@ -145,7 +145,7 @@ void show_state(int state,const char* message,int provider=-1) {
   lv_obj_remove_flag(bubble,LV_OBJ_FLAG_HIDDEN);
   if(state==3)lv_obj_remove_flag(thought_dot,LV_OBJ_FLAG_HIDDEN);
   else lv_obj_add_flag(thought_dot,LV_OBJ_FLAG_HIDDEN);
-  bubble_until=now+30000000;thought_next=now+6000000;
+  bubble_until=now+(state==3?20000000:30000000);thought_next=now+6000000;
   printf("PAL STATE %s OK\n",sequence_name());
 }
 void multiply(const float* a,const float* b,float* c) {
