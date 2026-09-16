@@ -4,7 +4,7 @@ This dedicated `character_usb` firmware profile plays baked Pixel Pal idle and
 wave clips using LVGL. It does not start Wi-Fi, TLS, provisioning, or the existing
 network transport. This is display/USB bring-up, not the final agent protocol.
 
-The 240 x 384 RGB565 frame buffer occupies 184,320 bytes. 132 frames are stored
+The 240 x 384 RGB565 frame buffer occupies 184,320 bytes. 164 frames are stored
 as 16-bit run-length/color pairs in flash (see `assets/manifest.json`). The face
 is baked, including a wave variant for each provider. Notification bubbles are
 drawn at runtime. See [USB notifications](../docs/usb-notifications.md) for setup.
@@ -22,7 +22,7 @@ Unknown commands are rejected; overlong lines are discarded. They are preview
 controls, not agent approval commands. The device acknowledges commands with
 `PAL OK` and reports free heap periodically. USB is the hardware USB Serial/JTAG
 console; the COM port may vary across PCs. The image is positioned above the connection caption. The demo uses a separate
-6 MB application partition to hold the larger frames.
+8 MB application partition to hold the linked animation frames.
 
 Rebuild assets with the simulator running:
 
@@ -78,3 +78,30 @@ at 77,572 bytes and observed free heap is 154,756 bytes. All 132 frames passed
 encoding round-trip and image-edge checks. Further animation expansion should
 improve encoding or move assets into a dedicated partition; this app partition
 is now 95.2% full, though the device has 16 MB flash overall.
+
+## Linked clips
+
+Boot is a 24-frame one-shot entrance, then the device selects listening (no host)
+or idle (host heartbeat received). Listening plays 0..15..0 without duplicating
+turnaround frames. Other clips use closed loops. New states are requested and
+applied only at the common neutral frame; boot cannot be interrupted mid-entry.
+
+All repeating clips start and finish at the same RGB565 frame. Boot finishes at
+that frame and starts off-screen. The encoder validates SHA-256 equality of the
+boundary frames and records the hashes and playback modes in the manifest.
+Baking blends bone/root transforms, face texture, and camera to the neutral pose
+with eased endpoints. Image placement stays fixed across states.
+
+The 164 frames use 6,308,132 bytes of encoded runs. The demo app partition is now
+8 MB (within the 16 MB flash); runtime frame-buffer size is unchanged. Listening
+and idle are approximately 10 FPS; provider waves retain approximately 7 FPS.
+`status` reports clip, frame, direction, and requested clip for bench validation.
+`listening` is available as a manual preview command. Notification bubbles start
+their 30-second timer when the queued animation actually begins. At expiry the
+bubble hides immediately and the animation returns through its neutral boundary.
+
+Linked-clip hardware check passed on COM5: cold boot once, listening in both
+frame directions, host-to-idle, notification-to-provider-wave, and timeout back
+to listening without reboot replay. Run `python tools/check_usb_playback.py`
+with the notification worker stopped to repeat (this resets the device).
+Build size: 6,842,843 bytes of 8,388,608; static RAM: 77,572 bytes.

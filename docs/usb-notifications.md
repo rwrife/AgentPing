@@ -47,7 +47,8 @@ path. The firmware supplies fixed messages and the provider-specific face logo.
 Notifications expire from the queue after 60 seconds. The queue is bounded, and
 the worker coalesces repeated provider/kind events within three seconds. The
 firmware acknowledges each event ID and ignores a retry of its most recent ID.
-Messages dismiss after 30 seconds and return to idle. Multiple simultaneous
+Messages dismiss after 30 seconds; animation returns at its next neutral boundary
+to idle if connected, or forward/reverse listening if the host is absent. Multiple simultaneous
 notifications currently replace the visible bubble; there is no on-device inbox.
 
 USB commands added by this path:
