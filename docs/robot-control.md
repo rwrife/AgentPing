@@ -50,6 +50,33 @@ refer to the robot's own left and right. Large offsets may intersect the mesh;
 there is no collision solver. Manual pose holds until another state is selected.
 `reset` or `state idle` blends back into the normal idle animation.
 
+## Custom Mixamo motion
+
+```powershell
+.\companion\robot.cmd motion "C:\Users\me\Downloads\Wave Hip Hop Dance.fbx"
+.\companion\robot.cmd motion clip.fbx --fps 12 --start 2.5
+```
+
+Retargets a Mixamo FBX onto the Pixel Pal rig and uploads it into device RAM,
+then plays it. MCP exposes `robot_play_motion(path, fps=12, start_seconds=0)`.
+A `.json` clip already produced by `simulator/scripts/export-motion.mjs` is
+accepted directly and skips conversion.
+
+`--fps` sets the sample rate; the renderer runs near 11 FPS, so values above 12
+add keyframes the display never shows. `--start` skips into a longer clip.
+
+Converting an FBX requires the simulator's Node dependencies and the retargeter's
+model, so run `npm install` in `simulator/` and
+`node simulator/scripts/export-live3d.mjs <pixel-pal.fbx>` once per checkout.
+
+The clip lives in RAM, not flash, so its length is bounded by free device
+memory. The CLI reads the robot's reported free heap and uploads as many
+keyframes as fit beside the renderer's reserve, trimming the clip when needed;
+the reply reports the frames, rate, and seconds actually played. A 1.64" panel
+at native resolution currently fits about 167 keyframes, or 13.8 seconds at
+12 FPS. Lowering the render resolution frees considerably more. Uploaded clips
+are discarded when another state or dance is selected.
+
 ## MCP configuration
 
 For **GitHub Copilot CLI on Windows**, the repository's

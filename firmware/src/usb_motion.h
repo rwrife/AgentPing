@@ -19,6 +19,8 @@ struct UsbMotion {
   float speed=2.0f/3.0f;
   int seek=-1;
   static constexpr unsigned bones=27,bytes_per_frame=bones*8;
+  // Bounded by the heap check below; the cap only keeps the header sane.
+  static constexpr unsigned max_frames=208;
   const int16_t* roots=nullptr;
   float current[bones][4]{},previous[bones][4]{},root[3]{},previous_root[3]{};
   float frame_position=0;
@@ -44,7 +46,7 @@ struct UsbMotion {
     }
     if(!strncmp(line,"motion ",7)) {
       unsigned n,hz,checksum;char tail;
-      if(sscanf(line,"motion %u %u %x %c",&n,&hz,&checksum,&tail)!=3||n<2||n>64||hz<1||hz>60){printf("MOTION ERROR header\n");return true;}
+      if(sscanf(line,"motion %u %u %x %c",&n,&hz,&checksum,&tail)!=3||n<2||n>max_frames||hz<1||hz>60){printf("MOTION ERROR header\n");return true;}
       playing=false;free(upload);upload=nullptr;keys=nullptr;roots=nullptr;count=received=0;seek=-1;finished=false;
       if(esp_get_free_heap_size()<n*bytes_per_frame+24576){printf("MOTION ERROR memory\n");return true;}
       upload=static_cast<int16_t*>(malloc(n*bytes_per_frame));keys=upload;

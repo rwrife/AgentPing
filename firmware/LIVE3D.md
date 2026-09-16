@@ -279,6 +279,29 @@ With all three dances included, the application is 994,065 bytes (31.6% of
 the 3 MiB app partition), with 112,224 bytes of static RAM. Hardware dance
 playback measured approximately 10.9 FPS with 30,492 bytes of free heap.
 
+## Sample rate and device memory
+
+Stored clips are sampled at **12 Hz**, the `--rate` default. The renderer runs
+near 11 FPS, so faster sampling only inflates the clip with interpolation the
+display never shows. Playback speed is a separate multiplier, so lowering the
+sample rate does not change how a motion looks. Re-baking the nine stored
+motions at 12 Hz halves their keyframe counts and removes 154 KB of flash.
+
+`--no-header` skips the `assets/*_motion.h` write for ad-hoc clips that are
+uploaded over USB rather than baked into the build.
+
+The LVGL pool is sized by `CONFIG_LV_MEM_SIZE_KILOBYTES` in
+`sdkconfig.defaults`, not by `include/lv_conf.h` — the build sets
+`CONFIG_LV_CONF_SKIP=y`, which makes that header inert. live3d only builds an
+image, two labels and a dot, so the pool is 24 KB rather than the default 64 KB;
+`viewstatus` reports `lvgl_used`/`lvgl_free` to confirm the headroom. That
+returns about 41 KB of SRAM to the heap that uploaded clips allocate from, and
+free heap measures 61 KB against 28 KB before.
+
+live3d installs the USB Serial JTAG driver with a 2 KB RX ring buffer. The bare
+console reads from a 64-byte hardware FIFO, which silently drops the 440-byte
+`key` lines a motion upload sends.
+
 Startup framing uses the same lower floor for fall, stand-up and idle. As the
 robot stands, its head rises into the idle position while its bottom stays at
 approximately pixel 356 on the 456-pixel panel. The camera no longer recenters

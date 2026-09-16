@@ -5,6 +5,7 @@ import base64
 import re
 import math
 from pathlib import Path
+import struct
 import time
 import uuid
 
@@ -12,6 +13,11 @@ STATES = ("idle", "thinking", "attention", "error", "wave", "boot")
 DANCES = ("random", "hiphop", "twist", "chicken")
 JOINTS = ("head", "torso", "left_shoulder", "right_shoulder", "left_elbow", "right_elbow",
           "left_hip", "right_hip", "left_knee", "right_knee")
+# The renderer keeps uploaded clips in RAM: 27 bones as 16-bit quaternions.
+MOTION_BONES = 27
+MOTION_MAX_FRAMES = 208
+MAX_REQUEST_BYTES = 2048
+MAX_MOTION_REQUEST_BYTES = 524288
 
 
 def command(action: str, args: dict) -> tuple[bytes, bytes]:
@@ -71,6 +77,41 @@ def command(action: str, args: dict) -> tuple[bytes, bytes]:
             f"PAL JOINT {joint} OK".encode())
 
 
+def motion_steps(args: dict) -> list[tuple[bytes, bytes]]:
+    """Stage a converted clip into renderer RAM one acknowledged keyframe at a time."""
+    if set(args) - {"frames", "rate"}:
+        raise ValueError("unknown command or argument")
+    rate, frames = args.get("rate"), args.get("frames")
+    if type(rate) is not int or not 1 <= rate <= 60:
+        raise ValueError("motion rate must be a whole number of frames per second between 1 and 60")
+    if not isinstance(frames, list) or not 2 <= len(frames) <= MOTION_MAX_FRAMES:
+        raise ValueError(f"motion needs between 2 and {MOTION_MAX_FRAMES} keyframes")
+    packed = []
+    for frame in frames:
+        if not isinstance(frame, list) or len(frame) != MOTION_BONES * 4:
+            raise ValueError(f"each keyframe needs one 16-bit quaternion for all {MOTION_BONES} bones")
+        if any(type(v) is not int or not -32768 <= v <= 32767 for v in frame):
+            raise ValueError("keyframe components must be 16-bit integers")
+        packed.append(struct.pack(f"<{MOTION_BONES * 4}h", *frame))
+    checksum = 2166136261
+    for byte in b"".join(packed):
+        checksum = ((checksum ^ byte) * 16777619) & 0xffffffff
+    # Idle first: it restores the renderer's 1.0 playback speed, so the uploaded
+    # clip runs at the rate it was sampled at instead of the previous state's.
+    steps = [(b"idle\n", b"STARTUP ENTER state=idle "),
+             (f"motion {len(packed)} {rate} {checksum:08x}\n".encode("ascii"),
+              f"MOTION READY {len(packed)}".encode())]
+    steps += [(f"key {index} {frame.hex()}\n".encode("ascii"), f"MOTION KEY {index}".encode())
+              for index, frame in enumerate(packed)]
+    steps.append((b"play\n", b"MOTION PLAY"))
+    return steps
+
+
+def steps(action: str, args: dict) -> list[tuple[bytes, bytes]]:
+    """Expand one validated request into the USB exchanges it needs."""
+    return motion_steps(args) if action == "motion" else [command(action, args)]
+
+
 def file_io(operation):
     # Windows can briefly retain a rename/delete handle after publishing a file.
     # Retry only filesystem sharing failures, never a USB send.
@@ -91,7 +132,7 @@ def atomic_json(path: Path, value: dict) -> None:
 
 
 def request(root: Path, action: str, args: dict, timeout: float = 8) -> dict:
-    command(action, args)
+    steps(action, args)
     request_id = uuid.uuid4().hex
     target = root / "commands" / (request_id + ".json")
     result = root / "results" / (request_id + ".json")
@@ -121,18 +162,24 @@ def process_requests(root: Path, send) -> bool:
             file_io(lambda: path.unlink(missing_ok=True))
             continue
         try:
-            if path.stat().st_size > 2048:
+            size = path.stat().st_size
+            if size > MAX_MOTION_REQUEST_BYTES:
                 raise ValueError("oversize command")
             event = json.loads(file_io(lambda: path.read_text(encoding="utf-8")))
             if set(event) != {"action", "args", "expires"}:
                 raise ValueError("invalid request")
+            if event["action"] != "motion" and size > MAX_REQUEST_BYTES:
+                raise ValueError("oversize command")
             now = time.time()
             expires = event["expires"]
             if type(expires) not in (int, float) or not math.isfinite(expires) or not now < expires <= now + 6:
                 raise ValueError("command expired")
-            wire, ack = command(event["action"], event["args"])
+            exchanges = steps(event["action"], event["args"])
             file_io(lambda: path.unlink(missing_ok=True))
-            reply = "Desktop USB worker stopped" if event["action"] == "stop" else send(wire, ack)
+            reply = "Desktop USB worker stopped"
+            if event["action"] != "stop":
+                for wire, ack in exchanges:
+                    reply = send(wire, ack)
             value = {"ok": True, "reply": reply}
         except (OSError, ValueError, TypeError, KeyError) as error:
             # Do not persist user text or transport diagnostics in error logs.
