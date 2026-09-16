@@ -80,6 +80,7 @@ def main():
     backup.mkdir(parents=True, exist_ok=True)
     script.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(Path(__file__).with_name(script.name), script)
+    shutil.copy2(Path(__file__).with_name("robot_control.py"), script.with_name("robot_control.py"))
     for index, (path, content) in enumerate(updates.items()):
         if path.exists(): shutil.copy2(path, backup / f"{index}-{path.name}")
         path.parent.mkdir(parents=True, exist_ok=True)

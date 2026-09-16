@@ -4,8 +4,8 @@
 Waveshare ESP32-C6 Touch AMOLED 1.64. It transforms the skeleton and rasterizes
 the robot on the device; it does not play baked image frames or stream video
 from the PC. Startup, idle, thinking, attention, and error animations run locally.
-USB notifications show provider names and message bubbles; provider logos and
-the remaining simulator states are not yet ported.
+USB notifications show provider logos on the face, provider names, and message
+bubbles; the remaining simulator states are not yet ported.
 
 ## Asset pipeline
 
@@ -224,7 +224,7 @@ shoulder view in the lower half, and eases back when returning to idle.
 Existing `notify <16-hex-id> <codex|claude|copilot> <attention|completed|error>`
 messages are accepted and acknowledged. They show provider names and preset
 messages; errors use the new error wave. Repeated IDs do not restart the bubble.
-Provider logos are not yet ported to the live face. The direct state commands
+Provider notifications display the matching real logo on the live face. The direct state commands
 above accept custom text. `host` marks the desktop as seen; the idle caption stays hidden until restart.
 
 Convert the new clips with:
@@ -287,3 +287,26 @@ the growing stand-up silhouette.
 Full-body framing now uses a projection scale of 51% of panel width (up from
 46%), making the robot approximately 11% larger. The fixed startup floor and
 head/shoulder close-up framing are retained.
+
+For desktop CLI/MCP commands and smooth manual joint control, see
+[robot controls](../docs/robot-control.md). Manual joint poses blend into the
+next animation using the existing cached pose transition.
+
+## Provider face logos
+
+Provider `notify` commands display Codex, Claude, or GitHub Copilot artwork on
+the face instead of eyes/mouth, including error notifications. Generic messages
+retain the normal animated face. Logos survive error animation loops and clear
+when the bubble expires, idle starts, or a generic message/manual pose replaces
+it. No exclamation mark or extra state label is drawn over the logo.
+
+The 48 x 48 one-bit masks occupy 864 bytes in flash and reuse the existing face
+canvas. They derive from the simulator's existing SVG assets and license. Run
+`node simulator/scripts/export-agent-logos.mjs` to regenerate them using installed
+Edge, or set `PLAYWRIGHT_CHANNEL` to another installed Chromium browser channel.
+
+Custom 48 x 48 one-bit icons and RGB colors can also be uploaded through the
+desktop CLI/MCP. The firmware validates a staged bitmap before publishing it
+and reuses the face canvas; see [custom icons](../docs/robot-control.md#custom-1-bit-face-icons).
+
+Custom icon uploads may be committed with `iconerror <message>` to show an error. Error-state icon rendering always uses red RGB565 0xf800, including provider logos, regardless of uploaded color. `iconshow` retains attention behavior.

@@ -126,3 +126,8 @@ See [`CONTRIBUTING.md`](CONTRIBUTING.md) for exact verification commands and [`S
 ## License
 
 MIT. See [`LICENSE`](LICENSE).
+
+## Desktop robot controls
+
+Use the [USB CLI and MCP server](docs/robot-control.md) to show custom messages,
+play animations and dances, and pose individual robot joints from the desktop.

@@ -1,7 +1,6 @@
 """Encode the FBX export as flash-resident fixed-point model data."""
 from pathlib import Path
 import json
-from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / 'simulator/test-results/live3d'
@@ -17,8 +16,31 @@ def floats(values):
     return ','.join(result)
 
 
+def repair_finger_weights(model):
+    """Repair root-bound rigid fingertips in the validated Pixel Pal export.
+
+    Three disconnected finger pieces arrived weighted to spine. The narrow
+    bind-pose bounds select only the distal fingers, never the palm or torso.
+    Keep this model-specific correction in the encoder so reexports retain it.
+    """
+    names = [bone['name'] for bone in model['bones']]
+    if not names or names[0] != 'spine' or not {'handL', 'handR'} <= set(names):
+        return 0
+    repaired = 0
+    for vertex in model['vertices']:
+        x, y, z = vertex[:3]
+        root_only = all(b == 0 for b, w in zip(vertex[5:9], vertex[9:13]) if w)
+        if root_only and 4500 < abs(x) < 5200 and 500 < y < 1200 and abs(z) < 500:
+            vertex[5:9] = [names.index('handL' if x > 0 else 'handR'), 0, 0, 0]
+            vertex[9:13] = [255, 0, 0, 0]
+            repaired += 1
+    return repaired
+
+
 def main():
+    from PIL import Image
     model = json.loads((SOURCE / 'model.json').read_text())
+    print(f'Repaired fingertip weights: {repair_finger_weights(model)} vertices')
     text = '#pragma once\n#include <cstdint>\nnamespace live_model {\n'
     text += 'struct Vertex { int16_t x,y,z; uint16_t u,v; uint8_t bone[4],weight[4]; };\n'
     text += 'inline constexpr Vertex vertices[]={\n'

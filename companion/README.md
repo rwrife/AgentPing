@@ -15,3 +15,9 @@ dotnet publish companion/AgentPing.Companion.Windows -c Release -r win-x64 --sel
 ```
 
 CI also publishes an unsigned `win-arm64` tree. See `installer/README.md`; no signing claim is made. Physical device, LAN TLS interoperability, accessibility-tool, and installer upgrade/uninstall exercises remain manual release evidence.
+
+## USB robot demo controls
+
+The USB desktop client provides CLI and MCP controls for messages, animations,
+dances, and smooth skeletal joint movement. See [robot controls](../docs/robot-control.md)
+for setup and examples. Run `companion\robot.cmd start` after setup.
