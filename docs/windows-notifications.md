@@ -16,7 +16,7 @@ thinking state; agent hooks remain separate.
    .\companion\robot.cmd status
    ```
 
-2. Install the .NET SDK required by `global.json` and the Windows 10/11 SDK
+2. Install a stable .NET 10.0 SDK (10.0.100 or newer) and the Windows 10/11 SDK
    with its MakeAppx packaging tools. Exit any running AgentPing Companion using
    its tray menu, then build the notification companion:
 
