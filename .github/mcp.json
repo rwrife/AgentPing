@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "agentping": {
+      "type": "local",
+      "command": "cmd.exe",
+      "args": ["/d", "/c", "companion\\robot.cmd", "mcp"],
+      "tools": ["*"],
+      "timeout": 15000
+    }
+  }
+}

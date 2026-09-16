@@ -1,17 +1,18 @@
 # USB provider notifications
 
 This notification-only path connects local Codex, Claude Code, and GitHub Copilot
-CLI hooks to the `character_usb` firmware. It is separate from the existing
+CLI hooks to the `live3d_usb` robot firmware (also supported by the older baked
+`character_usb` profile). It is separate from the existing
 network bridge and approval-return protocol. It never approves, denies, or
 continues an agent task, and its hook commands emit no stdout.
 
 ## Setup on Windows
 
-From the repository root, using the firmware Python environment (includes pyserial):
+From the repository root, after running `companion/setup-robot.ps1`:
 
 ```powershell
-.\.venv-firmware\Scripts\python.exe tools/install_usb_hooks.py --apply
-.\.venv-firmware\Scripts\python.exe tools/agentping_usb_notifications.py run --port COM5
+.\.venv-robot\Scripts\python.exe tools/install_usb_hooks.py --apply
+.\companion\robot.cmd --port COM5 start
 ```
 
 The installer copies the hook/worker script into `~/.agentping/usb/bin`, backs up
@@ -47,8 +48,9 @@ path. The firmware supplies fixed messages and the provider-specific face logo.
 Notifications expire from the queue after 60 seconds. The queue is bounded, and
 the worker coalesces repeated provider/kind events within three seconds. The
 firmware acknowledges each event ID and ignores a retry of its most recent ID.
-Messages dismiss after 30 seconds; animation returns at its next neutral boundary
-to idle if connected, or forward/reverse listening if the host is absent. Multiple simultaneous
+In `live3d_usb`, messages dismiss after 30 seconds and blend back to idle. The
+initial connection caption disappears after the first desktop signal. The older
+baked profile uses forward/reverse listening while disconnected. Multiple simultaneous
 notifications currently replace the visible bubble; there is no on-device inbox.
 
 USB commands added by this path:
@@ -61,14 +63,15 @@ notify 1234567890abcdef copilot error
 ```
 
 Acknowledgments are `PAL HOST OK` and `PAL EVENT <id> OK`. Unknown providers,
-kinds, extra fields, and malformed IDs are rejected. The host connection caption
-returns after 15 seconds without a heartbeat. Notifications do not expose any
+kinds, extra fields, and malformed IDs are rejected. Only the older baked profile
+restores the connection caption after 15 seconds without a heartbeat; live 3D
+shows it only before the first desktop signal. Notifications do not expose any
 device-side approval command.
 
 Inspect the worker status without opening COM5:
 
 ```powershell
-.\.venv-firmware\Scripts\python.exe tools/agentping_usb_notifications.py status
+.\companion\robot.cmd worker-status
 ```
 
 Check `updated` as well as `connected`: a stopped/killed process can leave stale
@@ -78,14 +81,14 @@ acknowledgments, not proof that a human read the message.
 ## Verification and source contracts
 
 ```powershell
-.\.venv-firmware\Scripts\python.exe -m unittest discover -s tools/tests -v
+.\.venv-robot\Scripts\python.exe -m unittest discover -s tools/tests -v
 ```
 
 Installed binaries used during bring-up: Codex `0.154.0-alpha.6.2`, Claude Code
 `2.1.197`, and Copilot CLI `1.0.84-8`. Keep live-provider results separate from
 injected fixture results when reporting validation.
 
-Bench results on 2026-09-16:
+Earlier baked-firmware bench results on 2026-09-16 (not live-renderer memory figures):
 
 - Claude Code and Copilot CLI: real no-tool completion runs emitted hooks, and
   their queued events were acknowledged by the physical device on COM5.
