@@ -8,7 +8,10 @@ V=App.Vector
 # Manufacturer envelope plus 0.4 mm clearance on each side.
 BODY_W,BODY_H,DEPTH=42.0,56.0,18.8
 CAVITY_W,CAVITY_H=29.92,45.0
-SCREWS=[(x,y) for x in [-18,18] for y in [-24,24]]
+# Hole centres from manufacturer drawing; verify on the physical revision.
+SCREWS=[(x,y) for x in [-11,11] for y in [-18.9,19.6]]
+# Provisional spacer: 9.6 mm pin-free envelope from the drawing.
+STANDOFF_SPACER=4.8
 def rounded(w,h,r,z,height):
     shape=Part.makeBox(w-2*r,h,height,V(-w/2+r,-h/2,z)).fuse(Part.makeBox(w,h-2*r,height,V(-w/2,-h/2+r,z)))
     for x in [-w/2+r,w/2-r]:
@@ -27,11 +30,28 @@ shell=shell.makeFillet(.65,aperture_edges)
 # Broad USB plug and button access; no battery assumed.
 shell=shell.cut(box(16,8,11,-8,-29,3.5))
 for x in [-22,14]:shell=shell.cut(box(8,10,8,x,-20,5))
-for x,y in SCREWS:shell=shell.cut(Part.makeCylinder(1.05,6,V(x,y,2.7)))
+
 shell=shell.removeSplitter()
 # Plain removable rear cover. Adhesive goes on either flat SIDE of the shell.
 cover=rounded(BODY_W,BODY_H,5,0,2.8)
-for x,y in SCREWS:cover=cover.cut(Part.makeCylinder(1.4,4,V(x,y,-.1)))
+for x,y in SCREWS:
+    cover=cover.fuse(Part.makeCylinder(2.5,STANDOFF_SPACER,V(x,y,2.8)))
+    cover=cover.cut(Part.makeCylinder(1.15,12,V(x,y,-.1)))
+# Four rear-mounted cantilever catches. Each flexes inward into its own channel.
+for side in [-1,1]:
+    for y in [-8,8]:
+        beam=box(1,5,9.2,16.6,y-2.5,2.8)
+        pts=[V(17.5,y-2.5,10.5),V(18.05,y-2.5,10.5),V(17.5,y-2.5,12),V(17.5,y-2.5,10.5)]
+        hook=Part.Face(Part.makePolygon(pts)).extrude(V(0,5,0))
+        catch=beam.fuse(hook)
+        channel=box(2.4,5.6,11.5,15.45,y-2.8,2.7)
+        pocket=box(.7,5.6,1,17.75,y-2.8,10.2)
+        release=box(1.1,5.6,3,15.25,y-2.8,-.1)
+        if side<0:
+            catch=catch.mirror(V(0,0,0),V(1,0,0));channel=channel.mirror(V(0,0,0),V(1,0,0));pocket=pocket.mirror(V(0,0,0),V(1,0,0));release=release.mirror(V(0,0,0),V(1,0,0))
+        cover=cover.fuse(catch).cut(release)
+        shell=shell.cut(channel.fuse(pocket))
+
 # Rear ventilation inside the shell outline, away from adhesive strip and fasteners.
 for y in [-8,-2,4,10]:cover=cover.cut(box(10,2,4,-5,y,-.1))
 cover=cover.removeSplitter()

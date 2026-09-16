@@ -1,22 +1,22 @@
 {
   "front-shell": {
     "valid_solid": true,
-    "volume_mm3": 13841.6,
+    "volume_mm3": 13328.7,
     "size_mm": [
       42.0,
       56.0,
       16.0
     ],
-    "triangles": 8924
+    "triangles": 7772
   },
   "back-cover": {
     "valid_solid": true,
-    "volume_mm3": 6232.5,
+    "volume_mm3": 6672.7,
     "size_mm": [
       42.0,
       56.0,
-      2.8
+      12.0
     ],
-    "triangles": 1788
+    "triangles": 3324
   }
 }
