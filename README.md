@@ -322,6 +322,17 @@ Example demo prompts:
 
 USB rendering, CLI/MCP control, provider logos, red error icons, and timed return to idle have been tested on the physical device. Notifications replace the visible notice; there is no on-device queue or approval-response flow.
 
+## Forward Windows notifications
+
+The Windows companion can send new notifications from selected apps to the USB
+robot, including the app's logo and message. Open **Windows notifications** in the
+packaged companion to grant access and select apps. Messages show for 30 seconds,
+then the robot returns to idle.
+
+See [Windows notification setup](docs/windows-notifications.md) for the Windows 11
+package build/install commands, permission setup, and testing steps. The USB host
+must be running; the network bridge is not required.
+
 ## Optional network bridge and tray application
 
 ### Build and launch the Windows tray app

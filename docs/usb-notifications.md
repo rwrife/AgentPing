@@ -51,14 +51,15 @@ Notifications expire from the queue after 60 seconds. The queue is bounded, and
 automatic thinking notices have a **120-second cooldown across all providers**.
 The cooldown starts after a successful device acknowledgment. Repeats during
 that interval are discarded, not delayed, and do not extend the current bubble's
-30-second lifetime. Attention, error, and completion notices remain eligible
+20-second lifetime. Attention, error, and completion notices remain eligible
 immediately. The cooldown resets when the desktop worker restarts; explicit
 CLI/MCP demo commands bypass it.
 
 For other repeated notices,
 the worker coalesces repeated provider/kind events within three seconds. The
 firmware acknowledges each event ID and ignores a retry of its most recent ID.
-In `live3d_usb`, messages dismiss after 30 seconds and blend back to idle. The
+In `live3d_usb`, thinking dismisses after 20 seconds; other messages dismiss after
+30 seconds. Both blend back to idle. The
 initial connection caption disappears after the first desktop signal. The older
 baked profile uses forward/reverse listening while disconnected. Multiple simultaneous
 notifications currently replace the visible bubble; there is no on-device inbox.
