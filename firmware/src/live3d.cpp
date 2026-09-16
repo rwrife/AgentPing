@@ -2,7 +2,9 @@
 // Favor throughput in the software renderer without changing system libraries.
 #pragma GCC optimize("O3")
 #include "../assets/live_model.h"
+#include "../assets/wave_motion.h"
 #include "board.h"
+#include "usb_motion.h"
 #include "esp_heap_caps.h"
 #include "esp_system.h"
 #include "esp_timer.h"
@@ -21,6 +23,7 @@ namespace agentping {
 namespace {
 constexpr unsigned kVertices=sizeof(live_model::vertices)/sizeof(live_model::vertices[0]);
 constexpr unsigned kBones=sizeof(live_model::parents)/sizeof(int);
+static_assert(kBones==UsbMotion::bones,"USB motion must match the model skeleton");
 struct Point { int16_t x,y,z; };
 Point projected[kVertices];
 uint16_t strip_masks[sizeof(live_model::indices)/6];
@@ -33,6 +36,7 @@ bool small_texture=false;
 uint16_t* texture64=nullptr;
 lv_image_dsc_t descriptor{};
 lv_obj_t* picture=nullptr;
+UsbMotion motion;
 void multiply(const float* a,const float* b,float* c) {
   for(int col=0;col<4;col++)for(int row=0;row<4;row++) {
     float sum=0;for(int k=0;k<4;k++)sum+=a[k*4+row]*b[col*4+k];
@@ -46,7 +50,7 @@ void rotation(float* m,float angle,bool yaw=false) {
   else {m[0]=m[5]=c;m[1]=s;m[4]=-s;}
 }
 void pose(float t) {
-  float spin[16];rotation(spin,0.45f*sinf(t*0.7f),true);
+  float spin[16];rotation(spin,0.45f*sinf(t*0.7f)*(1-motion.blend()),true);
   for(unsigned b=0;b<kBones;b++) {
     float r[16],local[16],out[16];float angle=0;
     // This export has no clips: exercise its actual arm bones procedurally.
@@ -54,7 +58,9 @@ void pose(float t) {
     if(b==12)angle=0.5f-0.65f*sinf(t*2);
     if(b==9)angle=0.3f*sinf(t*2+1);
     if(b==13)angle=-0.3f*sinf(t*2+1);
-    rotation(r,angle);multiply(live_model::local[b],r,local);
+    rotation(r,angle);
+    if(motion.playing){float base[16];memcpy(base,r,64);motion.rotation(b,r,base);}
+    multiply(live_model::local[b],r,local);
     const int parent=live_model::parents[b];
     multiply(parent<0?spin:world[parent],local,world[b]);
     multiply(world[b],live_model::inverse[b],out);
@@ -172,16 +178,19 @@ void run_live3d() {
   // Touch is unused during profiling; suspend its periodic I2C reads.
   for(auto* input=lv_indev_get_next(nullptr);input;input=lv_indev_get_next(input))lv_indev_enable(input,false);
   if(!resolution(280,456)&&!resolution(160,260))return;
+  motion.stored(wave_motion::keys,wave_motion::count,wave_motion::rate);
   setvbuf(stdin,nullptr,_IONBF,0);fcntl(STDIN_FILENO,F_SETFL,fcntl(STDIN_FILENO,F_GETFL,0)|O_NONBLOCK);
   printf("LIVE3D READY vertices=%u triangles=%u bones=%u commands=low,medium,high,max,native,fast,tex64,tex128,pause,resume,status,frame\n",kVertices,unsigned(sizeof(live_model::indices)/6),kBones);
-  char line[32]{};unsigned used=0;bool paused=false;
+  char line[512]{};unsigned used=0;bool paused=false,overflow=false;
   int64_t epoch=esp_timer_get_time(),stats=epoch;unsigned frames=0;int64_t skin_us=0,draw_us=0,screen_us=0;
   while(true) {
     char ch;
-    for(int n=0;n<64&&read(STDIN_FILENO,&ch,1)==1;n++) {
+    for(int n=0;n<1024&&read(STDIN_FILENO,&ch,1)==1;n++) {
       if(ch=='\n'||ch=='\r') {
-        if(used) {
+        if(used&&!overflow) {
           line[used]=0;bool changed=true,ok=true;
+          if(!strcmp(line,"wave")){motion.stored(wave_motion::keys,wave_motion::count,wave_motion::rate);used=0;continue;}
+          if(motion.command(line)){used=0;continue;}
           if(!strcmp(line,"low"))ok=resolution(140,228);
           else if(!strcmp(line,"medium"))ok=resolution(160,260);
           else if(!strcmp(line,"high"))ok=resolution(192,312);
@@ -209,8 +218,9 @@ void run_live3d() {
           printf("LIVE3D STATUS resolution=%dx%d texture=%d heap=%u min_heap=%u paused=%d\n",width,height,small_texture?64:128,unsigned(esp_get_free_heap_size()),unsigned(esp_get_minimum_free_heap_size()),paused);
           if(changed){frames=0;skin_us=draw_us=screen_us=0;stats=esp_timer_get_time();}
         }
-        used=0;
+        used=0;overflow=false;
       }else if(used<sizeof(line)-1)line[used++]=ch;
+      else overflow=true;
     }
     auto now=esp_timer_get_time();
     if(!paused) {
