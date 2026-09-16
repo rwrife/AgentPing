@@ -14,6 +14,8 @@ class UsbNotificationsTests(unittest.TestCase):
         self.assertEqual("completed", normalize("codex", {"type":"agent-turn-complete"}))
         self.assertEqual("attention", normalize("codex", {"hook_event_name":"PermissionRequest"}))
         self.assertEqual("attention", normalize("claude", {"hook_event_name":"Notification", "notification_type":"idle_prompt"}))
+        self.assertEqual("attention", normalize("copilot", {"hookEventName":"awaitingUserInput"}))
+        self.assertEqual("thinking", normalize("copilot", {"notification_type":"agent_thinking"}, "notification"))
         self.assertEqual("completed", normalize("copilot", {"sessionId":"a"}, "agentStop"))
         self.assertEqual("attention", normalize("copilot", {"notification_type":"permission_prompt"}, "notification"))
         self.assertEqual("error", normalize("copilot", {}, "errorOccurred"))

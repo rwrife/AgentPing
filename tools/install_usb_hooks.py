@@ -36,7 +36,7 @@ def configs(python: Path, script: Path) -> dict:
     events = {
         "codex": ["PermissionRequest", "Stop"],
         "claude": ["PermissionRequest", "Notification", "Stop", "StopFailure"],
-        "copilot": ["permissionRequest", "notification", "agentStop", "errorOccurred"],
+        "copilot": ["permissionRequest", "notification", "awaitingUserInput", "agentStop", "errorOccurred"],
     }
     for provider, names in events.items():
         hooks = {}

@@ -17,7 +17,7 @@ import uuid
 from robot_control import process_requests
 
 PROVIDERS = ("codex", "claude", "copilot")
-KINDS = ("attention", "completed", "error")
+KINDS = ("attention", "completed", "error", "thinking")
 MAX_INPUT = 1024 * 1024
 TTL = 60
 MAX_PENDING = 64
@@ -32,7 +32,9 @@ def normalize(provider: str, payload: dict, event: str | None = None) -> str | N
     if provider not in PROVIDERS or not isinstance(payload, dict):
         raise ValueError("invalid provider or payload")
     event = event or payload.get("hook_event_name") or payload.get("hookEventName") or payload.get("type")
-    if event in ("PermissionRequest", "permissionRequest"):
+    if event in ("agentThinking", "agent_thinking", "thinking", "working", "agentWorking"):
+        return "thinking"
+    if event in ("PermissionRequest", "permissionRequest", "awaitingUserInput"):
         return "attention"
     if event in ("Stop", "agentStop", "agent-turn-complete"):
         return "completed"
@@ -42,6 +44,8 @@ def normalize(provider: str, payload: dict, event: str | None = None) -> str | N
         kind = payload.get("notification_type")
         if kind in ("permission_prompt", "idle_prompt", "elicitation_dialog"):
             return "attention"
+        if kind in ("agent_thinking", "agent_working", "thinking", "working"):
+            return "thinking"
         if kind in ("agent_completed", "agent_idle", "shell_completed", "shell_detached_completed"):
             return "completed"
     return None
