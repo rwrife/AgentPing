@@ -19,6 +19,8 @@
 #include "manual_pose.h"
 #include "custom_icon.h"
 #include "esp_heap_caps.h"
+#include "driver/usb_serial_jtag.h"
+#include "driver/usb_serial_jtag_vfs.h"
 #include "esp_system.h"
 #include "esp_random.h"
 #include "esp_timer.h"
@@ -349,6 +351,13 @@ void run_live3d() {
   lv_obj_set_style_bg_color(thought_dot,lv_color_hex(0x50dfff),0);
   lv_obj_set_style_border_width(thought_dot,0,0);
   start_sequence(0,false);
+  // The bare console reads from the 64 byte USB FIFO, which drops the long
+  // `key` lines of a motion upload. The driver adds a real RX ring buffer.
+  {
+    usb_serial_jtag_driver_config_t usb_config=USB_SERIAL_JTAG_DRIVER_CONFIG_DEFAULT();
+    usb_config.rx_buffer_size=2048;
+    if(usb_serial_jtag_driver_install(&usb_config)==ESP_OK)usb_serial_jtag_vfs_use_driver();
+  }
   setvbuf(stdin,nullptr,_IONBF,0);fcntl(STDIN_FILENO,F_SETFL,fcntl(STDIN_FILENO,F_GETFL,0)|O_NONBLOCK);
   printf("LIVE3D READY vertices=%u triangles=%u bones=%u commands=low,medium,high,max,native,fast,tex64,tex128,pause,resume,status,frame\n",kVertices,unsigned(sizeof(live_model::indices)/6),kBones);
   char last_event[17]{};
@@ -402,7 +411,7 @@ void run_live3d() {
             }
             printf("PAL EVENT %s OK\n",event.id);used=0;continue;
           }
-          if(!strcmp(line,"viewstatus")){printf("VIEW state=%s zoom=%.3f bubble=%d thought=%d heap=%u provider=%d icon=%d color=%04x\n",sequence_name(),double(camera_focus),!lv_obj_has_flag(bubble,LV_OBJ_FLAG_HIDDEN),!lv_obj_has_flag(thought_dot,LV_OBJ_FLAG_HIDDEN),unsigned(esp_get_free_heap_size()),face_provider,custom_icon.active,custom_icon.color);used=0;continue;}
+          if(!strcmp(line,"viewstatus")){lv_mem_monitor_t pool;lv_mem_monitor(&pool);printf("VIEW state=%s zoom=%.3f bubble=%d thought=%d heap=%u provider=%d icon=%d color=%04x lvgl_used=%u lvgl_free=%u\n",sequence_name(),double(camera_focus),!lv_obj_has_flag(bubble,LV_OBJ_FLAG_HIDDEN),!lv_obj_has_flag(thought_dot,LV_OBJ_FLAG_HIDDEN),unsigned(esp_get_free_heap_size()),face_provider,custom_icon.active,custom_icon.color,unsigned(pool.total_size-pool.free_size),unsigned(pool.free_size));used=0;continue;}
           if(!strcmp(line,"host")){desktop_signal();printf("PAL HOST OK\n");used=0;continue;}
           if(!strcmp(line,"startupstatus")){printf("STARTUP STATUS state=%s frame=%.2f waiting=%d blend=%d bottom=%d\n",sequence_name(),double(motion.frame_position),!lv_obj_has_flag(connection_label,LV_OBJ_FLAG_HIDDEN),esp_timer_get_time()-motion.started<motion.transition_us,projected_bottom);used=0;continue;}
           if(motion.command(line)){if(!strncmp(line,"motion ",7)||!strcmp(line,"play"))sequence=-1;used=0;continue;}

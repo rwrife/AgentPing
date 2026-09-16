@@ -6,9 +6,16 @@ import * as T from 'three';
 import {FBXLoader} from 'three/addons/loaders/FBXLoader.js';
 const base=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../test-results/live3d');
 const source=process.argv[2];
-const namespace=process.argv[3]||'wave_motion';
+const namespaceArg=process.argv[3];
+const namespace=namespaceArg&&!namespaceArg.startsWith('--')?namespaceArg:'wave_motion';
 if(!/^[a-z][a-z0-9_]*_motion$/.test(namespace))throw Error('Invalid output namespace');
 const rootMotion=process.argv.includes('--root');
+// Ad-hoc clips uploaded over USB never become baked assets.
+const skipHeader=process.argv.includes('--no-header');
+// The renderer runs near 10-12 FPS, so sampling faster only inflates the clip.
+const rateFlag=process.argv.indexOf('--rate');
+const rate=rateFlag<0?12:Number(process.argv[rateFlag+1]);
+if(!Number.isInteger(rate)||rate<1||rate>60)throw Error('--rate must be a whole number of frames per second between 1 and 60');
 if(!source)throw Error('Usage: node simulator/scripts/export-motion.mjs animation.fbx');
 const bytes=fs.readFileSync(source);
 const root=new FBXLoader().parse(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength),'');
@@ -26,7 +33,7 @@ const targetFloor=Math.min(...model.vertices.map(v=>v[1]/4096));
 const rootScale=(model.bones[0].local[13]-targetFloor)/hipsRest.y;
 const targetRest=model.bones.map(b=>{const p=new T.Vector3(),q=new T.Quaternion(),s=new T.Vector3();new T.Matrix4().fromArray(b.inverse).invert().decompose(p,q,s);return q;});
 const localRest=model.bones.map(b=>{const p=new T.Vector3(),q=new T.Quaternion(),s=new T.Vector3();new T.Matrix4().fromArray(b.local).decompose(p,q,s);return q;});
-const clip=root.animations[0],rate=24,count=Math.ceil(clip.duration*rate-1e-5)+1;
+const clip=root.animations[0],count=Math.ceil(clip.duration*rate-1e-5)+1;
 const mixer=new T.AnimationMixer(root),action=mixer.clipAction(clip);action.setLoop(T.LoopOnce,1);action.clampWhenFinished=true;action.play();
 const frames=[],translations=[];
 for(let f=0;f<count;f++) {
@@ -54,5 +61,5 @@ fs.writeFileSync(path.join(base,namespace==='wave_motion'?'waving.json':namespac
 let header='#pragma once\n#include <cstdint>\nnamespace '+namespace+' {\ninline constexpr unsigned count='+count+', rate='+rate+';\ninline constexpr int16_t keys[]={\n'+result.frames.map(row=>row.join(',')).join(',\n')+'\n};\n';
 if(rootMotion)header+='inline constexpr int16_t roots[]={\n'+translations.map(row=>row.join(',')).join(',\n')+'\n};\n';
 header+='}\n';
-fs.writeFileSync(path.resolve(base,'../../../firmware/assets/'+namespace+'.h'),header);
+if(!skipHeader)fs.writeFileSync(path.resolve(base,'../../../firmware/assets/'+namespace+'.h'),header);
 console.log(JSON.stringify({source:result.source,duration:result.duration,frames:count,bones:result.bones,bytes:count*(result.bones*8+(rootMotion?6:0))},null,2));

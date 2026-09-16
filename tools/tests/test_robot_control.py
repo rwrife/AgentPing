@@ -10,7 +10,7 @@ from unittest.mock import patch
 from concurrent.futures import ThreadPoolExecutor
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from robot_control import atomic_json, command, process_requests, request
+from robot_control import MOTION_BONES, atomic_json, command, motion_steps, process_requests, request
 
 
 class RobotControlTests(unittest.TestCase):
@@ -109,6 +109,36 @@ class RobotControlTests(unittest.TestCase):
             with patch("robot_control.time.time", side_effect=lambda: clock[0]):
                 process_requests(root, send)
             self.assertEqual(len(calls), 1)
+
+
+class MotionStepsTests(unittest.TestCase):
+    @staticmethod
+    def clip(frames=3):
+        return {"frames": [[0, 0, 0, 32767] * MOTION_BONES for _ in range(frames)], "rate": 12}
+
+    def test_upload_sequence_declares_header_then_keys_then_play(self):
+        steps = motion_steps(self.clip())
+        wires = [w.decode() if isinstance(w, bytes) else w for w, _ in steps]
+        self.assertEqual(wires[0].strip(), "idle")
+        self.assertTrue(wires[1].startswith("motion 3 12 "))
+        self.assertEqual([w.split(" ", 2)[0:2] for w in wires[2:5]],
+                         [["key", "0"], ["key", "1"], ["key", "2"]])
+        self.assertEqual(wires[5].strip(), "play")
+        # Every bone contributes four signed 16-bit components.
+        self.assertEqual(len(wires[2].split(" ", 2)[2].strip()), MOTION_BONES * 8 * 2)
+
+    def test_checksum_follows_the_uploaded_bytes(self):
+        first = motion_steps(self.clip())[1][0]
+        moved = self.clip()
+        moved["frames"][1][2] = 16384
+        self.assertNotEqual(first, motion_steps(moved)[1][0])
+
+    def test_rejects_clips_the_firmware_cannot_accept(self):
+        for bad in ({"frames": [], "rate": 12},
+                    {"frames": self.clip()["frames"], "rate": 0},
+                    {"frames": [[0, 0, 0, 32767] * (MOTION_BONES - 1)] * 3, "rate": 12}):
+            with self.assertRaises((ValueError, TypeError)):
+                motion_steps(bad)
 
 
 if __name__ == "__main__": unittest.main()

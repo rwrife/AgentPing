@@ -17,10 +17,10 @@ inline bool parse_notification(const char* line, NotificationCommand& output) {
   const char* providers[] = {"codex", "claude", "copilot"};
   const char* kinds[] = {"attention", "completed", "error", "thinking"};
   bool valid_provider = false, valid_kind = false;
-  for (unsigned i=0; i<4; ++i) {
+  for (unsigned i=0; i<sizeof(providers)/sizeof(providers[0]); ++i)
     if (!std::strcmp(provider,providers[i])) { output.provider=i; valid_provider=true; }
+  for (unsigned i=0; i<sizeof(kinds)/sizeof(kinds[0]); ++i)
     if (!std::strcmp(kind,kinds[i])) { output.kind=i; valid_kind=true; }
-  }
   return valid_provider && valid_kind;
 }
 }

@@ -4,13 +4,79 @@ import argparse
 import json
 import os
 from pathlib import Path
+import re
+import shutil
 import subprocess
 import sys
 import time
 from typing import Literal
 
 from agentping_usb_notifications import state_dir
-from robot_control import DANCES, JOINTS, STATES, request
+from robot_control import DANCES, JOINTS, MOTION_BONES, MOTION_MAX_FRAMES, STATES, request
+
+REPO = Path(__file__).resolve().parents[1]
+EXPORTED_CLIP = REPO / "simulator/test-results/live3d/custom_motion.json"
+# The renderer refuses an upload that would leave it less than this much heap.
+MOTION_HEAP_RESERVE = 24576
+MOTION_HEAP_MARGIN = 512
+
+
+def convert_fbx(source: Path, rate: int) -> Path:
+    """Retarget a Mixamo FBX onto the Pixel Pal rig using the simulator exporter."""
+    node = shutil.which("node")
+    if not node:
+        raise RuntimeError("Node.js is required to convert an FBX; pass an exported .json clip instead")
+    exporter = REPO / "simulator/scripts/export-motion.mjs"
+    finished = subprocess.run([node, str(exporter), str(source), "custom_motion", "--no-header", "--rate", str(rate)],
+                              capture_output=True, text=True, cwd=REPO)
+    if finished.returncode:
+        raise RuntimeError("FBX conversion failed; run simulator/scripts/export-motion.mjs directly for details")
+    return EXPORTED_CLIP
+
+
+def sample_clip(clip: dict, fps: int, start: float, max_frames: int = MOTION_MAX_FRAMES) -> dict:
+    """Pick an evenly spaced window that fits the renderer's RAM clip limit."""
+    if clip.get("bones") != MOTION_BONES:
+        raise ValueError(f"clip must target the {MOTION_BONES}-bone Pixel Pal rig")
+    source_rate, frames = clip.get("rate"), clip.get("frames")
+    if type(source_rate) is not int or source_rate < 1 or not isinstance(frames, list):
+        raise ValueError("clip is missing a frame rate or keyframes")
+    if not 1 <= fps <= 60:
+        raise ValueError("fps must be between 1 and 60")
+    stride = max(1, round(source_rate / fps))
+    first = min(max(0, round(start * source_rate)), max(0, len(frames) - 1))
+    window = frames[first::stride][:max(0, min(max_frames, MOTION_MAX_FRAMES))]
+    if len(window) < 2:
+        raise ValueError("clip window needs at least two keyframes; lower --start or raise --fps")
+    return {"frames": window, "rate": max(1, min(60, round(source_rate / stride)))}
+
+
+def load_motion(clip: Path, fps: int, start: float, max_frames: int = MOTION_MAX_FRAMES) -> dict:
+    # Sampling the FBX at the playback rate avoids uploading frames the renderer
+    # would immediately discard; exported .json clips are strided instead.
+    source = convert_fbx(clip, fps) if clip.suffix.lower() == ".fbx" else clip
+    return sample_clip(json.loads(source.read_text(encoding="utf-8")), fps, start, max_frames)
+
+
+def frame_budget(root: Path) -> int:
+    """Ask the device how many keyframes fit beside the renderer's fixed heap reserve."""
+    reply = request(root, "status", {}).get("reply") or ""
+    free = re.search(r"heap=(\d+)", reply)
+    if not free:
+        raise RuntimeError("robot did not report free memory")
+    usable = int(free.group(1)) - MOTION_HEAP_RESERVE - MOTION_HEAP_MARGIN
+    budget = min(MOTION_MAX_FRAMES, usable // (MOTION_BONES * 8))
+    if budget < 2:
+        raise RuntimeError("robot has too little free memory for a custom clip; lower the render resolution")
+    return budget
+
+
+def play_motion(root: Path, clip: Path, fps: int, start: float) -> dict:
+    motion = load_motion(clip, fps, start, frame_budget(root))
+    result = request(root, "motion", motion, timeout=90)
+    result["clip"] = {"frames": len(motion["frames"]), "rate": motion["rate"],
+                      "seconds": round((len(motion["frames"]) - 1) / motion["rate"], 2)}
+    return result
 
 
 def worker_status(root: Path) -> dict:
@@ -79,6 +145,11 @@ def serve_mcp(root: Path) -> None:
         return request(root, "joint", {"joint": joint, "x": x, "y": y, "z": z, "duration_ms": duration_ms})
 
     @mcp.tool()
+    def robot_play_motion(path: str, fps: int = 12, start_seconds: float = 0) -> dict:
+        """Retarget a Mixamo .fbx animation (or an already exported .json clip) onto the robot and loop it from RAM. Converting an FBX needs Node.js and the simulator dependencies. The renderer keeps clips in its spare heap, so a long clip may be trimmed: fps trades smoothness against how much of the clip fits, and start_seconds chooses where the window begins. Idle or reset stops playback."""
+        return play_motion(root, Path(path), fps, start_seconds)
+
+    @mcp.tool()
     def robot_reset() -> dict:
         """Clear manual joint controls and bubbles, blending back to idle."""
         return request(root, "reset", {})
@@ -111,12 +182,18 @@ def main() -> int:
     joint = sub.add_parser("joint"); joint.add_argument("joint", choices=JOINTS)
     for axis in ("x", "y", "z"): joint.add_argument("--" + axis, type=float, default=0)
     joint.add_argument("--duration-ms", type=int, default=600)
+    motion = sub.add_parser("motion", help="Play a custom Mixamo animation from the renderer's RAM")
+    motion.add_argument("clip", type=Path, help="Mixamo .fbx, or a .json clip already written by export-motion.mjs")
+    motion.add_argument("--fps", type=int, default=12, help="Keyframes sampled per second (1-60)")
+    motion.add_argument("--start", type=float, default=0, help="Seconds into the clip to begin the sampled window")
     args = parser.parse_args()
     try:
         if args.mode == "mcp":
             serve_mcp(args.state_dir); return 0
         if args.mode == "start": result = start_worker(args.state_dir, args.port)
         elif args.mode == "worker-status": result = worker_status(args.state_dir)
+        elif args.mode == "motion":
+            result = play_motion(args.state_dir, args.clip, args.fps, args.start)
         else:
             fields = {k: v for k, v in vars(args).items() if k not in ("mode", "state_dir", "port")}
             if args.mode == "icon":
