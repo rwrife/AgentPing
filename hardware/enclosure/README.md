@@ -41,17 +41,33 @@ check the slicer dimensions before printing. The shell's openings may require
 local support depending on bridging performance. Keep support scars off the
 front glass contact edge and adhesive face.
 
-Use four M2.5 x 8 mm thread-forming screws for plastic through the 2.8 mm rear
-clearance holes into the 2.1 mm pilot holes in the shell. Check pilot fit with
-one screw first; printer tolerances may require adjusting the diameter.
-Do not overtighten. These screws join printed parts; they do not engage the PCB.
+## M2 board mounting and snap closure
 
-Insert the device from the rear, USB downward. The perimeter rim retains the
-module at the front. Before fastening the cover, check that the board sits flat,
-the connector accepts your actual USB plug, and the buttons are reachable.
-Any anti-rattle shims should contact only the metal frame, never the display,
-components, or exposed pins. Do not force the cover onto the board. Internal
-support pads may need adjustment after the first physical fit test.
+The user confirmed M2 threaded metal standoffs and no pin headers; the standoffs
+clear the rear components. Four 2.3 mm clearance holes in the backplate align
+with the manufacturer's 22 x 38.5 mm mounting pattern. Printed spacer pads carry
+the standoffs, keeping pressure away from the PCB and components.
+
+**Spacer height is provisional: 4.8 mm**, derived from the manufacturer's 9.6 mm
+pin-free drawing envelope. Measure the actual screen-front-to-standoff-foot
+height before final printing. Change STANDOFF_SPACER in the generator so the
+display sits behind the bezel without pressure on the glass. Hole-pattern fit
+also needs checking on the actual board revision.
+
+Fasten the board to the backplate using M2 machine screws, then insert the
+assembly into the front shell. Four cantilever catches engage pockets in the
+shell. Release slots beside each catch are accessible from the rear; gently push
+the catches inward while withdrawing the backplate. No shell screws are used.
+
+Screw grip through the current backplate and spacers is 7.6 mm. Choose screw
+length from that grip plus the measured usable thread engagement; do not bottom
+screws in the metal standoffs. Do not force the shell closed if the screen touches.
+
+The PLA snap beams are 1 mm thick and about 9 mm long, with a 0.2 mm nominal
+engagement. Print a fit test before installing electronics: flex and fatigue
+performance are not validated by CAD. The upright printed beams are sensitive
+to layer adhesion; adjust fit rather than forcing a tight catch. The backplate
+is a removable service part, not intended for frequent cycling.
 
 ## Source and remaining checks
 
