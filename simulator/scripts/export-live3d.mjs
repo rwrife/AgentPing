@@ -1,0 +1,34 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
+import * as T from 'three';
+import {FBXLoader} from 'three/addons/loaders/FBXLoader.js';
+globalThis.window={URL};T.TextureLoader.prototype.load=function(url){const t=new T.Texture();t.userData.url=url;return t;};
+const source=process.argv[2];
+if(!source)throw Error('Usage: node scripts/export-live3d.mjs <character.fbx>');
+const output=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../test-results/live3d');
+const data=fs.readFileSync(source);const root=new FBXLoader().parse(data.buffer.slice(data.byteOffset,data.byteOffset+data.byteLength),'');root.updateMatrixWorld(true);
+const mesh=[];root.traverse(o=>{if(o.isSkinnedMesh)mesh.push(o)});if(mesh.length!==1)throw Error('Expected one skinned mesh');const m=mesh[0],g=m.geometry;
+const box=new T.Box3().setFromObject(root),center=box.getCenter(new T.Vector3()),height=box.getSize(new T.Vector3()).y;
+const N=new T.Matrix4().makeScale(2/height,2/height,2/height).multiply(new T.Matrix4().makeTranslation(-center.x,-center.y,-center.z));
+const bones=m.skeleton.bones;const worlds=bones.map(b=>N.clone().multiply(b.matrixWorld));
+const boneData=bones.map((b,i)=>{const parent=bones.indexOf(b.parent);return {name:b.name,parent,local:(parent<0?worlds[i]:worlds[parent].clone().invert().multiply(worlds[i])).elements,inverse:worlds[i].clone().invert().elements};});
+if(bones.length>255)throw Error('Bone indices exceed uint8');
+boneData.forEach((b,i)=>{if(b.parent>=i)throw Error('Bones must be ordered parent before child');});
+const vertices=[],indices=[],keys=new Map();
+for(let i=0;i<g.attributes.position.count;i++){
+ const p=new T.Vector3().fromBufferAttribute(g.attributes.position,i).applyMatrix4(m.matrixWorld).applyMatrix4(N);
+ const uv=new T.Vector2().fromBufferAttribute(g.attributes.uv,i);
+ const bi=Array.from({length:4},(_,j)=>g.attributes.skinIndex.array[i*4+j]);
+ let weights=Array.from({length:4},(_,j)=>g.attributes.skinWeight.array[i*4+j]);const total=weights.reduce((a,b)=>a+b,0);if(total<=0)throw Error('Unweighted vertex');
+ weights=weights.map(w=>Math.round(w/total*255));weights[weights.indexOf(Math.max(...weights))]+=255-weights.reduce((a,b)=>a+b,0);
+ const row=[...p.toArray().map(v=>Math.round(v*4096)),...uv.toArray().map(v=>Math.round(v*65535)),...bi,...weights];const key=row.join(',');
+ if(row.slice(0,3).some(v=>v<-32768||v>32767)||row.slice(3,5).some(v=>v<0||v>65535))throw Error('Position/UV outside fixed-point range');
+ if(bi.some(v=>v<0||v>=bones.length)||weights.some(v=>v<0||v>255))throw Error('Invalid skin data');
+ if(!keys.has(key)){keys.set(key,vertices.length);vertices.push(row)}indices.push(keys.get(key));
+}
+if(g.index)throw Error('Exporter expects FBX triangle soup');
+if(vertices.length>65535)throw Error('Vertex indices exceed uint16');
+fs.mkdirSync(output,{recursive:true});fs.writeFileSync(path.join(output,'model.json'),JSON.stringify({vertices,indices,bones:boneData}));
+fs.writeFileSync(path.join(output,'color.jpg'),Buffer.from(await (await fetch(m.material.map.userData.url)).arrayBuffer()));
+console.log(JSON.stringify({vertices:vertices.length,triangles:indices.length/3,bones:boneData.map((b,i)=>({i,name:b.name,parent:b.parent}))},null,2));

@@ -1,5 +1,8 @@
 # USB character bring-up
 
+For the separate on-device mesh renderer and measured performance, see
+[Live 3D hardware experiment](LIVE3D.md).
+
 This dedicated `character_usb` firmware profile plays baked Pixel Pal idle and
 wave clips using LVGL. It does not start Wi-Fi, TLS, provisioning, or the existing
 network transport. This is display/USB bring-up, not the final agent protocol.

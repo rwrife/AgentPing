@@ -38,6 +38,10 @@ void ui_task(void*) {
 
 }  // namespace
 
+#ifdef AGENTPING_LIVE3D
+namespace agentping { void run_live3d(); }
+#endif
+
 extern "C" void app_main() {
   esp_err_t nvs_result = nvs_flash_init();
   if (nvs_result == ESP_ERR_NVS_NO_FREE_PAGES || nvs_result == ESP_ERR_NVS_NEW_VERSION_FOUND) {
@@ -48,6 +52,10 @@ extern "C" void app_main() {
 
   ESP_ERROR_CHECK(agentping::board::initialize());
   agentping::board::set_brightness(65);
+#ifdef AGENTPING_LIVE3D
+  agentping::run_live3d();
+  return;
+#endif
 #ifdef AGENTPING_CHARACTER_DEMO
   agentping::run_character_demo();
   return;
