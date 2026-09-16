@@ -52,6 +52,13 @@ there is no collision solver. Manual pose holds until another state is selected.
 
 ## MCP configuration
 
+For **GitHub Copilot CLI on Windows**, the repository's
+[`.github/mcp.json`](../.github/mcp.json) already defines the `agentping` server.
+Run `companion/robot.cmd start`, then launch `copilot` from the repository root
+and accept folder trust. Use `/mcp show agentping` to inspect the tools.
+The relative Windows launcher requires the repository root as the working
+directory. This configuration does not start the USB worker or install hooks.
+
 The implementation uses the maintained v1 line of the
 [official MCP Python SDK](https://py.sdk.modelcontextprotocol.io/v1/), pinned
 in `tools/requirements-robot.txt`. Add this server to an MCP client's configuration,
