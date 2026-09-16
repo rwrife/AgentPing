@@ -3,15 +3,16 @@
 `live3d_usb` is a separate, USB-only software-rendering profile for the
 Waveshare ESP32-C6 Touch AMOLED 1.64. It transforms the skeleton and rasterizes
 the robot on the device; it does not play baked image frames or stream video
-from the PC. This experimental profile does not yet implement the notification
-protocol or the simulator's state animations.
+from the PC. Startup and idle animations run locally. The full provider
+notification protocol and remaining simulator states are not yet ported.
 
 ## Asset pipeline
 
 The user-provided `pingpal.fbx` contains one skinned mesh, 27 bones, UVs, and
 embedded textures, but no animation clips. The original benchmark exercised
-the arm bones with procedural rotations; the current demo boots into the
-converted Mixamo wave described below. It uses the base-color texture only;
+the arm bones with procedural rotations; the current demo boots through the
+fall, stand-up, and idle sequence below. It uses the base-color texture plus
+a separate dynamic face canvas;
 normal maps, metallic maps, and physically based lighting are not implemented.
 
 The converted model retains all 2,668 triangles with 2,822 deduplicated vertices.
@@ -55,9 +56,10 @@ device framebuffer PNG to `test-results/live3d-device/`, then resumes animation.
 The captured image validates the renderer's output; it is not a photograph of
 the physical display.
 
-## Measured on the device
+## Original renderer benchmark
 
-September 16, 2026, ESP32-C6 at its stock 160 MHz clock, all 2,668 triangles:
+September 16, 2026, before the dynamic face and closer camera, ESP32-C6 at its
+stock 160 MHz clock, all 2,668 triangles:
 
 | Rendering mode | Texture | Measured FPS |
 | --- | --- | --- |
@@ -94,7 +96,7 @@ are retained; root translation and finger tracks are omitted for this in-place
 wave. All 27 target rotations are quantized to signed 16-bit quaternions.
 
 The generated `assets/wave_motion.h` stores **3,024 bytes of motion in flash**.
-The live demo starts it automatically at the requested **two-thirds speed**
+The `wave` command selects it at the requested **two-thirds speed**
 (0.8125 seconds per loop) and interpolates poses at the display's render rate,
 including the loop seam and a 400 ms entry blend. The original 24 Hz sample
 timing is retained; playback speed is a separate multiplier. It needs no PC
@@ -118,12 +120,68 @@ python tools/upload_motion.py simulator/test-results/live3d/waving.json --port C
 python tools/check_usb_motion.py simulator/test-results/live3d/waving.json --port COM5
 ```
 
-Hardware validation: the stored wave plays at approximately 12.8–13.0 rendered
+Earlier wave-only hardware validation: the stored wave plays at approximately 12.8–13.0 rendered
 FPS at native resolution with 40,140 bytes free heap. The application is
 649,363 bytes with 102,996 bytes static RAM. Startup from flash, framebuffer
 appearance, successful RAM upload/playback, malformed upload rejection,
 checksum rejection, and memory recovery when returning to flash were checked
 on COM5. Final playback reports `source=flash` and `speed=0.667`.
+
+## Startup sequence and dynamic face
+
+The boot sequence is stored entirely in flash:
+
+| Clip | Keys at 24 Hz | Motion bytes, including hip position | Playback |
+| --- | ---: | ---: | --- |
+| Falling Flat Impact | 38 | 8,436 | Once, 1.5x speed (about 1.03 seconds) |
+| Standing Up | 274 | 60,828 | Once, original speed (11.375 seconds) |
+| Standing Idle | 145 | 32,190 | Loop, original speed (6 seconds) |
+
+The three clips total **101,454 bytes**. The fall starts with all projected
+vertices above the display, descends to its center, and is never automatically
+replayed during idle. Framing is about 21% closer than the first renderer.
+The animated silhouette stays centered, while the connection caption is a
+separate LVGL label fixed 16 pixels above the bottom edge.
+
+The player renders each one-shot's final key before advancing. It retains the
+outgoing bone quaternions and hip position, then blends them into the incoming
+first pose over 400 ms with eased, normalized shortest-path quaternion blends.
+The incoming clip's clock begins after this blend. The same player supports
+smooth transitions to the stored wave and back to idle. A pending USB upload
+holds the last displayed pose until a validated clip is ready. Pause/resume
+preserves animation time.
+
+Idle immediately shows “Waiting for connection...” and the host-agent caption.
+A USB `host` heartbeat hides it; 15 seconds without another heartbeat restores
+it. USB power alone is not treated as a host-agent connection. `boot` replays
+startup for testing, `idle` transitions to idle, and `startupstatus` reports the
+state, key position, transition status, and caption visibility.
+
+The reduced FBX retains the front screen surface but has only one material.
+The renderer now projects a separate 64 x 64 RGB565 face canvas over 51 front
+screen triangles using their rest-pose coordinates. This preserves facial
+detail independently of the 128 x 128 body atlas. Fall, recovery, and idle have
+different expressions; idle blinks periodically. The face uses 8 KiB of RAM.
+
+With the closer framing and dynamic face, hardware validation measured 10.38
+FPS in idle with the connection caption and 11.08 FPS without it. Free heap
+remained at 31,036 bytes. The application uses 757,649 bytes of flash and
+112,116 bytes of static RAM. A cold-boot test confirmed an entirely off-screen
+entrance (maximum projected Y = -12), both 400 ms transitions, looping idle,
+and caption visibility through heartbeat expiry.
+
+Rebuild the assets from the repository root:
+
+```powershell
+python scripts/encode_live3d.py
+node simulator/scripts/export-motion.mjs 'C:/Users/ryrife/Downloads/Falling Flat Impact.fbx' fall_motion --root
+node simulator/scripts/export-motion.mjs 'C:/Users/ryrife/Downloads/Standing Up.fbx' stand_motion --root
+node simulator/scripts/export-motion.mjs 'C:/Users/ryrife/Downloads/Standing Idle.fbx' idle_motion --root
+.\.venv-firmware\Scripts\python.exe tools/check_startup_motion.py --port COM5
+```
+
+The last command resets the physical device and tests the sequence, off-screen
+entrance, looping idle, connection caption, and heartbeat timeout.
 
 ## Restore notification firmware
 

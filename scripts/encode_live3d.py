@@ -42,6 +42,18 @@ def main():
     small_pixels = [((r >> 3) << 11) | ((g >> 2) << 5) | (b >> 3) for r, g, b in small.getdata()]
     text += 'inline constexpr uint16_t texture64[]={' + ','.join(map(str, small_pixels)) + '};\n}\n'
     (ROOT / 'firmware/assets/live_model.h').write_text(text)
+    # Identify the front screen triangles independently of the low-resolution
+    # body atlas. Firmware projects a separate face canvas over this surface.
+    face_triangles = []
+    for start in range(0, len(model['indices']), 3):
+        tri = [model['vertices'][i] for i in model['indices'][start:start+3]]
+        center = [sum(v[k] / 4096 for v in tri) / 3 for k in range(3)]
+        face_triangles.append(int(-.29 < center[0] < .29 and .43 < center[1] < .96 and center[2] > .16))
+    if sum(face_triangles) < 10:
+        raise ValueError('Face surface mapping failed')
+    header = '#pragma once\n#include <cstdint>\nnamespace live_face {\ninline constexpr uint8_t triangles[]={' + ','.join(map(str, face_triangles)) + '};\n}\n'
+    (ROOT / 'firmware/assets/face_lookup.h').write_text(header)
+    print(f'Dynamic face mapping: {sum(face_triangles)} screen triangles')
     size = len(model['vertices']) * 18 + len(model['indices']) * 2 + len(pixels) * 2 + len(model['bones']) * 132
     print(f'Model data: {size:,} bytes; {len(model["vertices"])} vertices; {len(model["indices"]) // 3} triangles')
 
