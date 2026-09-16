@@ -38,6 +38,12 @@ the worker does not install an auto-start service.
 
 ## Detection and display
 
+Copilot's interactive `ask_user` questions trigger attention through a targeted
+`preToolUse` hook, before the question opens. Other tools are ignored by this
+hook, and it emits no permission decision. This covers questions that do not
+emit `awaitingUserInput` while waiting. Restart existing Copilot sessions after
+reinstalling hooks to load this handler. Attention bypasses the thinking cooldown.
+
 Permission requests and requests for input trigger attention. Thinking/working
 signals trigger the thinking animation instead of the amber “Ready for your
 input” attention state. Turn completion triggers completion, and supported
