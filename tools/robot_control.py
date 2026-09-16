@@ -12,6 +12,12 @@ STATES = ("idle", "thinking", "attention", "error", "wave", "boot")
 DANCES = ("random", "hiphop", "twist", "chicken")
 JOINTS = ("head", "torso", "left_shoulder", "right_shoulder", "left_elbow", "right_elbow",
           "left_hip", "right_hip", "left_knee", "right_knee")
+# Actions that change what is on screen. A manual CLI/MCP call to one of these
+# briefly suppresses queued agent notifications (see write_suppression/suppressed)
+# so an operator's explicit robot command is not immediately undone by a
+# same-instant provider hook notification.
+DISPLAY_ACTIONS = frozenset({"state", "dance", "joint", "icon", "reset"})
+SUPPRESS_SECONDS = 5
 
 
 def command(action: str, args: dict) -> tuple[bytes, bytes]:
@@ -90,6 +96,22 @@ def atomic_json(path: Path, value: dict) -> None:
     file_io(lambda: temp.replace(path))
 
 
+def write_suppression(root: Path, until: float) -> None:
+    """Record that queued agent notifications should be dropped until `until`."""
+    atomic_json(root / "suppress.json", {"until": until})
+
+
+def suppressed(root: Path, now: float | None = None) -> bool:
+    """True while a recent manual robot command is suppressing agent notifications."""
+    now = time.time() if now is None else now
+    try:
+        value = json.loads((root / "suppress.json").read_text(encoding="utf-8"))
+        until = value.get("until")
+        return isinstance(until, (int, float)) and math.isfinite(until) and now < until
+    except (OSError, ValueError, KeyError):
+        return False
+
+
 def request(root: Path, action: str, args: dict, timeout: float = 8) -> dict:
     command(action, args)
     request_id = uuid.uuid4().hex
@@ -133,6 +155,11 @@ def process_requests(root: Path, send) -> bool:
             wire, ack = command(event["action"], event["args"])
             file_io(lambda: path.unlink(missing_ok=True))
             reply = "Desktop USB worker stopped" if event["action"] == "stop" else send(wire, ack)
+            if event["action"] in DISPLAY_ACTIONS:
+                # A manual command just changed the display; ignore agent
+                # notifications queued at the same instant so they cannot
+                # immediately cancel it out.
+                write_suppression(root, time.time() + SUPPRESS_SECONDS)
             value = {"ok": True, "reply": reply}
         except (OSError, ValueError, TypeError, KeyError) as error:
             # Do not persist user text or transport diagnostics in error logs.

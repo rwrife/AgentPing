@@ -53,6 +53,10 @@ Messages dismiss after 30 seconds; animation returns at its next neutral boundar
 to idle if connected, or forward/reverse listening if the host is absent. Multiple simultaneous
 notifications currently replace the visible bubble; there is no on-device inbox.
 
+A manual robot command sent via the [CLI or MCP server](robot-control.md) is
+never immediately overwritten by one of these notifications: for 5 seconds
+after such a command, queued notifications are dropped rather than delivered.
+
 USB commands added by this path:
 
 ```text

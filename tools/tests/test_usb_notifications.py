@@ -2,11 +2,13 @@ import json
 from pathlib import Path
 import sys
 import tempfile
+import time
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from agentping_usb_notifications import enqueue, normalize, wire
+from agentping_usb_notifications import enqueue, normalize, process_pending_notifications, wire
 from install_usb_hooks import merge_hooks, configs
+from robot_control import write_suppression
 
 
 class UsbNotificationsTests(unittest.TestCase):
@@ -49,6 +51,30 @@ class UsbNotificationsTests(unittest.TestCase):
         with self.assertRaises(ValueError): normalize("unknown",{})
         with tempfile.TemporaryDirectory() as directory:
             with self.assertRaises(ValueError): enqueue(Path(directory),"codex","approve")
+
+    def test_manual_robot_command_suppresses_queued_agent_notifications(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            enqueue(root, "claude", "attention", now=100)
+            write_suppression(root, time.time() + 5)
+            sent = []
+            result = process_pending_notifications(root, lambda *a: sent.append(a), {}, {p: 0 for p in ("codex","claude","copilot")})
+            self.assertIsNone(result)
+            self.assertFalse(sent)
+            self.assertFalse(list((root / "pending").glob("*.json")))
+
+    def test_notifications_deliver_normally_once_suppression_expires(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            now = time.time()
+            enqueue(root, "claude", "attention", now=now)
+            write_suppression(root, now - 1)
+            sent = []
+            counters = {p: 0 for p in ("codex", "claude", "copilot")}
+            result = process_pending_notifications(root, lambda *a: sent.append(a), {}, counters, now=now)
+            self.assertEqual({"provider": "claude", "kind": "attention", "at": now}, result)
+            self.assertEqual(1, len(sent))
+            self.assertEqual(1, counters["claude"])
 
 
 if __name__ == "__main__": unittest.main()

@@ -36,6 +36,17 @@ unknown commands and arguments. Acknowledgment means the command was accepted,
 not that the animation has finished. Message states dismiss after 30 seconds
 and return to idle. Dances play once. `state boot` replays the startup sequence.
 
+## Manual commands take priority over agent notifications
+
+`message`, `state`, `dance`, `joint`, `icon`, and `reset` are treated as manual
+overrides: for 5 seconds after one of these commands is sent, the worker drops
+any queued Codex/Claude Code/Copilot CLI notification (see
+[usb-notifications.md](usb-notifications.md)) instead of delivering it. This
+prevents a same-instant provider hook notification from immediately
+overwriting the display you just set with the CLI or MCP. `status` does not
+count as a manual override, since it does not change the display. The
+suppression window is a fixed 5 seconds and is not currently configurable.
+
 ## Joint controls
 
 Supported joints: `head`, `torso`, `left_shoulder`, `right_shoulder`,

@@ -14,7 +14,7 @@ import sys
 import time
 import uuid
 
-from robot_control import process_requests
+from robot_control import process_requests, suppressed
 
 PROVIDERS = ("codex", "claude", "copilot")
 KINDS = ("attention", "completed", "error", "thinking")
@@ -86,6 +86,41 @@ def wire(event: dict, now: float) -> bytes | None:
     return f"notify {event['id']} {event['provider']} {event['kind']}\n".encode("ascii")
 
 
+def process_pending_notifications(root: Path, send, recent: dict, counters: dict, now: float | None = None) -> dict | None:
+    """Send queued provider notifications, unless a manual robot command is suppressing them.
+
+    Returns the most recently delivered event, or None if nothing was delivered.
+    """
+    now = time.time() if now is None else now
+    pending = sorted((root / "pending").glob("*.json"))
+    if suppressed(root, now):
+        # An MCP/CLI robot command ran moments ago; drop queued agent
+        # notifications so they cannot immediately override it.
+        for path in pending:
+            path.unlink(missing_ok=True)
+        return None
+    last_event = None
+    for path in pending:
+        try:
+            if path.stat().st_size > 512:
+                raise ValueError("oversize event")
+            event = json.loads(path.read_text(encoding="utf-8"))
+            command = wire(event, now)
+        except (ValueError, TypeError, KeyError):
+            path.unlink(missing_ok=True)
+            continue
+        key = (event["provider"], event["kind"])
+        if command is None or time.monotonic() - recent.get(key, -100) < 3:
+            path.unlink(missing_ok=True)
+            continue
+        send(command, f"PAL EVENT {event['id']} OK".encode())
+        recent[key] = time.monotonic()
+        counters[event["provider"]] += 1
+        last_event = {"provider": event["provider"], "kind": event["kind"], "at": now}
+        path.unlink(missing_ok=True)
+    return last_event
+
+
 def run(root: Path, port_name: str) -> None:
     import serial
     root.mkdir(parents=True, exist_ok=True)
@@ -139,24 +174,9 @@ def run(root: Path, port_name: str) -> None:
                     next_heartbeat = time.monotonic() + 5
                 if process_requests(root, send):
                     break
-                for path in sorted((root / "pending").glob("*.json")):
-                    try:
-                        if path.stat().st_size > 512:
-                            raise ValueError("oversize event")
-                        event = json.loads(path.read_text(encoding="utf-8"))
-                        command = wire(event, time.time())
-                    except (ValueError, TypeError, KeyError):
-                        path.unlink(missing_ok=True)
-                        continue
-                    key = (event["provider"], event["kind"])
-                    if command is None or time.monotonic() - recent.get(key, -100) < 3:
-                        path.unlink(missing_ok=True)
-                        continue
-                    send(command, f"PAL EVENT {event['id']} OK".encode())
-                    recent[key] = time.monotonic()
-                    counters[event["provider"]] += 1
-                    last_event = {"provider": event["provider"], "kind": event["kind"], "at": time.time()}
-                    path.unlink(missing_ok=True)
+                result = process_pending_notifications(root, send, recent, counters)
+                if result is not None:
+                    last_event = result
                 last_error = None
                 status(True)
                 time.sleep(.25)

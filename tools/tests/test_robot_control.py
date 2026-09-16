@@ -10,7 +10,7 @@ from unittest.mock import patch
 from concurrent.futures import ThreadPoolExecutor
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from robot_control import atomic_json, command, process_requests, request
+from robot_control import atomic_json, command, process_requests, request, suppressed, write_suppression
 
 
 class RobotControlTests(unittest.TestCase):
@@ -94,6 +94,28 @@ class RobotControlTests(unittest.TestCase):
             atomic_json(root / "commands" / ("a" * 32 + ".json"),
                         {"action": "stop", "args": {}, "expires": time.time() + 5})
             self.assertTrue(process_requests(root, lambda *a: self.fail("Stop must not open USB")))
+
+    def test_display_affecting_commands_suppress_agent_notifications_but_status_does_not(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.assertFalse(suppressed(root))
+            atomic_json(root / "commands" / ("a" * 32 + ".json"),
+                        {"action": "status", "args": {}, "expires": time.time() + 5})
+            process_requests(root, lambda *a: "VIEW state=idle")
+            self.assertFalse(suppressed(root))
+            atomic_json(root / "commands" / ("b" * 32 + ".json"),
+                        {"action": "joint", "args": {"joint": "head", "y": 20}, "expires": time.time() + 5})
+            process_requests(root, lambda *a: "PAL JOINT head OK")
+            self.assertTrue(suppressed(root))
+            self.assertFalse(suppressed(root, time.time() + 10))
+
+    def test_write_suppression_and_suppressed_read_the_same_window(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            write_suppression(root, time.time() + 2)
+            self.assertTrue(suppressed(root))
+            self.assertFalse(suppressed(root, time.time() + 3))
+            self.assertFalse(suppressed(Path(directory) / "missing"))
 
     def test_later_commands_expire_while_an_earlier_send_is_slow(self):
         with tempfile.TemporaryDirectory() as directory:
