@@ -7,7 +7,7 @@
 #include "../assets/stand_motion.h"
 #include "../assets/idle_motion.h"
 #include "../assets/thinking_motion.h"
-#include "../assets/error_motion.h"
+#include "../assets/attention_motion.h"
 #include "../assets/hiphop_motion.h"
 #include "../assets/twist_motion.h"
 #include "../assets/chicken_motion.h"
@@ -112,8 +112,8 @@ void start_sequence(int state,bool transition=true) {
   if(state==0)motion.stored(fall_motion::keys,fall_motion::count,fall_motion::rate,fall_motion::roots,false,transition,1.5f);
   else if(state==1)motion.stored(stand_motion::keys,stand_motion::count,stand_motion::rate,stand_motion::roots,false,transition,1);
   else if(state==3)motion.stored(thinking_motion::keys,thinking_motion::count,thinking_motion::rate,thinking_motion::roots,false,transition,1);
-  else if(state==4)motion.stored(wave_motion::keys,wave_motion::count,wave_motion::rate,nullptr,true,transition,2.0f/3.0f);
-  else if(state==5)motion.stored(error_motion::keys,error_motion::count,error_motion::rate,error_motion::roots,false,transition,2.0f/3.0f);
+  else if(state==4)motion.stored(attention_motion::keys,attention_motion::count,attention_motion::rate,attention_motion::roots,false,transition,2.0f/3.0f);
+  else if(state==5)motion.stored(wave_motion::keys,wave_motion::count,wave_motion::rate,nullptr,true,transition,2.0f/3.0f);
   else if(state==6)motion.stored(hiphop_motion::keys,hiphop_motion::count,hiphop_motion::rate,hiphop_motion::roots,false,transition,1);
   else if(state==7)motion.stored(twist_motion::keys,twist_motion::count,twist_motion::rate,twist_motion::roots,false,transition,1);
   else if(state==8)motion.stored(chicken_motion::keys,chicken_motion::count,chicken_motion::rate,chicken_motion::roots,false,transition,1);
@@ -443,7 +443,7 @@ void run_live3d() {
       if(sequence>=0&&sequence<2&&motion.finished)start_sequence(sequence+1);
       if(dancing()&&motion.finished)start_sequence(2);
       if(sequence==2&&dance_at&&now>=dance_at)random_dance();
-      if((sequence==3||sequence==5)&&motion.finished)start_sequence(sequence);
+      if((sequence==3||sequence==4)&&motion.finished)start_sequence(sequence);
       if(bubble_until&&now>=bubble_until)start_sequence(2);
       if(bubble_until&&sequence==3&&random_thought&&now>=thought_next){thought_index=(thought_index+1)%(sizeof(thoughts)/sizeof(thoughts[0]));lv_label_set_text(bubble,thoughts[thought_index]);thought_next=now+6000000;}
       motion.update(now);

@@ -199,9 +199,10 @@ The live renderer uses stock CPU clocks and the existing display driver.
 
 The live renderer includes Thinking.fbx (103 keys, 22,866 bytes) and Attention
 Waving.fbx (77 keys, 17,094 bytes), both with hip motion. Thinking plays at
-original speed; the error wave and existing attention wave play at two-thirds
-speed. Non-closed thinking/error clips blend back to their first pose over
-400 ms on repeat. State changes use the same bone blend.
+original speed; the attention wave (both hands) and the existing single-hand
+wave play at two-thirds speed. Non-closed thinking/attention clips blend back
+to their first pose over 400 ms on repeat. State changes use the same bone
+blend.
 
 USB commands:
 
@@ -223,7 +224,8 @@ shoulder view in the lower half, and eases back when returning to idle.
 
 Existing `notify <16-hex-id> <codex|claude|copilot> <attention|completed|error>`
 messages are accepted and acknowledged. They show provider names and preset
-messages; errors use the new error wave. Repeated IDs do not restart the bubble.
+messages; attention uses the two-hand wave and error uses the original
+single-hand wave. Repeated IDs do not restart the bubble.
 Provider notifications display the matching real logo on the live face. The direct state commands
 above accept custom text. `host` marks the desktop as seen; the idle caption stays hidden until restart.
 
@@ -231,7 +233,7 @@ Convert the new clips with:
 
 ```powershell
 node simulator/scripts/export-motion.mjs 'C:/Users/ryrife/Downloads/Thinking.fbx' thinking_motion --root
-node simulator/scripts/export-motion.mjs 'C:/Users/ryrife/Downloads/Attention Waving.fbx' error_motion --root
+node simulator/scripts/export-motion.mjs 'C:/Users/ryrife/Downloads/Attention Waving.fbx' attention_motion --root
 .\.venv-firmware\Scripts\python.exe tools/check_live_states.py
 ```
 
