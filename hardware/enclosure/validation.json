@@ -16,17 +16,17 @@
   },
   "front-shell": {
     "valid_solid": true,
-    "volume_mm3": 3144.5,
+    "volume_mm3": 3309.3,
     "size_mm": [
       42.0,
       56.0,
       5.6
     ],
-    "triangles": 2128
+    "triangles": 2064
   },
   "back-cover": {
     "valid_solid": true,
-    "volume_mm3": 11576.7,
+    "volume_mm3": 11713.9,
     "size_mm": [
       42.0,
       56.0,

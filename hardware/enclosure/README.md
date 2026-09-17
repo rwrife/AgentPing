@@ -49,6 +49,10 @@ There are no mounting tabs. The screen faces the viewer; the adhesive side is
 perpendicular to the screen. A button on the bonded side may become inaccessible.
 Check the USB plug and necessary button access before permanent mounting.
 
+The rear USB cutout is 13 mm wide, centred on the housing, with its bottom
+edge 3.6 mm above the back surface. The cut extends to the same 11.2 mm top
+height; the front shell has no USB notch.
+
 ## Printing
 
 White PLA, 0.2 mm layers, four walls, 20-30% infill as starting settings.
@@ -95,7 +99,8 @@ connector/button positions on the actual board during the first physical fit.
 
 ## BOOT / RESET access
 
-Plain 10 x 6 mm side openings provide direct switch access. No printed caps,
+Side openings are limited to the rear tray; the front shell has no external
+button or USB notches. Its internal snap-fit pockets remain in place. No printed caps,
 flexures, guide pockets, or button-loading slots are used. Only the front shell
 and rear tray need printing. Confirm the openings align with your board during
 the fit check. A switch on the monitor-facing side may require detaching the pod.

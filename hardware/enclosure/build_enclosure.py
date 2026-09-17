@@ -37,11 +37,11 @@ cover=cover.cut(rounded(CAVITY_W,CAVITY_H,3.5,BASE,12))
 for x,y in SCREWS:
     cover=cover.cut(Part.makeCylinder(1.15,BASE+.2,V(x,y,-.1)))
     cover=cover.cut(Part.makeCylinder(2.1,1.4,V(x,y,-.1)))
-# Side button and bottom USB openings cross the seam as required.
-cutouts=[box(16,8,8,-8,-29,3.2)]
+# Connector/button openings stay in the rear tray; the front rim is continuous.
+cutouts=[box(13,8,7.6,-6.5,-29,3.6)]
 cutouts += [box(8,10,6,x,-20,4) for x in [-22,14]]
 for opening in cutouts:
-    shell=shell.cut(opening);cover=cover.cut(opening)
+    cover=cover.cut(opening)
 # Isolated rear-tray spring catches engage pockets inside the front bezel.
 for side in [-1,1]:
     for y in [-8,8]:
