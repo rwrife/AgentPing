@@ -3,8 +3,11 @@
     "size_mm": [
       42.0,
       56.0,
-      13.600000000000001
+      15.100000000000001
     ],
+    "board_lift_mm": 1.5,
+    "usb_width_mm": 13,
+    "usb_bottom_mm": 3.6,
     "module_height_mm": 9.3,
     "hole_pitch_mm": [
       22,
@@ -12,7 +15,7 @@
     ],
     "screen_clearance_mm": 0.3,
     "front_bezel_band_mm": 5.600000000000001,
-    "button_access": "plain side openings; no caps"
+    "button_access": "closed side walls; open enclosure for BOOT/RESET"
   },
   "front-shell": {
     "valid_solid": true,
@@ -26,12 +29,12 @@
   },
   "back-cover": {
     "valid_solid": true,
-    "volume_mm3": 11713.9,
+    "volume_mm3": 13740.5,
     "size_mm": [
       42.0,
       56.0,
-      10.8
+      12.3
     ],
-    "triangles": 4220
+    "triangles": 5460
   }
 }

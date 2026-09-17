@@ -8,11 +8,11 @@ fit-check prototype, not a verified production fit.
 
 | Feature | Dimension |
 |---|---|
-| Assembled housing | 42 x 56 x 13.6 |
+| Assembled housing | 42 x 56 x 15.1 |
 | Front bezel depth | 5.6 |
 | Rear floor | 2.8 |
-| Rear exterior seam height | 8.0 |
-| Rear recessed locating lip top | 10.8 |
+| Rear exterior seam height | 9.5 |
+| Rear recessed locating lip top | 12.3 |
 | Locating lip / socket | 38 x 52 / 38.5 x 52.5 |
 | Module pocket | 29.92 x 45 |
 | Screen opening | 27.2 x 42.2 |
@@ -23,8 +23,8 @@ fit-check prototype, not a verified production fit.
 The user measured **9.3 mm from metal standoff feet to screen top**, confirmed
 M2 threaded standoffs and no header pins, and estimated the mounting pattern
 as 22 x 39. Hole centres are (+/-11, +/-19.5) relative to the enclosure centre.
-The standoffs sit directly on the rear floor: no tall printed spacers remain.
-Depth = 2.8 floor + 9.3 module + 0.3 glass clearance + 1.2 front rim.
+Four 1.5 mm printed pads lift the metal standoffs above the rear floor for USB clearance.
+Depth = 2.8 floor + 1.5 pads + 9.3 module + 0.3 glass clearance + 1.2 front rim.
 The 39 mm pitch supersedes the older drawing's 38.5 mm value; dry-fit all four
 screws without force because the user measurement is approximate.
 
@@ -33,7 +33,7 @@ screws without force because the user measurement is approximate.
 1. Fasten the board to the rear tray through four 2.3 mm clearance holes using
    M2 machine screws into its metal standoffs. USB points down.
 2. Rear screw-head recesses are 4.2 mm diameter x 1.3 mm deep. Check the actual
-   screw heads fit. Remaining screw grip is 1.5 mm; choose length as grip plus
+   screw heads fit. Remaining screw grip is 3.0 mm; choose length as grip plus
    usable thread engagement, without bottoming in the metal standoffs.
 3. Slide the thin front bezel over the recessed rear lip. Four spring catches
    engage internal pockets. The glass must not be clamped or pressed by the bezel.
@@ -50,7 +50,7 @@ perpendicular to the screen. A button on the bonded side may become inaccessible
 Check the USB plug and necessary button access before permanent mounting.
 
 The rear USB cutout is 13 mm wide, centred on the housing, with its bottom
-edge 3.6 mm above the back surface. The cut extends to the same 11.2 mm top
+edge 3.6 mm above the back surface. The cut extends to the same 12.7 mm top
 height; the front shell has no USB notch.
 
 ## Printing
@@ -61,7 +61,7 @@ away from hot monitor exhaust. The supplied STL files are oriented for printing:
 front bezel face-down, rear tray floor-down. Local support may be needed at
 connector openings and latch pockets; inspect the slicer preview.
 
-Snap beams are 1 mm thick and 8 mm tall, with 0.25 mm nominal engagement.
+Snap beams are 1 mm thick and 9.5 mm tall, with 0.25 mm nominal engagement.
 The locating lip has 0.25 mm clearance per side. PLA layer adhesion and printer
 accuracy affect clip strength; print a fit check before inserting electronics.
 These catches are intended for occasional service, not frequent cycling.
@@ -99,8 +99,8 @@ connector/button positions on the actual board during the first physical fit.
 
 ## BOOT / RESET access
 
-Side openings are limited to the rear tray; the front shell has no external
-button or USB notches. Its internal snap-fit pockets remain in place. No printed caps,
-flexures, guide pockets, or button-loading slots are used. Only the front shell
-and rear tray need printing. Confirm the openings align with your board during
-the fit check. A switch on the monitor-facing side may require detaching the pod.
+Side walls are closed; open the enclosure to access BOOT/RESET. The front shell
+has no external button or USB notches. Internal snap-fit pockets remain.
+
+The checked-in 3MF files are earlier slicer projects. Import the current STL files
+for the latest USB opening and housing geometry.
