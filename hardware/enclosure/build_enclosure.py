@@ -8,11 +8,12 @@ V=App.Vector
 # User measured: standoff foot to screen top 9.3; symmetric 22 x 39 hole pattern.
 BODY_W,BODY_H=42.0,56.0
 BASE=2.8
+BOARD_LIFT=1.5
 MODULE_HEIGHT=9.3
 SCREEN_CLEARANCE=.3
 FRONT_RIM=1.2
-DEPTH=BASE+MODULE_HEIGHT+SCREEN_CLEARANCE+FRONT_RIM
-SPLIT=8.0
+DEPTH=BASE+BOARD_LIFT+MODULE_HEIGHT+SCREEN_CLEARANCE+FRONT_RIM
+SPLIT=8.0+BOARD_LIFT
 CAVITY_W,CAVITY_H=29.92,45.0
 SCREWS=[(x,y) for x in [-11,11] for y in [-19.5,19.5]]
 def rounded(w,h,r,z,height):
@@ -26,30 +27,30 @@ shell=rounded(BODY_W,BODY_H,5,SPLIT,DEPTH-SPLIT)
 front_edges=[e for e in shell.Edges if abs(e.BoundBox.ZMin-DEPTH)<.001 and abs(e.BoundBox.ZMax-DEPTH)<.001]
 shell=shell.makeChamfer(2.0,front_edges)
 shell=shell.cut(rounded(38.5,52.5,3.25,SPLIT-.1,3.2))
-shell=shell.cut(rounded(CAVITY_W,CAVITY_H,3.5,SPLIT-.1,BASE+MODULE_HEIGHT+SCREEN_CLEARANCE-SPLIT+.1))
+shell=shell.cut(rounded(CAVITY_W,CAVITY_H,3.5,SPLIT-.1,BASE+BOARD_LIFT+MODULE_HEIGHT+SCREEN_CLEARANCE-SPLIT+.1))
 shell=shell.cut(rounded(27.2,42.2,2.6,DEPTH-FRONT_RIM-.1,FRONT_RIM+.2))
 aperture_edges=[e for e in shell.Edges if abs(e.BoundBox.ZMin-DEPTH)<.001 and abs(e.BoundBox.ZMax-DEPTH)<.001 and e.BoundBox.XMin>=-13.601 and e.BoundBox.XMax<=13.601 and e.BoundBox.YMin>=-21.101 and e.BoundBox.YMax<=21.101]
 shell=shell.makeChamfer(.5,aperture_edges)
 cover=rounded(BODY_W,BODY_H,5,0,SPLIT)
 cover=cover.fuse(rounded(38,52,3,SPLIT-.1,2.9))
-cover=cover.cut(rounded(CAVITY_W,CAVITY_H,3.5,BASE,12))
-# Metal standoffs sit directly on the rear floor. Screw heads recess from the back.
+cover=cover.cut(rounded(CAVITY_W,CAVITY_H,3.5,BASE,12+BOARD_LIFT))
+# Printed pads lift the metal standoffs for USB plug clearance.
 for x,y in SCREWS:
-    cover=cover.cut(Part.makeCylinder(1.15,BASE+.2,V(x,y,-.1)))
+    cover=cover.fuse(Part.makeCylinder(2.5,BOARD_LIFT,V(x,y,BASE)))
+    cover=cover.cut(Part.makeCylinder(1.15,BASE+BOARD_LIFT+.2,V(x,y,-.1)))
     cover=cover.cut(Part.makeCylinder(2.1,1.4,V(x,y,-.1)))
-# Connector/button openings stay in the rear tray; the front rim is continuous.
-cutouts=[box(13,8,7.6,-6.5,-29,3.6)]
-cutouts += [box(8,10,6,x,-20,4) for x in [-22,14]]
+# USB opening stays in the rear tray; front rim and button side walls are continuous.
+cutouts=[box(13,8,7.6+BOARD_LIFT,-6.5,-29,3.6)]
 for opening in cutouts:
     cover=cover.cut(opening)
 # Isolated rear-tray spring catches engage pockets inside the front bezel.
 for side in [-1,1]:
     for y in [-8,8]:
-        beam=box(1,5,8,18,y-2.5,BASE)
-        pts=[V(18.9,y-2.5,9.4),V(19.5,y-2.5,9.4),V(18.9,y-2.5,10.8),V(18.9,y-2.5,9.4)]
+        beam=box(1,5,8+BOARD_LIFT,18,y-2.5,BASE)
+        pts=[V(18.9,y-2.5,9.4+BOARD_LIFT),V(19.5,y-2.5,9.4+BOARD_LIFT),V(18.9,y-2.5,10.8+BOARD_LIFT),V(18.9,y-2.5,9.4+BOARD_LIFT)]
         catch=beam.fuse(Part.Face(Part.makePolygon(pts)).extrude(V(0,5,0)))
-        channel=box(3,5.6,9,17,y-2.8,BASE)
-        pocket=box(.7,5.6,1,19.15,y-2.8,9.2)
+        channel=box(3,5.6,9+BOARD_LIFT,17,y-2.8,BASE)
+        pocket=box(.7,5.6,1,19.15,y-2.8,9.2+BOARD_LIFT)
         release=box(1,5.6,BASE+.2,17,y-2.8,-.1)
         if side<0:
             catch=catch.mirror(V(0,0,0),V(1,0,0));channel=channel.mirror(V(0,0,0),V(1,0,0));pocket=pocket.mirror(V(0,0,0),V(1,0,0));release=release.mirror(V(0,0,0),V(1,0,0))
@@ -58,7 +59,7 @@ for side in [-1,1]:
 for y in [-8,-2,4,10]:cover=cover.cut(box(10,2,BASE+.2,-5,y,-.1))
 shell=shell.removeSplitter();cover=cover.removeSplitter()
 parts={'front-shell':shell,'back-cover':cover}
-report={'assembly':{'size_mm':[BODY_W,BODY_H,DEPTH],'module_height_mm':MODULE_HEIGHT,'hole_pitch_mm':[22,39],'screen_clearance_mm':SCREEN_CLEARANCE,'front_bezel_band_mm':DEPTH-SPLIT,'button_access':'plain side openings; no caps'}}
+report={'assembly':{'size_mm':[BODY_W,BODY_H,DEPTH],'board_lift_mm':BOARD_LIFT,'usb_width_mm':13,'usb_bottom_mm':3.6,'module_height_mm':MODULE_HEIGHT,'hole_pitch_mm':[22,39],'screen_clearance_mm':SCREEN_CLEARANCE,'front_bezel_band_mm':DEPTH-SPLIT,'button_access':'closed side walls; open enclosure for BOOT/RESET'}}
 doc=App.newDocument('PixelPalMonitorPod')
 for name,shape in parts.items():
     assert shape.isValid() and len(shape.Solids)==1,(name,'invalid solid')
