@@ -12,7 +12,7 @@ From the repository root, after running `companion/setup-robot.ps1`:
 
 ```powershell
 .\.venv-robot\Scripts\python.exe tools/install_usb_hooks.py --apply
-.\companion\robot.cmd --port COM5 start
+.\companion\robot.cmd start
 ```
 
 The installer copies the hook/worker script into `~/.agentping/usb/bin`, backs up
@@ -31,10 +31,14 @@ updates AgentPing's handlers without adding duplicates. Remove only the
 `agentping_usb_notifications.py` handlers to uninstall; do not overwrite later
 user settings with an old backup.
 
-One worker owns COM5. Stop it before flashing firmware or using the manual serial
-helper. The process retries disconnected USB every two seconds and checks a host
-heartbeat every five seconds. No network listener or Wi-Fi is needed. Launching
-the worker does not install an auto-start service.
+One worker owns the Pixel Pal. Stop it before flashing firmware or using the
+manual serial helper. The worker finds the device by its USB VID/PID
+(`303A:1001`) rather than a fixed COM port, so unplugging it and reconnecting
+it to a different port does not require a restart; pass `--port` to pin an
+explicit port instead, or `--serial <id>` to disambiguate several connected
+Pixel Pals. The process retries disconnected USB every two seconds and checks
+a host heartbeat every five seconds. No network listener or Wi-Fi is needed.
+Launching the worker does not install an auto-start service.
 
 ## Detection and display
 

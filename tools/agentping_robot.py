@@ -92,17 +92,21 @@ def worker_status(root: Path) -> dict:
         return {"running": False, "connected": False}
 
 
-def start_worker(root: Path, port: str) -> dict:
+def start_worker(root: Path, port: str | None, serial_number: str | None = None) -> dict:
     status = worker_status(root)
     if status["running"]:
-        if status.get("control_version") != 1 or status.get("port") != port:
+        if status.get("control_version") != 1 or status.get("requested_port") != port:
             raise RuntimeError("An older worker or different USB port is active; stop it before starting this worker")
         return status
     root.mkdir(parents=True, exist_ok=True)
     # The existing worker lock arbitrates simultaneous CLI/MCP starts.
-    subprocess.Popen([sys.executable, str(Path(__file__).with_name("agentping_usb_notifications.py")),
-                      "--state-dir", str(root), "run", "--port", port],
-                     stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+    argv = [sys.executable, str(Path(__file__).with_name("agentping_usb_notifications.py")),
+            "--state-dir", str(root), "run"]
+    if port:
+        argv += ["--port", port]
+    if serial_number:
+        argv += ["--serial", serial_number]
+    subprocess.Popen(argv, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
                      creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0)
     until = time.monotonic() + 6
     while time.monotonic() < until:
@@ -164,7 +168,8 @@ def serve_mcp(root: Path) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--state-dir", type=Path, default=state_dir())
-    parser.add_argument("--port", default="COM5")
+    parser.add_argument("--port", default=None, help="Explicit COM port; omit to auto-detect the Pixel Pal by USB VID/PID")
+    parser.add_argument("--serial", default=None, help="USB serial number to pick one of several Pixel Pals")
     sub = parser.add_subparsers(dest="mode", required=True)
     sub.add_parser("start", help="Start the shared desktop worker in the background")
     sub.add_parser("worker-status")
@@ -194,12 +199,12 @@ def main() -> int:
     try:
         if args.mode == "mcp":
             serve_mcp(args.state_dir); return 0
-        if args.mode == "start": result = start_worker(args.state_dir, args.port)
+        if args.mode == "start": result = start_worker(args.state_dir, args.port, args.serial)
         elif args.mode == "worker-status": result = worker_status(args.state_dir)
         elif args.mode == "motion":
             result = play_motion(args.state_dir, args.clip, args.fps, args.start)
         else:
-            fields = {k: v for k, v in vars(args).items() if k not in ("mode", "state_dir", "port")}
+            fields = {k: v for k, v in vars(args).items() if k not in ("mode", "state_dir", "port", "serial")}
             if args.mode == "icon":
                 path = fields.pop("file")
                 if path is not None:
