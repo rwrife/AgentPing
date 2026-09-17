@@ -6,6 +6,7 @@ transcripts, and provider messages are never persisted or sent to the display.
 from __future__ import annotations
 
 import argparse
+from contextlib import suppress
 import json
 import os
 from pathlib import Path
@@ -13,8 +14,6 @@ import re
 import sys
 import time
 import uuid
-
-from robot_control import UsbDisconnectedError, process_requests
 
 PROVIDERS = ("codex", "claude", "copilot")
 KINDS = ("attention", "completed", "error", "thinking")
@@ -73,6 +72,8 @@ def normalize(provider: str, payload: dict, event: str | None = None) -> str | N
     if provider not in PROVIDERS or not isinstance(payload, dict):
         raise ValueError("invalid provider or payload")
     event = event or payload.get("hook_event_name") or payload.get("hookEventName") or payload.get("type")
+    if provider == "codex" and event in ("UserPromptSubmit", "PostToolUse"):
+        return "thinking"
     # Interactive questions can open before awaitingUserInput is emitted.
     # Observe only the tool name; never inspect or forward its question/arguments.
     if provider == "copilot" and event in ("preToolUse", "PreToolUse"):
@@ -85,7 +86,13 @@ def normalize(provider: str, payload: dict, event: str | None = None) -> str | N
         return "thinking"
     if event in ("PermissionRequest", "permissionRequest", "awaitingUserInput"):
         return "attention"
-    if event in ("Stop", "agentStop", "agent-turn-complete"):
+    if provider == "copilot" and event in ("agentStop", "Stop"):
+        # Only the main agent's explicit end-of-turn signal is completion.
+        # Missing/unknown reasons must not turn a pause or interruption into success.
+        reason = payload.get("stopReason", payload.get("stop_reason"))
+        return "completed" if reason == "end_turn" else None
+    if ((provider in ("codex", "claude") and event == "Stop")
+            or (provider == "codex" and event == "agent-turn-complete")):
         return "completed"
     if event in ("StopFailure", "PostToolUseFailure", "errorOccurred"):
         return "error"
@@ -95,8 +102,8 @@ def normalize(provider: str, payload: dict, event: str | None = None) -> str | N
             return "attention"
         if kind in ("agent_thinking", "agent_working", "thinking", "working"):
             return "thinking"
-        if kind in ("agent_completed", "agent_idle", "shell_completed", "shell_detached_completed"):
-            return "completed"
+        # Background subagent/shell completion and idle are not main-task
+        # completion (agent_completed can even describe a failed subagent).
     return None
 
 
@@ -136,6 +143,9 @@ def wire(event: dict, now: float) -> bytes | None:
 
 
 def run(root: Path, port_name: str | None, serial_number: str | None = None) -> None:
+    # Hooks only enqueue notifications. Worker dependencies must not prevent
+    # them from starting: Copilot treats a preToolUse process error as a denial.
+    from robot_control import UsbDisconnectedError, process_requests
     import serial
     root.mkdir(parents=True, exist_ok=True)
     (root / "pending").mkdir(exist_ok=True)
@@ -218,8 +228,11 @@ def run(root: Path, port_name: str | None, serial_number: str | None = None) -> 
                 status(True)
                 time.sleep(.25)
             except (OSError, serial.SerialException) as error:
-                if connection:
-                    connection.close()
+                if connection is not None:
+                    # Unplugged handles can fail during close too. Still clear
+                    # the handle and return to device discovery in that case.
+                    with suppress(OSError):
+                        connection.close()
                 connection = None
                 last_error = (str(error) if isinstance(error, PortDiscoveryError) else
                               f"USB connection or acknowledgment failed on {active_port or port_name or 'auto'}; check the device and close other serial tools") + "; retrying"
@@ -229,8 +242,9 @@ def run(root: Path, port_name: str | None, serial_number: str | None = None) -> 
                     break
                 time.sleep(2)
     finally:
-        if connection:
-            connection.close()
+        if connection is not None:
+            with suppress(OSError):
+                connection.close()
         status(False, running=False)
         lock.close()
 

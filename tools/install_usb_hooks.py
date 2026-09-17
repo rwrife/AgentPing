@@ -34,7 +34,7 @@ def merge_hooks(existing: dict, additions: dict) -> dict:
 def configs(python: Path, script: Path) -> dict:
     result = {}
     events = {
-        "codex": ["PermissionRequest", "Stop"],
+        "codex": ["UserPromptSubmit", "PostToolUse", "PermissionRequest", "Stop"],
         "claude": ["PermissionRequest", "Notification", "Stop", "StopFailure"],
         "copilot": ["userPromptSubmitted", "preToolUse", "permissionRequest", "postToolUse", "notification", "awaitingUserInput", "agentStop", "errorOccurred"],
     }
