@@ -11,7 +11,7 @@ From the repository root:
 
 ```powershell
 .\companion\setup-robot.ps1
-.\companion\robot.cmd --port COM5 start
+.\companion\robot.cmd start
 .\companion\robot.cmd status
 .\companion\robot.cmd message "Hello from the desktop!"
 .\companion\robot.cmd message "Consulting my rubber duck..." --state thinking
@@ -25,8 +25,13 @@ From the repository root:
 ```
 
 The underlying entry point is `python tools/agentping_robot.py`. Run `--help`
-or a subcommand's `--help` for options. `--state-dir` and `--port` go before
-the subcommand. Start the worker once per desktop session; stop it before
+or a subcommand's `--help` for options. `--state-dir`, `--port`, and `--serial`
+go before the subcommand. The worker finds the Pixel Pal by its USB VID/PID
+(`303A:1001`, the ESP32-C6's built-in USB Serial/JTAG controller), so moving it
+to a different port or unplugging and reconnecting it does not require
+restarting the worker or passing `--port`. Pass `--port COM5` to pin an
+explicit port instead, and `--serial <id>` to pick one of several connected
+Pixel Pals. Start the worker once per desktop session; stop it before
 flashing firmware or using tools that open USB directly. `worker-status`
 reads the local worker state without sending anything to the device.
 

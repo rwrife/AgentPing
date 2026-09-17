@@ -3,13 +3,38 @@ from pathlib import Path
 import sys
 import tempfile
 import unittest
+from types import SimpleNamespace
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from agentping_usb_notifications import enqueue, normalize, wire, ThinkingCooldown
+from agentping_usb_notifications import DEVICE_PID, DEVICE_VID, discover_port, enqueue, normalize, wire, ThinkingCooldown
 from install_usb_hooks import merge_hooks, configs
 
 
+def port_info(device, vid=DEVICE_VID, pid=DEVICE_PID, serial_number=None):
+    return SimpleNamespace(device=device, vid=vid, pid=pid, serial_number=serial_number)
+
+
 class UsbNotificationsTests(unittest.TestCase):
+    def test_discover_port_matches_device_vid_pid_and_ignores_others(self):
+        ports = [port_info("COM3", vid=0x1234, pid=0x1), port_info("COM7")]
+        with patch("serial.tools.list_ports.comports", return_value=ports):
+            self.assertEqual("COM7", discover_port())
+
+    def test_discover_port_disambiguates_by_serial_number(self):
+        ports = [port_info("COM7", serial_number="AAA"), port_info("COM9", serial_number="BBB")]
+        with patch("serial.tools.list_ports.comports", return_value=ports):
+            self.assertEqual("COM9", discover_port("BBB"))
+            with self.assertRaises(OSError):
+                discover_port()
+            with self.assertRaises(OSError):
+                discover_port("CCC")
+
+    def test_discover_port_raises_when_none_found(self):
+        with patch("serial.tools.list_ports.comports", return_value=[]):
+            with self.assertRaises(OSError):
+                discover_port()
+
     def test_copilot_question_requests_attention_before_tool_runs(self):
         hooks = configs(Path("python.exe"), Path("hook.py"))["copilot"]["hooks"]
         self.assertIn("preToolUse", hooks)

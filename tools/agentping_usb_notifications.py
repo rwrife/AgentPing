@@ -22,6 +22,25 @@ MAX_INPUT = 1024 * 1024
 TTL = 60
 MAX_PENDING = 64
 THINKING_COOLDOWN = 120
+# The ESP32-C6's built-in USB Serial/JTAG controller always enumerates with
+# this Espressif VID/PID, regardless of which physical port it is plugged
+# into, so the worker can find the Pixel Pal without a fixed COM port.
+DEVICE_VID = 0x303A
+DEVICE_PID = 0x1001
+
+
+def discover_port(serial_number: str | None = None) -> str:
+    """Find the Pixel Pal's COM port by USB VID/PID instead of a fixed port."""
+    from serial.tools import list_ports
+    matches = [p for p in list_ports.comports()
+               if p.vid == DEVICE_VID and p.pid == DEVICE_PID
+               and (serial_number is None or p.serial_number == serial_number)]
+    if not matches:
+        raise OSError("No Pixel Pal found on USB; check the cable/port")
+    if len(matches) > 1:
+        raise OSError("Multiple Pixel Pals found; pass --serial to pick one: "
+                       + ", ".join(f"{m.device}={m.serial_number}" for m in matches))
+    return matches[0].device
 
 
 class ThinkingCooldown:
@@ -108,7 +127,7 @@ def wire(event: dict, now: float) -> bytes | None:
     return f"notify {event['id']} {event['provider']} {event['kind']}\n".encode("ascii")
 
 
-def run(root: Path, port_name: str) -> None:
+def run(root: Path, port_name: str | None, serial_number: str | None = None) -> None:
     import serial
     root.mkdir(parents=True, exist_ok=True)
     (root / "pending").mkdir(exist_ok=True)
@@ -121,6 +140,7 @@ def run(root: Path, port_name: str) -> None:
     except OSError:
         raise SystemExit("AgentPing USB worker is already running")
     connection = None
+    active_port = None  # The COM port actually opened; re-resolved by VID/PID when port_name is None.
     counters = {p: 0 for p in PROVIDERS}
     recent = {}
     thinking_cooldown = ThinkingCooldown()
@@ -130,7 +150,8 @@ def run(root: Path, port_name: str) -> None:
     def status(connected, running=True):
         p = root / "status.tmp"
         p.write_text(json.dumps({"pid": os.getpid(), "updated": time.time(), "connected": connected, "running": running,
-                                "port": port_name, "control_version": 1, "delivered": counters, "last_event": last_event,
+                                "port": active_port or port_name or "auto", "requested_port": port_name,
+                                "control_version": 1, "delivered": counters, "last_event": last_event,
                                 "error": last_error}), encoding="utf-8")
         p.replace(root / "status.json")
     def send(command, expected):
@@ -153,8 +174,11 @@ def run(root: Path, port_name: str) -> None:
         while True:
             try:
                 if connection is None:
+                    # Re-resolve by VID/PID on every (re)connect so unplugging the
+                    # device and plugging it into a different port still finds it.
+                    active_port = discover_port(serial_number) if port_name is None else port_name
                     connection = serial.Serial(baudrate=115200, timeout=.1, write_timeout=1)
-                    connection.dtr = False; connection.rts = False; connection.port = port_name
+                    connection.dtr = False; connection.rts = False; connection.port = active_port
                     connection.open(); connection.reset_input_buffer()
                     next_heartbeat = 0
                 if time.monotonic() >= next_heartbeat:
@@ -189,6 +213,7 @@ def run(root: Path, port_name: str) -> None:
                 if connection:
                     connection.close()
                 connection = None
+                active_port = None
                 last_error = "USB unavailable; retrying"
                 status(False)
                 if process_requests(root, send):
@@ -210,11 +235,12 @@ def main() -> int:
     hook.add_argument("--event")
     hook.add_argument("payload", nargs="?")
     worker = sub.add_parser("run")
-    worker.add_argument("--port", default="COM5")
+    worker.add_argument("--port", default=None, help="Explicit COM port; omit to auto-detect by USB VID/PID")
+    worker.add_argument("--serial", default=None, help="USB serial number to pick one of several Pixel Pals")
     sub.add_parser("status")
     args = parser.parse_args()
     if args.mode == "run":
-        run(args.state_dir, args.port)
+        run(args.state_dir, args.port, args.serial)
     elif args.mode == "status":
         path = args.state_dir / "status.json"
         print(path.read_text() if path.exists() else '{"connected": false}')

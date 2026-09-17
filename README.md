@@ -101,7 +101,7 @@ Node.js, and the simulator are not needed. See [live renderer details](firmware/
 ### 5. Start the Windows USB client and verify the display
 
 ```powershell
-.\companion\robot.cmd --port COM5 start
+.\companion\robot.cmd start
 .\companion\robot.cmd status
 ```
 
@@ -220,7 +220,7 @@ Preview the configuration paths, then install the additive hooks for all three p
 ```powershell
 .\.venv-robot\Scripts\python.exe tools/install_usb_hooks.py
 .\.venv-robot\Scripts\python.exe tools/install_usb_hooks.py --apply
-.\companion\robot.cmd --port COM5 start
+.\companion\robot.cmd start
 ```
 
 The installer preserves unrelated handlers and backs up existing settings under `%USERPROFILE%\.agentping\usb\backups`.
@@ -249,7 +249,7 @@ Start-Sleep -Seconds 2
 After installing the desktop tools, launch Copilot from the repository root:
 
 ```powershell
-.\companion\robot.cmd --port COM5 start
+.\companion\robot.cmd start
 copilot mcp list
 copilot
 ```
@@ -315,7 +315,7 @@ Example demo prompts:
 .\.venv-robot\Scripts\python.exe tools/check_robot_mcp.py
 ```
 
-- **USB unavailable/no acknowledgment:** check the data cable and COM port, close serial monitors, then run `robot.cmd stop`. Reconnect or reset the board, wait for boot, and run `robot.cmd --port COM5 start` followed by `robot.cmd status`.
+- **USB unavailable/no acknowledgment:** check the data cable and USB port, close serial monitors, then run `robot.cmd stop`. Reconnect or reset the board, wait for boot, and run `robot.cmd start` followed by `robot.cmd status`. The worker finds the board by USB VID/PID, so it does not matter which port it is plugged into.
 - **MCP tools missing:** check the registered absolute paths, reconnect the client, and confirm `.venv-robot` exists. MCP speaks a machine protocol over stdio; it does not present a terminal UI.
 - **MCP works but automatic notices do not:** check hook installation and provider-session reload; review Codex `/hooks`. Compare delivery counters before/after a real event. Identical provider events can be coalesced for three seconds.
 - **Firmware upload fails:** stop the worker and other serial clients, then flash `live3d_usb` on the correct port.
