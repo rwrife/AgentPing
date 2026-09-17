@@ -14,7 +14,7 @@ import sys
 import time
 import uuid
 
-from robot_control import process_requests
+from robot_control import UsbDisconnectedError, process_requests
 
 PROVIDERS = ("codex", "claude", "copilot")
 KINDS = ("attention", "completed", "error", "thinking")
@@ -29,16 +29,24 @@ DEVICE_VID = 0x303A
 DEVICE_PID = 0x1001
 
 
+class PortDiscoveryError(OSError):
+    """Actionable discovery diagnostics, containing no command payloads."""
+
+
 def discover_port(serial_number: str | None = None) -> str:
     """Find the Pixel Pal's COM port by USB VID/PID instead of a fixed port."""
     from serial.tools import list_ports
-    matches = [p for p in list_ports.comports()
+    ports = list(list_ports.comports())
+    if not ports:
+        raise PortDiscoveryError("No COM ports detected by Windows; check the USB data cable, device connection and Device Manager")
+    matches = [p for p in ports
                if p.vid == DEVICE_VID and p.pid == DEVICE_PID
                and (serial_number is None or p.serial_number == serial_number)]
     if not matches:
-        raise OSError("No Pixel Pal found on USB; check the cable/port")
+        raise PortDiscoveryError("No matching Pixel Pal (303A:1001) found; check --serial and USB connection. Available ports: "
+                                 + ", ".join(p.device for p in ports))
     if len(matches) > 1:
-        raise OSError("Multiple Pixel Pals found; pass --serial to pick one: "
+        raise PortDiscoveryError("Multiple Pixel Pals found; pass --serial to pick one: "
                        + ", ".join(f"{m.device}={m.serial_number}" for m in matches))
     return matches[0].device
 
@@ -156,7 +164,7 @@ def run(root: Path, port_name: str | None, serial_number: str | None = None) -> 
         p.replace(root / "status.json")
     def send(command, expected):
         if connection is None:
-            raise OSError("USB unavailable")
+            raise UsbDisconnectedError()
         connection.reset_input_buffer()
         connection.write(command)
         deadline = time.monotonic() + 2
@@ -209,12 +217,13 @@ def run(root: Path, port_name: str | None, serial_number: str | None = None) -> 
                 last_error = None
                 status(True)
                 time.sleep(.25)
-            except (OSError, serial.SerialException):
+            except (OSError, serial.SerialException) as error:
                 if connection:
                     connection.close()
                 connection = None
+                last_error = (str(error) if isinstance(error, PortDiscoveryError) else
+                              f"USB connection or acknowledgment failed on {active_port or port_name or 'auto'}; check the device and close other serial tools") + "; retrying"
                 active_port = None
-                last_error = "USB unavailable; retrying"
                 status(False)
                 if process_requests(root, send):
                     break

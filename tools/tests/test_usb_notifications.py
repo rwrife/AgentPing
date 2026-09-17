@@ -32,7 +32,12 @@ class UsbNotificationsTests(unittest.TestCase):
 
     def test_discover_port_raises_when_none_found(self):
         with patch("serial.tools.list_ports.comports", return_value=[]):
-            with self.assertRaises(OSError):
+            with self.assertRaisesRegex(OSError, "No COM ports detected"):
+                discover_port()
+
+    def test_discover_port_reports_unmatched_ports_without_selecting_one(self):
+        with patch("serial.tools.list_ports.comports", return_value=[port_info("COM3", vid=0x1234)]):
+            with self.assertRaisesRegex(OSError, "No matching Pixel Pal.*COM3"):
                 discover_port()
 
     def test_copilot_question_requests_attention_before_tool_runs(self):

@@ -20,6 +20,10 @@ MAX_REQUEST_BYTES = 2048
 MAX_MOTION_REQUEST_BYTES = 524288
 
 
+class UsbDisconnectedError(OSError):
+    """The worker has no USB connection, so no command was sent."""
+
+
 def command(action: str, args: dict) -> tuple[bytes, bytes]:
     if not isinstance(args, dict):
         raise ValueError("arguments must be an object")
@@ -181,6 +185,8 @@ def process_requests(root: Path, send) -> bool:
                 for wire, ack in exchanges:
                     reply = send(wire, ack)
             value = {"ok": True, "reply": reply}
+        except UsbDisconnectedError:
+            value = {"ok": False, "error": "Robot USB is disconnected; command not sent. Run 'worker-status' for the connection error, then resend after reconnecting"}
         except (OSError, ValueError, TypeError, KeyError) as error:
             # Do not persist user text or transport diagnostics in error logs.
             value = {"ok": False, "error": f"Invalid, expired or unacknowledged robot command ({type(error).__name__}); not retried"}
