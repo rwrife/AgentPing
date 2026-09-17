@@ -35,6 +35,14 @@ Pixel Pals. Start the worker once per desktop session; stop it before
 flashing firmware or using tools that open USB directly. `worker-status`
 reads the local worker state without sending anything to the device.
 
+If `worker-status` reports no COM ports, check Device Manager. An "Unknown USB
+Device (Device Descriptor Request Failed)" means Windows could not identify a
+USB device; selecting an explicit COM port cannot resolve that. Reconnect the
+robot using a known data-capable USB cable directly to the PC, and try another
+USB socket. The worker retries automatically once the device enumerates.
+Commands submitted while disconnected are not sent or replayed; resend them
+after `worker-status` reports `connected: true`.
+
 Messages accept up to 192 printable ASCII characters supported by the current
 display font. Newlines and other control characters are rejected, as are
 unknown commands and arguments. Acknowledgment means the command was accepted,
@@ -64,6 +72,9 @@ there is no collision solver. Manual pose holds until another state is selected.
 
 Retargets a Mixamo FBX onto the Pixel Pal rig and uploads it into device RAM,
 then plays it. MCP exposes `robot_play_motion(path, fps=10, start_seconds=0)`.
+A live robot status acknowledgment is required before conversion starts, so an
+unavailable robot fails before running the converter. This check leaves the
+current animation playing.
 A `.json` clip already produced by `simulator/scripts/export-motion.mjs` is
 accepted directly and skips conversion.
 

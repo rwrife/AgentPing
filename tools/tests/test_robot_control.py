@@ -10,10 +10,23 @@ from unittest.mock import patch
 from concurrent.futures import ThreadPoolExecutor
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from robot_control import MOTION_BONES, atomic_json, command, motion_steps, process_requests, request
+from robot_control import MOTION_BONES, UsbDisconnectedError, atomic_json, command, motion_steps, process_requests, request
 
 
 class RobotControlTests(unittest.TestCase):
+    def test_disconnected_command_reports_not_sent_and_is_not_replayed(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            path = root / "commands" / ("a" * 32 + ".json")
+            atomic_json(path, {"action": "reset", "args": {}, "expires": time.time() + 5})
+            def disconnected(*args):
+                raise UsbDisconnectedError()
+            process_requests(root, disconnected)
+            result = json.loads((root / "results" / path.name).read_text())
+            self.assertFalse(result["ok"])
+            self.assertIn("command not sent", result["error"])
+            process_requests(root, lambda *args: self.fail("Must not replay"))
+
     def test_icon_roundtrip_color_and_line_bounds(self):
         pixels = bytes(range(256)) + bytes(range(32))
         wire, ack = command("icon", {"data_hex": pixels.hex(), "color": "#ff8800", "message": "Custom icon"})

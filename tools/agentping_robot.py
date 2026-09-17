@@ -72,6 +72,8 @@ def frame_budget(root: Path) -> int:
 
 
 def play_motion(root: Path, clip: Path, fps: int, start: float) -> dict:
+    # Require a live device acknowledgment before a potentially long FBX conversion.
+    request(root, "status", {})
     # Convert/validate before interrupting the current animation. Release the old
     # RAM clip before measuring capacity for its replacement.
     motion = load_motion(clip, fps, start)
