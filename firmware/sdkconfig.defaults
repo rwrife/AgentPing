@@ -1,4 +1,4 @@
-# Waveshare documents 16 MB flash for ESP32-C6-Touch-AMOLED-1.64.
+# Both supported Waveshare boards have 16 MB flash.
 CONFIG_ESPTOOLPY_FLASHSIZE_16MB=y
 CONFIG_ESP_MAIN_TASK_STACK_SIZE=8192
 CONFIG_ESP_TLS_USING_MBEDTLS=y

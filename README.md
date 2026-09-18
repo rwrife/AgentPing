@@ -6,18 +6,28 @@
 
 **A tiny desk-side inbox for AI coding agents.**
 
-AgentPing puts an animated 3D robot on a **Waveshare ESP32-C6 Touch AMOLED 1.64** (280 × 456 portrait). A Windows USB worker connects it to **Codex, Claude Code, and GitHub Copilot CLI**. Agent notifications show a provider logo and message; CLI and MCP controls let you play animations, pose limbs, and display custom icons.
+AgentPing puts an animated 3D robot on either a **Waveshare ESP32-C6 Touch AMOLED 1.64** (280 × 456 portrait) or **Waveshare ESP32-S3-LCD-1.47B** (172 × 320 portrait). A Windows USB worker connects it to **Codex, Claude Code, and GitHub Copilot CLI**. Agent notifications show a provider logo and message; CLI and MCP controls let you play animations, pose limbs, and display custom icons.
 
-The physical robot uses the `live3d_usb` firmware. This path needs **USB only**: no Wi-Fi, .NET bridge, tray app, Node.js, or simulator is required.
+The physical robot uses `live3d_usb` on C6 or `live3d_usb_s3` on S3. Both share the same robot, USB protocol, Windows client, and agent integrations. This path needs **USB only**: no Wi-Fi, .NET bridge, tray app, Node.js, or simulator is required.
+
+| Board | Display / input | Firmware environment | Purchase |
+| --- | --- | --- | --- |
+| ESP32-C6-Touch-AMOLED-1.64 | 280 × 456 AMOLED, touch | `live3d_usb` | [Amazon](https://www.amazon.com/dp/B0GTDXXYV8) |
+| ESP32-S3-LCD-1.47B | 172 × 320 LCD, **no touch** | `live3d_usb_s3` | [Amazon](https://www.amazon.com/dp/B0FBWPJPXN) / [Waveshare specifications](https://www.waveshare.com/ESP32-S3-LCD-1.47B.htm) |
+
+The S3 port requires physical bring-up; the existing hardware measurements and
+FPS results are C6-only. Select the exact **1.47B**, not the non-B S3 board.
+The optional network/touch application remains C6-only. Board-specific
+[3D-print enclosure files and fit notes](hardware/enclosure/README.md) are separate;
+do not print the C6 enclosure for the S3.
 
 ## Quick start: physical robot on Windows
 
 ### 1. Buy the board and prepare Windows
 
-1. Get the **Waveshare ESP32-C6 Touch AMOLED 1.64** display board. Here is the
-   [Amazon purchase link supplied for this project](https://www.amazon.com/dp/B0GTDXXYV8).
-   Check that the selected listing variant matches this board; the firmware is
-   configured for its 280 × 456 AMOLED display, not a bare ESP32 development board.
+1. Choose either display board from the table above. Check the exact listing
+   variant; a bare ESP32 development board or a different display revision
+   will not work with these pin assignments and enclosure dimensions.
 2. Have a USB **data** cable ready. The same connection powers the board and carries
    commands; a charge-only cable will not expose a serial port.
 3. Install Git and Python 3.11 or newer (tested with 3.13), with their commands
@@ -60,18 +70,19 @@ below run from the repository root; virtual environment activation is unnecessar
 
 ### 3. Build the firmware
 
-Skip steps 3–4 if the board already has the current `live3d_usb` firmware.
+Skip steps 3–4 if the board already has the current USB robot firmware for its model.
 Create a separate build environment, install the pinned dependencies, and compile:
 
 ```powershell
 python -m venv .venv-firmware
 .\.venv-firmware\Scripts\python.exe -m pip install -r firmware/requirements-ci.txt
-.\.venv-firmware\Scripts\pio.exe run -d firmware -e live3d_usb
+$firmwareEnv = "live3d_usb" # C6; use "live3d_usb_s3" for ESP32-S3-LCD-1.47B
+.\.venv-firmware\Scripts\pio.exe run -d firmware -e $firmwareEnv
 ```
 
 Wait for `[SUCCESS]`. The first build downloads the ESP-IDF toolchain and can take
-several minutes. The output is `firmware/.pio/build/live3d_usb/firmware.bin`.
-Use **`-e live3d_usb`** explicitly; the default network firmware is a different
+several minutes. The output is `firmware/.pio/build/<environment>/firmware.bin`.
+Use **`-e $firmwareEnv`** explicitly; the default C6 network firmware is a different
 application. Model, textures, and animations are checked in, so FBX conversion,
 Node.js, and the simulator are not needed. See [live renderer details](firmware/LIVE3D.md).
 
@@ -91,12 +102,15 @@ Node.js, and the simulator are not needed. See [live renderer details](firmware/
 # Only needed if a worker is already running:
 .\companion\robot.cmd stop
 
-.\.venv-firmware\Scripts\pio.exe run -d firmware -e live3d_usb -t upload --upload-port COM5
+.\.venv-firmware\Scripts\pio.exe run -d firmware -e $firmwareEnv -t upload --upload-port COM5
 ```
 
 4. Wait for the upload's `[SUCCESS]` message and automatic reset. The robot should
    play its startup sequence and enter idle with the initial connection message.
    If no port appears, try another data cable/USB port before retrying.
+   On S3, if automatic download fails, hold **BOOT**, tap **RESET**, release
+   **BOOT**, and check the COM port again before uploading. Tap **RESET** after
+   flashing if it remains in download mode. Keep both buttons clear of the enclosure.
 
 ### 5. Start the Windows USB client and verify the display
 
@@ -318,9 +332,9 @@ Example demo prompts:
 - **USB unavailable/no acknowledgment:** check the data cable and USB port, close serial monitors, then run `robot.cmd stop`. Reconnect or reset the board, wait for boot, and run `robot.cmd start` followed by `robot.cmd status`. The worker finds the board by USB VID/PID, so it does not matter which port it is plugged into.
 - **MCP tools missing:** check the registered absolute paths, reconnect the client, and confirm `.venv-robot` exists. MCP speaks a machine protocol over stdio; it does not present a terminal UI.
 - **MCP works but automatic notices do not:** check hook installation and provider-session reload; review Codex `/hooks`. Compare delivery counters before/after a real event. Identical provider events can be coalesced for three seconds.
-- **Firmware upload fails:** stop the worker and other serial clients, then flash `live3d_usb` on the correct port.
+- **Firmware upload fails:** stop the worker and other serial clients, then flash the correct board environment (`live3d_usb` or `live3d_usb_s3`) on the correct port.
 
-USB rendering, CLI/MCP control, provider logos, red error icons, and timed return to idle have been tested on the physical device. Notifications replace the visible notice; there is no on-device queue or approval-response flow.
+USB rendering, CLI/MCP control, provider logos, red error icons, and timed return to idle have been tested on the physical C6 device; the S3 needs the same bench checks. Notifications replace the visible notice; there is no on-device queue or approval-response flow.
 
 ## Forward Windows notifications
 
@@ -406,7 +420,7 @@ The network firmware described in this section has compile/host-test evidence; U
 
 ```text
 bridge/       ASP.NET Core bridge and tests
-firmware/     ESP32-C6 PlatformIO firmware, native logic tests, and bring-up guide
+firmware/     shared robot, C6/S3 board drivers, native tests, and bring-up guides
 protocol/     shared machine-readable protocol schema, fixtures, and validator
 hardware/     hardware scope and future editable KiCad sources
 docs/         architecture and protocol status
@@ -454,7 +468,7 @@ python3 protocol/validate.py
 platformio run -d firmware
 ```
 
-These commands build the network firmware. CI compilation does not validate physical Wi-Fi, touch, or pairing behavior. Use the explicit `live3d_usb` instructions above for the USB robot. See [`firmware/README.md`](firmware/README.md).
+These commands build the C6 network firmware. CI compilation does not validate physical Wi-Fi, touch, or pairing behavior. Use the explicit board-specific USB instructions above for the robot. See [`firmware/README.md`](firmware/README.md).
 
 ## Container build
 

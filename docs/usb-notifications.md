@@ -1,7 +1,7 @@
 # USB provider notifications
 
 This notification-only path connects local Codex, Claude Code, and GitHub Copilot
-CLI hooks to the `live3d_usb` robot firmware (also supported by the older baked
+CLI hooks to the `live3d_usb` (C6) or `live3d_usb_s3` (S3) robot firmware (also supported by the older baked
 `character_usb` profile). It is separate from the existing
 network bridge and approval-return protocol. It never approves, denies, or
 continues an agent task, and its hook commands emit no stdout.
@@ -68,7 +68,7 @@ CLI/MCP demo commands bypass it.
 For other repeated notices,
 the worker coalesces repeated provider/kind events within three seconds. The
 firmware acknowledges each event ID and ignores a retry of its most recent ID.
-In `live3d_usb`, thinking dismisses after 20 seconds; other messages dismiss after
+In both live3d profiles, thinking dismisses after 20 seconds; other messages dismiss after
 30 seconds. Both blend back to idle. The
 initial connection caption disappears after the first desktop signal. The older
 baked profile uses forward/reverse listening while disconnected. Multiple simultaneous

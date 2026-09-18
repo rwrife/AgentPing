@@ -54,12 +54,15 @@ jobs:
           python3 -m pip install pip-licenses
           pip-licenses --format=json --with-urls --output-file artifacts/release-inputs/licenses/licenses-python.json
           cp firmware/dependencies.lock artifacts/release-inputs/licenses/firmware-components.lock
+          cp firmware/dependencies.esp32s3.lock artifacts/release-inputs/licenses/firmware-components-esp32s3.lock
       - name: Stage release inputs
         run: |
           set -euo pipefail
-          FW_DIR="firmware/.pio/build/waveshare_esp32_c6_touch_amoled_1_64"
-          mkdir -p artifacts/release-inputs/firmware
-          find "$FW_DIR" -maxdepth 1 -type f \( -name '*.bin' -o -name '*.elf' -o -name '*.map' \) -exec cp {} artifacts/release-inputs/firmware/ \;
+          for ENV in waveshare_esp32_c6_touch_amoled_1_64 live3d_usb live3d_usb_s3; do
+            FW_DIR="firmware/.pio/build/$ENV"
+            mkdir -p "artifacts/release-inputs/firmware/$ENV"
+            find "$FW_DIR" -maxdepth 1 -type f \( -name '*.bin' -o -name '*.elf' -o -name '*.map' \) -exec cp {} "artifacts/release-inputs/firmware/$ENV/" \;
+          done
 
           mkdir -p artifacts/release-inputs/hardware
           cp hardware/fabrication/rev-a0/agentping-carrier-gerbers.zip artifacts/release-inputs/hardware/

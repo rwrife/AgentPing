@@ -1,11 +1,18 @@
 # Live 3D hardware experiment
 
-`live3d_usb` is a separate, USB-only software-rendering profile for the
-Waveshare ESP32-C6 Touch AMOLED 1.64. It transforms the skeleton and rasterizes
+`live3d_usb` (Waveshare ESP32-C6 Touch AMOLED 1.64) and `live3d_usb_s3`
+(Waveshare ESP32-S3-LCD-1.47B) are USB-only profiles of the same software renderer.
+It transforms the skeleton and rasterizes
 the robot on the device; it does not play baked image frames or stream video
 from the PC. Startup, idle, thinking, attention, and error animations run locally.
 USB notifications show provider logos on the face, provider names, and message
 bubbles; the remaining simulator states are not yet ported.
+
+Use `-e live3d_usb_s3` instead of `-e live3d_usb` in the build/upload commands
+below for the S3 board. Its LCD has no touch; the C6 robot also does not use
+touch. The old `character_usb` restore command is **C6-only**.
+All historical benchmark and physical-validation results below describe the
+C6, not the S3. See [S3 bring-up](BRINGUP-S3.md) before relying on the new port.
 
 ## Asset pipeline
 
@@ -42,7 +49,18 @@ after restoring the notification firmware.
 
 Commands are newline-delimited ASCII: `low`, `medium`, `high`, `max`, `native`,
 `fast`, `tex64`, `tex128`, `pause`, `resume`, `status`, and `frame`. Native
-280 x 456 rendering with the sharper 128 x 128 texture is the boot default.
+rendering with the sharper 128 x 128 texture is the boot default:
+
+| Command | C6 resolution | S3 resolution |
+| --- | --- | --- |
+| `low` | 140 x 228 | 86 x 160 |
+| `medium` | 160 x 260 | 100 x 186 |
+| `high` | 192 x 312 | 120 x 224 |
+| `max` | 208 x 338 | 140 x 260 |
+| `native` | 280 x 456 | 172 x 320 |
+| `fast` | 140 x 228, 2x output | 86 x 160, 2x output |
+
+The S3 message bubble uses a smaller font and bounds adapted to its panel.
 The firmware reports frame rate,
 skinning, rasterization, display time, and heap usage every five seconds.
 Allocation checks reserve 24 KiB and fall back to the medium mode on failure.
@@ -193,7 +211,7 @@ entrance, looping idle, and startup-only connection caption.
 ```
 
 Restart the installed USB notification worker after restoring `character_usb`.
-The live renderer uses stock CPU clocks and the existing display driver.
+The live renderer uses stock CPU clocks and the selected board's display driver.
 
 ## Thinking, attention, and error states
 

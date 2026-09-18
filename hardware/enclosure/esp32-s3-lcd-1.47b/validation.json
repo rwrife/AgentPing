@@ -1,0 +1,157 @@
+{
+  "board": "Waveshare ESP32-S3-LCD-1.47B (no headers)",
+  "status": "UNPRINTED fit-check prototype; NOT verified board fit",
+  "source_dimensions_mm": {
+    "pcb_outline": [
+      20.32,
+      36.37
+    ]
+  },
+  "user_measurements_mm": {
+    "boot_reset_lateral_protrusion_approx": 1.5,
+    "support_feet_to_glass_top": 7.7
+  },
+  "rear_vent_interface": {
+    "basis": "user-required exact C6 rear vent compatibility, 2026-09-18",
+    "openings": [
+      {
+        "width_mm": 10.0,
+        "height_mm": 2.0,
+        "lower_left_mm": [
+          -5.0,
+          -8.0
+        ],
+        "centre_mm": [
+          0.0,
+          -7.0
+        ],
+        "tunnel_depth_mm": 2.8
+      },
+      {
+        "width_mm": 10.0,
+        "height_mm": 2.0,
+        "lower_left_mm": [
+          -5.0,
+          -2.0
+        ],
+        "centre_mm": [
+          0.0,
+          -1.0
+        ],
+        "tunnel_depth_mm": 2.8
+      },
+      {
+        "width_mm": 10.0,
+        "height_mm": 2.0,
+        "lower_left_mm": [
+          -5.0,
+          4.0
+        ],
+        "centre_mm": [
+          0.0,
+          5.0
+        ],
+        "tunnel_depth_mm": 2.8
+      },
+      {
+        "width_mm": 10.0,
+        "height_mm": 2.0,
+        "lower_left_mm": [
+          -5.0,
+          10.0
+        ],
+        "centre_mm": [
+          0.0,
+          11.0
+        ],
+        "tunnel_depth_mm": 2.8
+      }
+    ],
+    "pitch_mm": [
+      6.0,
+      6.0,
+      6.0
+    ]
+  },
+  "assumptions_mm": {
+    "lateral_clearance_per_side": 0.5,
+    "button_print_clearance": 0.5,
+    "button_datum": "protrusion applied outside PCB long edges; confirm against actual display",
+    "wall": 2.0,
+    "floor": 2.8,
+    "floor_to_rim_underside": 8.5,
+    "installed_support_pad": 0.5,
+    "glass_clearance": 0.3,
+    "front_rim": 1.2,
+    "aperture": [
+      21.32,
+      37.37
+    ],
+    "aperture_basis": "PCB envelope + clearance; glass outline/active-area offset NOT dimensioned",
+    "button_z_limit": 11.3,
+    "service_cutout_top_y": -7.0,
+    "usb_floor_notch": [
+      14.0,
+      5.0
+    ]
+  },
+  "assembly": {
+    "size_mm": [
+      25.32,
+      41.37,
+      12.5
+    ],
+    "printed_parts": 2,
+    "mounting_holes": "none; no guessed board hole pattern",
+    "board_retention": "removable insulating adhesive on measured standoff feet; not validated",
+    "board_interference_checked": false,
+    "front_retention": "slip-fit locating lip + removable exterior tape; no glass clamping",
+    "split_z_mm": 8.0,
+    "glass_top_z_mm": 11.0,
+    "rim_underside_z_mm": 11.3,
+    "part_overlap_mm3": 0.0,
+    "assumed_glass_envelope_clearance_mm": 0.3,
+    "button_keepout_overlap_mm3": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "removal_sweep_sampled_clear": true,
+    "button_keepout_width_mm": 25.32,
+    "button_to_mount_plane_clearance_mm": 0.5
+  },
+  "clearance-tray": {
+    "valid_solid": true,
+    "solid_count": 1,
+    "volume_mm3": 3480.253,
+    "size_mm": [
+      25.32,
+      41.37,
+      11.05
+    ],
+    "triangles": 148,
+    "closed_mesh": true,
+    "non_manifold": false,
+    "self_intersections": false,
+    "mesh_components": 1,
+    "mesh_volume_error_fraction": 1.4858383928250177e-07,
+    "print_z_min_mm": 0.0,
+    "nominal_cavity_overlap_mm3": 0.0,
+    "service_opening_overlap_mm3": 0.0,
+    "button_keepout_overlap_mm3": [
+      0.0,
+      0.0
+    ]
+  },
+  "front-bezel": {
+    "valid_solid": true,
+    "volume_mm3": 560.589,
+    "triangles": 56,
+    "closed_mesh": true,
+    "non_manifold": false,
+    "self_intersections": false,
+    "print_z_min_mm": -1.7763568394002505e-15,
+    "mesh_volume_error_fraction": 3.4579282895631625e-07
+  }
+}

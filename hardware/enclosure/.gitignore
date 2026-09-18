@@ -1,3 +1,2 @@
-# CAD and render backup files
+__pycache__/
 *.FCBak
-*.blend1

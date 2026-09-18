@@ -51,7 +51,7 @@ Linux verification job (must pass):
 - `./integration/smoke-bridge.sh`
 - `./integration/smoke-provider-adapters.sh`
 - `./integration/smoke-e2e-simulator.sh`
-- `platformio run -d firmware`
+- `platformio run -d firmware -e waveshare_esp32_c6_touch_amoled_1_64 -e live3d_usb -e live3d_usb_s3`
 - `docker build --file bridge/AgentPing.Bridge/Dockerfile --tag agentping-bridge:release .`
 
 Windows packaging jobs (must pass):
@@ -68,6 +68,11 @@ Bundle structure (`agentping-<version>-bundle.tar.gz`):
 - `windows/win-x64/` companion + bridge app and unsigned MSI
 - `windows/win-arm64/` companion + bridge app and unsigned MSI
 - `SHA256SUMS.txt` checksums for all bundled files
+
+Firmware files are separated under `linux-inputs/firmware/<environment>/`:
+`waveshare_esp32_c6_touch_amoled_1_64` for the C6 network application,
+`live3d_usb` for the C6 USB robot, and `live3d_usb_s3` for the S3 USB robot.
+Never flash an image from another board's directory.
 
 ## Reproducible local dry run (no tag required)
 
@@ -86,7 +91,7 @@ Expected static outputs:
 - `.NET` tests pass for bridge + companion test projects
 - `SMOKE_RESULT=PASS`, `ADAPTER_SMOKE_RESULT=PASS`
 - E2E simulator smoke passes (`BridgeEndToEndSimulationTests`)
-- PlatformIO emits binaries under `firmware/.pio/build/waveshare_esp32_c6_touch_amoled_1_64/`
+- PlatformIO emits binaries under `firmware/.pio/build/<environment>/` for all three environments
 
 ## Physical steps (explicitly not CI-validated)
 

@@ -321,7 +321,8 @@ void run_live3d() {
   picture=lv_image_create(screen);
   // Touch is unused during profiling; suspend its periodic I2C reads.
   for(auto* input=lv_indev_get_next(nullptr);input;input=lv_indev_get_next(input))lv_indev_enable(input,false);
-  if(!resolution(280,456)&&!resolution(160,260))return;
+  if(!resolution(board::kNative.width,board::kNative.height)&&
+     !resolution(board::kMedium.width,board::kMedium.height))return;
   connection_label=lv_label_create(screen);
   lv_obj_set_width(connection_label,board::kWidth-32);
   lv_obj_set_style_text_color(connection_label,lv_color_hex(0x99bbdd),0);
@@ -330,18 +331,18 @@ void run_live3d() {
   lv_obj_align(connection_label,LV_ALIGN_BOTTOM_MID,0,-16);
   lv_obj_add_flag(connection_label,LV_OBJ_FLAG_HIDDEN);
   bubble=lv_label_create(screen);
-  lv_obj_set_size(bubble,board::kWidth-32,164);
-  lv_obj_align(bubble,LV_ALIGN_TOP_MID,0,16);
-  lv_obj_set_style_pad_all(bubble,12,0);
+  lv_obj_set_size(bubble,board::kWidth-2*board::kBubbleMargin,board::kBubbleHeight);
+  lv_obj_align(bubble,LV_ALIGN_TOP_MID,0,board::kBubbleMargin);
+  lv_obj_set_style_pad_all(bubble,board::kBubblePadding,0);
   lv_obj_set_style_radius(bubble,18,0);
   lv_obj_set_style_bg_color(bubble,lv_color_hex(0x102335),0);
   lv_obj_set_style_bg_opa(bubble,LV_OPA_COVER,0);
   lv_obj_set_style_border_width(bubble,1,0);
   lv_obj_set_style_text_color(bubble,lv_color_hex(0xf3f8ff),0);
-  lv_obj_set_style_text_font(bubble,&lv_font_montserrat_20,0);
+  lv_obj_set_style_text_font(bubble,board::kWidth==280?&lv_font_montserrat_20:&lv_font_montserrat_14,0);
   lv_label_set_long_mode(bubble,LV_LABEL_LONG_DOT);
   thought_dot=lv_obj_create(screen);
-  lv_obj_set_size(thought_dot,10,10);lv_obj_set_pos(thought_dot,184,188);
+  lv_obj_set_size(thought_dot,10,10);lv_obj_set_pos(thought_dot,board::kThoughtX,board::kThoughtY);
   lv_obj_set_style_radius(thought_dot,LV_RADIUS_CIRCLE,0);
   lv_obj_set_style_bg_color(thought_dot,lv_color_hex(0x50dfff),0);
   lv_obj_set_style_border_width(thought_dot,0,0);
@@ -410,12 +411,12 @@ void run_live3d() {
           if(!strcmp(line,"host")){desktop_signal();printf("PAL HOST OK\n");used=0;continue;}
           if(!strcmp(line,"startupstatus")){printf("STARTUP STATUS state=%s frame=%.2f waiting=%d blend=%d bottom=%d\n",sequence_name(),double(motion.frame_position),!lv_obj_has_flag(connection_label,LV_OBJ_FLAG_HIDDEN),esp_timer_get_time()-motion.started<motion.transition_us,projected_bottom);used=0;continue;}
           if(motion.command(line)){if(!strncmp(line,"motion ",7)||!strcmp(line,"play"))sequence=-1;used=0;continue;}
-          if(!strcmp(line,"low"))ok=resolution(140,228);
-          else if(!strcmp(line,"medium"))ok=resolution(160,260);
-          else if(!strcmp(line,"high"))ok=resolution(192,312);
-          else if(!strcmp(line,"max"))ok=resolution(208,338);
-          else if(!strcmp(line,"native"))ok=resolution(280,456);
-          else if(!strcmp(line,"fast"))ok=resolution(140,228,true);
+          if(!strcmp(line,"low"))ok=resolution(board::kLow.width,board::kLow.height);
+          else if(!strcmp(line,"medium"))ok=resolution(board::kMedium.width,board::kMedium.height);
+          else if(!strcmp(line,"high"))ok=resolution(board::kHigh.width,board::kHigh.height);
+          else if(!strcmp(line,"max"))ok=resolution(board::kMax.width,board::kMax.height);
+          else if(!strcmp(line,"native"))ok=resolution(board::kNative.width,board::kNative.height);
+          else if(!strcmp(line,"fast"))ok=resolution(board::kLow.width,board::kLow.height,true);
           else if(!strcmp(line,"tex64"))small_texture=true;
           else if(!strcmp(line,"tex128"))small_texture=false;
           else {
@@ -428,7 +429,7 @@ void run_live3d() {
               printf("\nLIVE3D FRAME END\n");
             }
           }
-          if(!ok&&!resolution(160,260))return;
+          if(!ok&&!resolution(board::kMedium.width,board::kMedium.height))return;
           printf("LIVE3D STATUS resolution=%dx%d texture=%d heap=%u min_heap=%u paused=%d\n",width,height,small_texture?64:128,unsigned(esp_get_free_heap_size()),unsigned(esp_get_minimum_free_heap_size()),paused);
           if(changed){frames=0;skin_us=draw_us=screen_us=0;stats=esp_timer_get_time();}
         }
