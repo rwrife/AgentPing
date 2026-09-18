@@ -81,7 +81,7 @@
     "front_chamfer": 2,
     "floor": 2.8,
     "floor_to_rim_underside": 8.5,
-    "installed_support_pad": 0.5,
+    "printed_support_pad": 0.5,
     "glass_clearance": 0.3,
     "front_rim": 1.2,
     "aperture": [
@@ -110,8 +110,33 @@
       12.5
     ],
     "printed_parts": 2,
-    "mounting_holes": "none; no guessed board hole pattern",
-    "board_retention": "removable insulating adhesive on measured standoff feet; not validated",
+    "mounting_holes": "four 2.3 mm M2 clearance holes; manufacturer-dimensioned positions",
+    "support_centres_mm": [
+      [
+        -8.16,
+        -15.785
+      ],
+      [
+        8.16,
+        -15.785
+      ],
+      [
+        -6.64,
+        16.215
+      ],
+      [
+        6.64,
+        16.215
+      ]
+    ],
+    "printed_support_height_mm": 0.5,
+    "printed_support_diameter_mm": 4.0,
+    "screw_head_recess_mm": [
+      4.2,
+      1.3
+    ],
+    "screw_grip_mm": 1.9999999999999998,
+    "board_retention": "M2 screws into board metal standoffs, on four printed pads; physical fit unverified",
     "board_interference_checked": false,
     "front_retention": "four C6-style spring catches; rear tool-release slots; no glass clamping",
     "split_z_mm": 6.9,
@@ -132,18 +157,18 @@
   "clearance-tray": {
     "valid_solid": true,
     "solid_count": 1,
-    "volume_mm3": 14059.96,
+    "volume_mm3": 13979.812,
     "size_mm": [
       42.0,
       56.0,
       9.7
     ],
-    "triangles": 1076,
+    "triangles": 5124,
     "closed_mesh": true,
     "non_manifold": false,
     "self_intersections": false,
     "mesh_components": 1,
-    "mesh_volume_error_fraction": 4.11384527858426e-05,
+    "mesh_volume_error_fraction": 3.9078077190102096e-05,
     "print_z_min_mm": 0.0,
     "nominal_cavity_overlap_mm3": 0.0,
     "service_opening_overlap_mm3": 0.0,

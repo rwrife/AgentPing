@@ -11,7 +11,7 @@ These are unprinted fit-check options, not verified fits to soldered headers.
 | Board | Optional back | Header layout used | Two rear slots |
 |---|---|---|---|
 | ESP32-C6-Touch-AMOLED-1.64 | [back-cover-pin-access.stl](../esp32-c6-touch-amoled-1.64/back-cover-pin-access.stl) | 11 pins per row; 2.54 mm pitch; 22.86 mm between rows | 4 x 29.4 mm |
-| ESP32-S3-LCD-1.47B | [clearance-tray-pin-access.stl](../esp32-s3-lcd-1.47b/clearance-tray-pin-access.stl) | 9 pins per row; 2.54 mm pitch; 17.78 mm between rows | 4 x 24 mm |
+| ESP32-S3-LCD-1.47B | [clearance-tray-pin-access.stl](../esp32-s3-lcd-1.47b/clearance-tray-pin-access.stl) | 9 pins per row; 2.54 mm pitch; 17.78 mm between rows | 4 x 24 mm, rounded ends |
 
 Matching STEP files and `pin-access.FCStd` are beside each STL. Each FreeCAD
 document contains the optional rear and the unchanged original front, in
@@ -22,12 +22,14 @@ assembled coordinates. STL files are floor-down, ready for slicing.
 The exterior housing size, board seating height, USB/button clearance and all
 four **10 x 2 mm vents** remain unchanged. Slots are entirely outside the vent
 pattern. The minimum material between a slot and the vents is **4.43 mm on C6**
-and **1.89 mm on S3**. Screw pads and snap-release openings are untouched.
+and **1.89 mm on S3**. Snap-release openings are untouched. The S3 now has printed support pads in
+both back options; rounded slot ends preserve at least 0.5 mm of continuous
+material around the M2 clearance holes above the rear head recesses.
 
 The available distance from the board's support feet to the exterior rear plane is:
 
 - **C6: 4.3 mm** = 1.5 mm printed lift + 2.8 mm floor.
-- **S3: 3.3 mm** = 0.5 mm installed support adhesive + 2.8 mm floor.
+- **S3: 3.3 mm** = 0.5 mm printed supports + 2.8 mm floor.
 
 A header pin extending less than that distance behind the support feet remains
 recessed. These numbers are limits, not measured pin lengths. Check the actual
@@ -43,9 +45,11 @@ Their shoulders overlap the slot entrances outside the housing, so remove the
 mount to connect leads. Simultaneous use of rear plugs and the mount is not
 claimed. No alternate arms or adapters are needed for recessed bare pins.
 
-On S3, centre and secure the board on its support feet using insulating pads
-outside the slots and vents. On C6, use the existing M2 standoffs and screws.
-Neither variant changes the board stack or adds support posts.
+Both boards fasten through the rear with M2 screws into the metal standoffs.
+The S3 backs now provide four 0.5 mm-high printed pads instead of adhesive
+supports; see its [assembly instructions](../esp32-s3-lcd-1.47b/README.md) for
+the manufacturer-dimensioned screw positions and 2.0 mm screw grip. The board
+stack and existing front stay unchanged. Check screw length against actual threads.
 
 ## Coordinates and evidence
 
@@ -70,6 +74,10 @@ Sources and limits are also recorded in [the reference manifest](../../reference
 
 ![Interior faces: existing supports and snaps retained](interior-options.png)
 
+The S3 slots have 2 mm-radius semicircular ends to clear the nearby antenna-end
+supports. Their nominal header-body corners clear in CAD; real connector shapes
+and print tolerances still require checking.
+
 ## Reproduce and verify
 
 ```powershell
@@ -83,8 +91,8 @@ regenerating them. The main enclosure verifier includes the optional variants.
 Checks cover single valid solids, closed connected manifold meshes, STEP/STL/
 FreeCAD agreement, exact subtraction of two slots, nominal header clearance,
 unchanged vents and compatibility with both original mount arms and fronts.
-`validation.json` records the dimensions and results. The standard back files
-and their generators are preserved.
+`validation.json` records the dimensions and results. The standard C6 files and generator are preserved. The standard S3 back is
+also regenerated with the same four printed pads and M2 screw access.
 
 Use the original printing guidance: 0.2 mm layers, four walls, floor-down rear.
 Inspect the 1.89 mm S3 webs in the slicer. Physical print tolerances, actual pin

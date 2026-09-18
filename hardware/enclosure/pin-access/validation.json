@@ -19,6 +19,7 @@
       ],
       "slot_length_mm": 29.4,
       "vent_to_slot_web_mm": 4.43,
+      "slot_end_radius_mm": 0,
       "maximum_pin_projection_from_support_feet_for_flush_rear_mm": 4.3,
       "actual_pin_tip_recess_measured": false,
       "original_front_compatible": true,
@@ -43,13 +44,14 @@
       ],
       "slot_length_mm": 24.0,
       "vent_to_slot_web_mm": 1.89,
+      "slot_end_radius_mm": 2.0,
       "maximum_pin_projection_from_support_feet_for_flush_rear_mm": 3.3,
       "actual_pin_tip_recess_measured": false,
       "original_front_compatible": true,
       "rear_vents_unchanged": true,
       "slot_tunnels_clear": true,
       "single_valid_solid": true,
-      "volume_mm3": 13522.36
+      "volume_mm3": 13462.388
     }
   },
   "mounts": {

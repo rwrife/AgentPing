@@ -24,7 +24,8 @@ projection and mating-connector fit require checking.
 | PCB envelope | 20.32 x 36.37 |
 | Internal pocket | 24.32 x 37.37 (3 mm wider overall) |
 | Front aperture | 21.32 x 37.37 |
-| Floor / installed insulating support pad | 2.8 / 0.5 |
+| Floor / four printed support pads | 2.8 / 0.5 high, 4.0 diameter |
+| M2 clearance / rear head recess | 2.3 diameter / 4.2 diameter x 1.3 deep |
 | User-measured support feet to glass top | 7.7 |
 | Nominal glass top / rim underside | Z = 11.0 / 11.3 |
 | Rear seam / locating lip top | Z = 6.9 / 9.7 |
@@ -34,15 +35,28 @@ projection and mating-connector fit require checking.
 
 The aperture uses the full PCB envelope plus 0.5 mm per side because glass
 outline and offset are not dimensioned in the manufacturer drawing. It does
-not clamp or positively retain the board. Use removable insulating adhesive
-on the actual support feet outside the vents, with a measured installed thickness of 0.5 mm.
-Do not bond components, antenna, flex or glass. Feet positions and underside
-component clearance still require a physical fit check; no screw pattern is assumed.
+not clamp or positively retain the board. **Both S3 backs now have four printed
+support pads and M2 screw access**, replacing the earlier adhesive-only support.
+The pads are 0.5 mm high, so the 7.7 mm module stack and front bezel stay at
+their existing heights; do not add adhesive thickness on top of these pads.
+
+The manufacturer-dimensioned hole centres (USB toward -Y) are:
+
+- USB end: X = +/-8.16, Y = -15.785 mm.
+- Antenna end: X = +/-6.64, Y = +16.215 mm.
+
+Fasten through the rear into the board's metal M2 standoffs. Nominal screw grip
+is 2.0 mm above the head recess; choose screw length for that grip plus the
+actual usable thread engagement, without bottoming. Dry-fit all four screws
+without force. The printed pads have 4 mm outside diameter and a 2.3 mm hole.
+The pin-access back trims their edges with rounded slots while retaining at
+least 0.5 mm continuous material around every screw hole above the head recess.
+Actual board fit, standoff thread depth and screw-head size remain physical checks.
 
 The internal pocket is widened by **3 mm overall (1.5 mm per side)** along
 its full length, providing room for the buttons inside the closed enclosure.
 A centred board with 1.5 mm button protrusion has 0.5 mm nominal clearance
-per side. Centre and secure the board on its adhesive pads; that clearance is
+per side. Locate and secure the board on its four printed pads; that clearance is
 not an additional allowance for board movement. No individual button recesses
 or external openings are needed. The front aperture remains 21.32 mm wide.
 Open the housing for BOOT/RESET or microSD service, as with the C6 closed sides.

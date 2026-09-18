@@ -27,10 +27,10 @@ SLOT_WIDTH = 4.0
 BOARDS = {
     'c6': dict(directory='esp32-c6-touch-amoled-1.64', rear='back-cover',
                front='front-shell', depth=15.1, row_x=11.43, first_y=-12.42,
-               count=11, slot_length=29.4, foot_to_rear=4.3),
+               count=11, slot_length=29.4, foot_to_rear=4.3, slot_radius=0),
     's3': dict(directory='esp32-s3-lcd-1.47b', rear='clearance-tray',
                front='front-bezel', depth=12.5, row_x=8.89, first_y=-6.875,
-               count=9, slot_length=24.0, foot_to_rear=3.3),
+               count=9, slot_length=24.0, foot_to_rear=3.3, slot_radius=2.0),
 }
 
 
@@ -57,10 +57,19 @@ def slot_y(spec):
     return centre-spec['slot_length']/2
 
 
-def slots(spec, z=-.1, depth=FLOOR+.2):
-    return [box(SLOT_WIDTH, spec['slot_length'], depth,
-                side*spec['row_x']-SLOT_WIDTH/2, slot_y(spec), z)
-            for side in (-1, 1)]
+def slots(spec, z=-.1, depth=FLOOR+.7):
+    result = []
+    for side in (-1,1):
+        x, y, radius = side*spec['row_x'], slot_y(spec), spec['slot_radius']
+        if radius:
+            slot = box(SLOT_WIDTH,spec['slot_length']-2*radius,depth,
+                       x-SLOT_WIDTH/2,y+radius,z)
+            for cy in (y+radius,y+spec['slot_length']-radius):
+                slot = slot.fuse(Part.makeCylinder(radius,depth,V(x,cy,z)))
+        else:
+            slot = box(SLOT_WIDTH,spec['slot_length'],depth,x-SLOT_WIDTH/2,y,z)
+        result.append(slot.removeSplitter())
+    return result
 
 
 def rear_variant(spec):
@@ -124,13 +133,13 @@ def verify():
         removed = original.cut(rear)
         allowed = slots(spec)[0].fuse(slots(spec)[1])
         assert removed.cut(allowed).Volume < .001, 'changes outside header slots'
-        assert abs(removed.Volume-2*SLOT_WIDTH*spec['slot_length']*FLOOR) < .001
+        assert abs(removed.Volume-original.common(allowed).Volume) < .001
         assert parameters.check_rear_vents(rear) == parameters.check_rear_vents(original)
         # Verify the nominal continuous header bodies and each square pin have
         # a straight path through the floor, not just matching hole outlines.
         for side in (-1, 1):
             x = side*spec['row_x']
-            header = box(2.54, spec['count']*2.54, FLOOR+.2,
+            header = box(2.54, spec['count']*2.54, FLOOR+.7,
                          x-1.27, spec['first_y']-1.27, -.1)
             assert rear.common(header).Volume < .001
             for pin in range(spec['count']):
@@ -140,6 +149,8 @@ def verify():
             assert rear.common(slot).Volume < .001
         front = read_step(directory/(spec['front']+'.step'))
         assert rear.common(front).Volume < .001
+        if board == 's3':
+            parameters.check_supports(rear)
         checks.check_document(directory/'pin-access.FCStd', {
             'RearPinAccess': rear, 'OriginalFront': front})
         web = spec['row_x']-SLOT_WIDTH/2-5
@@ -152,6 +163,7 @@ def verify():
             'first_pin_y_mm': spec['first_y'],
             'slot_y_mm': [round(slot_y(spec),3), round(slot_y(spec)+spec['slot_length'],3)],
             'slot_length_mm': spec['slot_length'], 'vent_to_slot_web_mm': round(web,3),
+            'slot_end_radius_mm': spec['slot_radius'],
             'maximum_pin_projection_from_support_feet_for_flush_rear_mm': spec['foot_to_rear'],
             'actual_pin_tip_recess_measured': False,
             'original_front_compatible': True, 'rear_vents_unchanged': True,

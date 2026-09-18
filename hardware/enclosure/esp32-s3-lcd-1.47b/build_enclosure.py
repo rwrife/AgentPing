@@ -22,7 +22,15 @@ FLOOR = 2.8
 VENT_W, VENT_H = 10.0, 2.0
 VENT_Y = (-8.0, -2.0, 4.0, 10.0)
 MODULE_HEIGHT = 7.7  # User: rear support/feet to top of glass, 2026-09-18.
-SUPPORT_PAD = 0.5  # Assumed installed insulating adhesive thickness; measure it.
+SUPPORT_PAD = 0.5  # Printed risers replace the former 0.5 mm adhesive allowance.
+SUPPORT_RADIUS = 2.0
+SCREW_RADIUS = 1.15
+HEAD_RADIUS, HEAD_DEPTH = 2.1, 1.3
+# Manufacturer dimensioned rear photo, USB toward -Y. The two pairs differ.
+# USB pair: 2.40 mm from short edge, 2.00 mm from long edges.
+# Antenna pair: 1.97 mm from short edge, 3.52 mm from long edges.
+SUPPORTS = [(side*(BOARD_W/2-edge), y) for edge,y in (
+    (2.0, -BOARD_H/2+2.4), (3.52, BOARD_H/2-1.97)) for side in (-1,1)]
 GLASS_CLEARANCE = 0.3
 FRONT_RIM = 1.2
 GLASS_TOP = FLOOR + SUPPORT_PAD + MODULE_HEIGHT
@@ -52,7 +60,7 @@ def button_keepouts():
     return [
         box(
             outer_x - inner_x, POCKET_H,
-            POCKET_DEPTH, x, -POCKET_H / 2, FLOOR,
+            POCKET_DEPTH-SUPPORT_PAD, x, -POCKET_H / 2, FLOOR+SUPPORT_PAD,
         )
         for x in (-outer_x, inner_x)
     ]
@@ -135,6 +143,14 @@ def make_tray():
     # Full rectangular board envelope avoids assuming rounded glass corners.
     cavity = box(POCKET_W, POCKET_H, DEPTH, -POCKET_W/2,-POCKET_H/2,FLOOR)
     tray = tray.cut(cavity)
+    support_shapes = [Part.makeCylinder(SUPPORT_RADIUS,SUPPORT_PAD,V(x,y,FLOOR))
+                      for x,y in SUPPORTS]
+    for support in support_shapes:
+        tray = tray.fuse(support)
+        cavity = cavity.cut(support)
+    for x,y in SUPPORTS:
+        tray = tray.cut(Part.makeCylinder(SCREW_RADIUS,FLOOR+SUPPORT_PAD+.2,V(x,y,-.1)))
+        tray = tray.cut(Part.makeCylinder(HEAD_RADIUS,HEAD_DEPTH+.1,V(x,y,-.1)))
     # A bottom-facing USB tunnel; leave the rear floor intact for the mounts.
     service = box(14,12,USB_TOP-3.6,-7,-29,3.6)
     tray = tray.cut(service)
@@ -174,7 +190,21 @@ def make_bezel():
     return bezel
 
 
+def check_supports(tray):
+    # Verify a continuous 0.5 mm annular land around all four M2 holes,
+    # above the rear head recess, including the top of each printed pad.
+    for x,y in SUPPORTS:
+        shaft = Part.makeCylinder(SCREW_RADIUS,FLOOR+SUPPORT_PAD+.2,V(x,y,-.1))
+        head = Part.makeCylinder(HEAD_RADIUS,HEAD_DEPTH,V(x,y,0))
+        assert tray.common(shaft).Volume < 1e-6
+        assert tray.common(head).Volume < 1e-6
+        ring = Part.makeCylinder(SCREW_RADIUS+.5,FLOOR+SUPPORT_PAD-HEAD_DEPTH,
+                                 V(x,y,HEAD_DEPTH)).cut(shaft)
+        assert ring.cut(tray).Volume < 1e-6, "missing support or thin M2 hole land"
+
+
 def check_assembly(tray, bezel):
+    check_supports(tray)
     assert tray.common(bezel).Volume < 1e-6
     glass = box(
         APERTURE_W, POCKET_H, 0.1, -APERTURE_W / 2, -POCKET_H / 2, GLASS_TOP - 0.1,
@@ -259,7 +289,7 @@ def build():
             "button_print_clearance": BUTTON_PRINT_CLEARANCE,
             "button_datum": "protrusion applied outside PCB long edges; confirm against actual display",
             "outer_corner_radius": 5, "front_chamfer": 2, "floor": FLOOR, "floor_to_rim_underside": POCKET_DEPTH,
-            "installed_support_pad": SUPPORT_PAD,
+            "printed_support_pad": SUPPORT_PAD,
             "glass_clearance": GLASS_CLEARANCE,
             "front_rim": FRONT_RIM,
             "aperture": [APERTURE_W, POCKET_H],
@@ -274,8 +304,13 @@ def build():
         "assembly": {
             "size_mm": [round(BODY_W, 2), round(BODY_H, 2), DEPTH],
             "printed_parts": 2,
-            "mounting_holes": "none; no guessed board hole pattern",
-            "board_retention": "removable insulating adhesive on measured standoff feet; not validated",
+            "mounting_holes": "four 2.3 mm M2 clearance holes; manufacturer-dimensioned positions",
+            "support_centres_mm": [[round(x,3),round(y,3)] for x,y in SUPPORTS],
+            "printed_support_height_mm": SUPPORT_PAD,
+            "printed_support_diameter_mm": 2*SUPPORT_RADIUS,
+            "screw_head_recess_mm": [2*HEAD_RADIUS,HEAD_DEPTH],
+            "screw_grip_mm": FLOOR+SUPPORT_PAD-HEAD_DEPTH,
+            "board_retention": "M2 screws into board metal standoffs, on four printed pads; physical fit unverified",
             "board_interference_checked": False,
             "front_retention": "four C6-style spring catches; rear tool-release slots; no glass clamping",
             "split_z_mm": SPLIT,

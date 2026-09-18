@@ -3,8 +3,9 @@
 ## Optional rear pin-access housings: 2026-09-18
 
 The additive [pin-access variants](../enclosure/pin-access/README.md) use two
-4 mm-wide slots through the original 2.8 mm floor. No standard geometry or
-mount part is modified; pin tips are intended to remain inside the rear plane.
+4 mm-wide slots through the original 2.8 mm floor. Standard C6 geometry and all mount parts are preserved. Both S3 backs now
+have four printed support pads and M2 screw access; pin tips are intended
+to remain inside the rear plane.
 Actual header height/projection was not measured. Available support-foot to
 rear-plane distances are 4.3 mm C6 and 3.3 mm S3, using the existing stacks.
 
@@ -93,14 +94,19 @@ SHA-256 of downloaded evidence:
 43738d1480ef9c983bca3e7f1f7ad852c288a1bd00f1621f9ac3e6974e7539fd  schematic.pdf
 ```
 
-No S3 mounting-hole pattern is inferred or reused from the C6. The S3 tray has
-no mounting holes; removable insulating adhesive on physically measured
-standoff feet is only a provisional retention method. Clearance allowances
-(0.5 mm per side and 0.5 mm installed support adhesive), internal width and USB
-tunnel are **design assumptions**, not manufacturer dimensions. The user has now
-supplied the 7.7 mm foot-to-glass stack (below). Support contact areas, glass
-outline/offset, actual USB plug clearance and button access remain blockers to
-verified fit. See the S3 README before printing or attaching a board.
+### S3 printed supports and M2 retention
+
+The S3 manufacturer's dimensioned image gives the USB-end hole offsets as
+2.40 mm from the short edge and 2.00 mm from the long edges, and antenna-end
+hole offsets as 1.97 mm and 3.52 mm respectively. Applied to the centred
+20.32 x 36.37 mm board with USB toward -Y, these give USB centres
+(+/-8.16, -15.785) and antenna centres (+/-6.64, +16.215) mm.
+Both S3 backs now have 4 mm-diameter, 0.5 mm-high printed pads with 2.3 mm
+M2 clearance holes and 4.2 x 1.3 mm rear head recesses. This replaces the
+former 0.5 mm adhesive support allowance without changing the glass stack.
+Screw thread depth and real board fit require a dry fit. The pin-access back
+uses rounded slot ends and retains at least 0.5 mm annular material around
+the clearance holes above the head recess. The C6 hole pattern is not reused.
 
 ### S3 user-measured button protrusion, 2026-09-18
 
@@ -110,7 +116,7 @@ manufacturer drawing, and is applied only to the S3 prototype. The user subseque
 now 24.32 mm wide throughout, 3 mm wider than the 21.32 mm board-clearance
 pocket, with no separate button recesses. A centred board and its nominal
 1.5 mm button protrusions occupy 23.32 mm, leaving 0.5 mm on each side.
-Secure the board centrally with insulating adhesive; this gap cannot also be
+Secure the board on its printed pads with M2 screws; this gap cannot also be
 claimed as extra movement tolerance. Button height/travel remain unmeasured.
 The outer housing, display aperture, C6 geometry and shared vents are unchanged.
 
@@ -136,12 +142,12 @@ reported rather than resolved by altering this interface.
 In response to the explicit question "height from the rear mounting feet/support
 surface to the top of the display glass", the user answered **7.7 mm**.
 This supersedes the open-tray's unmeasured 10 mm pocket allowance. The two-piece
-prototype stack is **2.8 floor + 0.5 assumed installed support adhesive + 7.7
+prototype stack is **2.8 floor + 0.5 printed support pads + 7.7
 measured module + 0.3 glass clearance + 1.2 rim = 12.5 mm**.
 
 The front seats on a rear-tray shoulder, not the glass. A recessed lip locates it; four C6-style spring catches retain the front.
 Rear tool slots release the catches before bezel removal.
-No board screw positions are invented. The glass/active-area outline and its
+Board screw positions follow the manufacturer dimensioned image above. The glass/active-area outline and its
 X/Y offset are **not dimensioned in the available source**. Therefore the
 21.32 x 37.37 mm aperture exposes the full PCB envelope plus clearance, rather
 than pretending a smaller glass-retaining opening is validated. Glass width,
