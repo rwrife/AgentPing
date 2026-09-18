@@ -35,7 +35,7 @@ projection and mating-connector fit require checking.
 | Rear seam / locating lip top | Z = 9.2 / 12.0 |
 | Locating lip / socket | 32 x 47 / 32.5 x 47.5 |
 | Front rim / aperture chamfer | 1.2 / 0.5 |
-| USB tunnel | 14 wide; Z = 3.6..9.5 |
+| USB tunnel | 15 wide; Z = 3.1..10.0 |
 
 The screen opening is separate from the unchanged PCB/button pocket. The
 19.3 x 33.3 mm measurement is user supplied; its interpretation as the visible
@@ -44,11 +44,13 @@ outer aperture chamfer expands the mouth; the inner throat has the stated size.
 A conservative full-board glass envelope remains 0.3 mm below the rim.
 
 Both backs have four 2.8 mm-high printed supports, raised another 0.3 mm after
-the latest cable fit check. The assembled USB opening is now Z = 3.6..9.5 mm.
+the latest cable fit check. The assembled USB opening is now 15 mm wide and Z = 3.1..10.0 mm.
 Previously the front blocked the opening above the Z = 8.9 mm seam, despite
 a taller cut in the tray. Raising the board 0.3 mm and the actual opening roof
 0.6 mm adds 0.3 mm clearance below and above the same plug. Both parts are
-checked together for an unobstructed 14 mm-wide passage. Do not add adhesive
+checked together for an unobstructed 15 mm-wide passage. The latest revision
+adds another 0.5 mm on all four edges of the preceding 14 x 5.9 mm opening,
+for a 15 x 6.9 mm opening. Board height and outer dimensions stay unchanged. Do not add adhesive
 on the supports. Real cable fit still requires a print check.
 
 The manufacturer-dimensioned hole centres (USB toward -Y) are:

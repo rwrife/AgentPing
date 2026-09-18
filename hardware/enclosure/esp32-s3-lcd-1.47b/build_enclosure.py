@@ -49,10 +49,10 @@ BODY_W, BODY_H = 36.0, 51.0
 LIP_W, LIP_H = BODY_W-4, BODY_H-4
 DEPTH = BEZEL_Z + FRONT_RIM
 SERVICE_TOP_Y = -7.0
-USB_BOTTOM = 3.6
-# Previous assembled opening ended at the seam (8.9), despite a taller tray cut.
-# Board rises 0.3; opening roof rises 0.6 for +0.3 clearance on each side.
-USB_TOP = 9.5
+# Additional 0.5 mm on every edge after the latest cable fit feedback.
+USB_WIDTH = 15.0
+USB_BOTTOM = 3.1
+USB_TOP = 10.0
 EPS = 0.1
 
 
@@ -149,7 +149,8 @@ def snap_features():
 
 
 def usb_keepout():
-    return box(14,BODY_H/2+1-17,USB_TOP-USB_BOTTOM,-7,-BODY_H/2-1,USB_BOTTOM)
+    # Join the board cavity at Y=-18 without cutting the adjacent M2 supports.
+    return box(USB_WIDTH,BODY_H/2+1-18,USB_TOP-USB_BOTTOM,-USB_WIDTH/2,-BODY_H/2-1,USB_BOTTOM)
 
 
 def make_tray():
@@ -319,7 +320,7 @@ def build():
             "aperture_basis": "user screen dimensions; centred offset and 3 mm radius provisional",
             "button_z_limit": BEZEL_Z,
             "internal_button_keepout_top_y": POCKET_H/2,
-            "usb_tunnel": {"width": 14, "bottom_z": USB_BOTTOM, "top_z": USB_TOP},
+            "usb_tunnel": {"width": USB_WIDTH, "bottom_z": USB_BOTTOM, "top_z": USB_TOP},
         },
         "assembly": {
             "size_mm": [round(BODY_W, 2), round(BODY_H, 2), DEPTH],

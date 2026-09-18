@@ -1,3 +1,11 @@
+## Additional S3 USB clearance, 2026-09-18
+
+Latest user feedback requests another 0.5 mm on all sides of the cable opening.
+Expand the previous 14 x 5.9 mm passage to 15 x 6.9 mm: X = -7.5..7.5,
+Z = 3.1..10.0. Cut both front and rear with the same envelope. Board supports,
+36 x 51 x 14.8 mm outer size, screen opening and shared vents remain unchanged.
+This supersedes the USB opening dimensions in the preceding revision below.
+
 ## Latest S3 screen and USB fit revision, 2026-09-18
 
 Supersedes earlier S3 aperture and height assumptions below. User measured the

@@ -103,9 +103,9 @@
     "button_z_limit": 13.600000000000001,
     "internal_button_keepout_top_y": 18.685,
     "usb_tunnel": {
-      "width": 14,
-      "bottom_z": 3.6,
-      "top_z": 9.5
+      "width": 15.0,
+      "bottom_z": 3.1,
+      "top_z": 10.0
     }
   },
   "assembly": {
@@ -166,18 +166,18 @@
   "clearance-tray": {
     "valid_solid": true,
     "solid_count": 1,
-    "volume_mm3": 11311.943,
+    "volume_mm3": 11185.501,
     "size_mm": [
       36.0,
       51.0,
       12.0
     ],
-    "triangles": 5148,
+    "triangles": 5128,
     "closed_mesh": true,
     "non_manifold": false,
     "self_intersections": false,
     "mesh_components": 1,
-    "mesh_volume_error_fraction": 0.00010316705733934009,
+    "mesh_volume_error_fraction": 0.00010996653839522014,
     "print_z_min_mm": 0.0,
     "nominal_cavity_overlap_mm3": 0.0,
     "service_opening_overlap_mm3": 0.0,
@@ -188,12 +188,12 @@
   },
   "front-bezel": {
     "valid_solid": true,
-    "volume_mm3": 3055.991,
+    "volume_mm3": 3042.341,
     "triangles": 1744,
     "closed_mesh": true,
     "non_manifold": false,
     "self_intersections": false,
     "print_z_min_mm": 0.0,
-    "mesh_volume_error_fraction": 0.0001312700098569249
+    "mesh_volume_error_fraction": 0.0001326293531912328
   }
 }
