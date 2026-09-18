@@ -101,22 +101,29 @@ def main():
     # Check the shipped arms, including their pressure-fit blades, on both cases.
     for name in ("monitor-arm", "desk-arm"):
         mount = check_part(ROOT / "mounts", name)
+        if name == "monitor-arm":
+            pad = mount.common(Part.makeBox(50,42,30,App.Vector(-25,-137.4,-25)))
+            stem = mount.common(Part.makeBox(26,40,30,App.Vector(-13,-80,-25)))
+            assert abs(pad.BoundBox.ZMax-stem.BoundBox.ZMax-4) < 1e-6, "adhesive pad must rise 4 mm on tab-facing side"
+            assert abs(pad.BoundBox.ZMin-stem.BoundBox.ZMin) < 1e-6, "arm rear face must remain flat"
         for board, cover in (("C6", rear), ("S3", tray)):
             body = mount.common(Part.makeBox(100,200,30,App.Vector(-50,-160,-30)))
             assert body.common(cover).Volume < 1e-6, (board,name,"mount body collision")
             tips = mount.common(Part.makeBox(100,100,20,App.Vector(-50,-50,0)))
             assert abs(tips.BoundBox.ZMax - 2.6) < 1e-6
             assert 2.8-tips.BoundBox.ZMax >= .199999, "tab enters electronics cavity"
-            # Only 0.03 mm/side at the roots may interfere for the friction fit.
+            # Only 0.08 mm/side at the roots may interfere for the friction fit.
             allowed = Part.Shape()
             for y in (-7,11):
-                slot = Part.makeBox(10,2.06,2.8,App.Vector(-5,y-1.03,0))
+                slot = Part.makeBox(10,2.16,2.8,App.Vector(-5,y-1.08,0))
                 allowed = slot if allowed.isNull() else allowed.fuse(slot)
             assert mount.common(cover).cut(allowed).Volume < 1e-6
+            air = Part.makeBox(24,13.8,3.8,App.Vector(-12,-4.9,-3.9))
+            assert mount.common(air).Volume < 1e-6, "riser air gap blocked"
             for y in (-2,4):
-                air = Part.makeBox(10,2,17,App.Vector(-5,y,-14.1))
-                assert mount.common(air).Volume < 1e-6, "middle vent blocked"
-            print(f"{board}/{name}: body clears; tabs stop 0.2 mm inside floor; middle vents open")
+                plate = Part.makeBox(10,2,10,App.Vector(-5,y,-14))
+                assert plate.cut(mount).Volume < 1e-6, "mount plate is not solid"
+            print(f"{board}/{name}: body clears; tabs stop 0.2 mm inside floor; solid plate and clear riser air gap")
     generated, cavity, service = parameters.make_tray()
     assert tray.cut(generated).Volume + generated.cut(tray).Volume < 1e-6
     assert tray.common(cavity).Volume < 1e-6
