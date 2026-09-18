@@ -10,6 +10,7 @@
   ],
   "monitor_pad_thickness_mm": 10.0,
   "monitor_arm_to_monitor_clearance_mm": 4.0,
+  "monitor_adhesive_face": "front (+Z)",
   "monitor_slot_end_from_bottom_mm": 46.0,
   "tab_insertion_mm": 2.6,
   "rear_floor_mm": 2.8,
@@ -20,7 +21,7 @@
       "print_size_mm": [
         42.0,
         152.4,
-        20.6
+        16.6
       ],
       "triangles": 2004
     },
