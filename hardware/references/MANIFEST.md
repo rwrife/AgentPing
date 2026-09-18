@@ -1,3 +1,28 @@
+## Additional S3 USB clearance, 2026-09-18
+
+Latest user feedback requests another 0.5 mm on all sides of the cable opening.
+Expand the previous 14 x 5.9 mm passage to 15 x 6.9 mm: X = -7.5..7.5,
+Z = 3.1..10.0. Cut both front and rear with the same envelope. Board supports,
+36 x 51 x 14.8 mm outer size, screen opening and shared vents remain unchanged.
+This supersedes the USB opening dimensions in the preceding revision below.
+
+## Latest S3 screen and USB fit revision, 2026-09-18
+
+Supersedes earlier S3 aperture and height assumptions below. User measured the
+screen as 19.3 x 33.3 mm and requested more rounded aperture corners. The new
+throat uses those dimensions with provisional centred alignment and 3 mm corner
+radius; the internal PCB/button pocket remains 24.32 x 37.37 mm. Outer footprint
+remains 36 x 51 mm. The screen measurement has not been independently verified.
+
+The user corrected the requested additional USB clearance to 0.3 mm per side.
+Supports rise from 2.5 to 2.8 mm; total depth is 14.8 mm, glass top Z = 13.3,
+rim underside Z = 13.6 and seam Z = 9.2 mm. The previous assembled opening was
+limited by the front at Z = 8.9, not the tray cut's Z = 11.9. Both current parts
+clear a 14 mm-wide passage from Z = 3.6 to 9.5: raising the board 0.3 and roof
+0.6 gives 0.3 mm extra clearance on each side of the same cable. Screw grip is
+4.3 mm and support-foot to rear-plane distance is 5.6 mm. Print the matching
+new front with either new back; actual cable and screen alignment need checking.
+
 # Manufacturer evidence manifest
 
 ## Optional rear pin-access housings: 2026-09-18

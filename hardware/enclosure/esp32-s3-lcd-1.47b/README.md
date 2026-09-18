@@ -2,11 +2,12 @@
 
 The S3 uses a compact **36 x 51 mm rounded outline**, 5 mm corner
 radius, 2 mm front chamfer, recessed locating lip and four spring catches.
-Its **14.5 mm depth** follows the measured S3 stack (C6: 15.1 mm).
-The bezel bands are 7.34 mm at the sides and 6.815 mm at the ends, close to
-the C6 bands of 7.4 and 6.9 mm. The outer sides and front are continuous; USB
-exits through the rear tray. **Print the new front and one new back together:**
-the older 42 x 56 mm S3 parts do not fit this compact revision.
+Its **14.8 mm depth** follows the measured S3 stack (C6: 15.1 mm).
+The front opening now follows the user-measured 19.3 x 33.3 mm screen,
+with provisional 3 mm rounded corners and centred alignment. The bezel bands
+are 8.35 mm at the sides and 8.85 mm at the ends (before edge chamfers).
+The USB opening spans the rear tray and a small relief in the front. **Print the new front and one new back together:**
+earlier fronts lack the matching screen opening and USB relief.
 
 ![S3 assembled pod](preview.png)
 ![S3 snap-fit interior](exploded.png)
@@ -23,28 +24,34 @@ projection and mating-connector fit require checking.
 
 | Feature | Millimetres |
 |---|---|
-| Body | 36 x 51 x 14.5 |
+| Body | 36 x 51 x 14.8 |
 | PCB envelope | 20.32 x 36.37 |
 | Internal pocket | 24.32 x 37.37 (3 mm wider overall) |
-| Front aperture | 21.32 x 37.37 |
-| Floor / four printed support pads | 2.8 / 2.5 high, 4.0 diameter |
+| Front aperture at throat | 19.3 x 33.3; provisional corner radius 3.0 |
+| Floor / four printed support pads | 2.8 / 2.8 high, 4.0 diameter |
 | M2 clearance / rear head recess | 2.3 diameter / 4.2 diameter x 1.3 deep |
 | User-measured support feet to glass top | 7.7 |
-| Nominal glass top / rim underside | Z = 13.0 / 13.3 |
-| Rear seam / locating lip top | Z = 8.9 / 11.7 |
+| Nominal glass top / rim underside | Z = 13.3 / 13.6 |
+| Rear seam / locating lip top | Z = 9.2 / 12.0 |
 | Locating lip / socket | 32 x 47 / 32.5 x 47.5 |
 | Front rim / aperture chamfer | 1.2 / 0.5 |
-| USB tunnel | 14 wide; Z = 3.6..11.9 |
+| USB tunnel | 15 wide; Z = 3.1..10.0 |
 
-The aperture uses the full PCB envelope plus 0.5 mm per side because glass
-outline and offset are not dimensioned in the manufacturer drawing. It does
-not clamp or positively retain the board. **Both S3 backs now have four printed
-support pads and M2 screw access**, replacing the earlier adhesive-only support.
-The pads are 2.5 mm high, raised by 2 mm after the first USB cable fit check.
-The rear walls, locating lip and catches rise by the same 2 mm, giving a
-14.5 mm total depth. The compact front matches both current back options. The USB
-tunnel floor stays at Z = 3.6 while its ceiling rises to 11.9, providing
-2 mm more clearance below the raised connector. Do not add adhesive on the pads.
+The screen opening is separate from the unchanged PCB/button pocket. The
+19.3 x 33.3 mm measurement is user supplied; its interpretation as the visible
+opening, centred offset and 3 mm corner radius remain provisional. The 0.5 mm
+outer aperture chamfer expands the mouth; the inner throat has the stated size.
+A conservative full-board glass envelope remains 0.3 mm below the rim.
+
+Both backs have four 2.8 mm-high printed supports, raised another 0.3 mm after
+the latest cable fit check. The assembled USB opening is now 15 mm wide and Z = 3.1..10.0 mm.
+Previously the front blocked the opening above the Z = 8.9 mm seam, despite
+a taller cut in the tray. Raising the board 0.3 mm and the actual opening roof
+0.6 mm adds 0.3 mm clearance below and above the same plug. Both parts are
+checked together for an unobstructed 15 mm-wide passage. The latest revision
+adds another 0.5 mm on all four edges of the preceding 14 x 5.9 mm opening,
+for a 15 x 6.9 mm opening. Board height and outer dimensions stay unchanged. Do not add adhesive
+on the supports. Real cable fit still requires a print check.
 
 The manufacturer-dimensioned hole centres (USB toward -Y) are:
 
@@ -52,7 +59,7 @@ The manufacturer-dimensioned hole centres (USB toward -Y) are:
 - Antenna end: X = +/-6.64, Y = +16.215 mm.
 
 Fasten through the rear into the board's metal M2 standoffs. Nominal screw grip
-is 4.0 mm above the head recess; choose screw length for that grip plus the
+is 4.3 mm above the head recess; choose screw length for that grip plus the
 actual usable thread engagement, without bottoming. Dry-fit all four screws
 without force. The printed pads have 4 mm outside diameter and a 2.3 mm hole.
 The pin-access back trims their edges with rounded slots while retaining at
@@ -64,7 +71,7 @@ its full length, providing room for the buttons inside the closed enclosure.
 A centred board with 1.5 mm button protrusion has 0.5 mm nominal clearance
 per side. Locate and secure the board on its four printed pads; that clearance is
 not an additional allowance for board movement. No individual button recesses
-or external openings are needed. The front aperture remains 21.32 mm wide.
+or external openings are needed. The front throat is 19.3 mm wide.
 Open the housing for BOOT/RESET or microSD service, as with the C6 closed sides.
 USB plug dimensions and insertion clearance must be checked with the actual cable.
 
