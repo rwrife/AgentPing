@@ -17,7 +17,8 @@ This is an unprinted fit-check prototype. The existing C6 geometry is preserved.
 |---|---|
 | Body | 42 x 56 x 12.5 |
 | PCB envelope | 20.32 x 36.37 |
-| Pocket / front aperture | 21.32 x 37.37 |
+| Internal pocket | 24.32 x 37.37 (3 mm wider overall) |
+| Front aperture | 21.32 x 37.37 |
 | Floor / installed insulating support pad | 2.8 / 0.5 |
 | User-measured support feet to glass top | 7.7 |
 | Nominal glass top / rim underside | Z = 11.0 / 11.3 |
@@ -33,9 +34,12 @@ on the actual support feet outside the vents, with a measured installed thicknes
 Do not bond components, antenna, flex or glass. Feet positions and underside
 component clearance still require a physical fit check; no screw pattern is assumed.
 
-Internal button pockets allow the user-measured approximately 1.5 mm lateral
-protrusion, 0.5 mm board float and 0.5 mm clearance. They span the USB-adjacent
-PCB edges to Y = -7 and Z = 2.8..11.3. Actual button Y/Z bounds remain unmeasured.
+The internal pocket is widened by **3 mm overall (1.5 mm per side)** along
+its full length, providing room for the buttons inside the closed enclosure.
+A centred board with 1.5 mm button protrusion has 0.5 mm nominal clearance
+per side. Centre and secure the board on its adhesive pads; that clearance is
+not an additional allowance for board movement. No individual button recesses
+or external openings are needed. The front aperture remains 21.32 mm wide.
 Open the housing for BOOT/RESET or microSD service, as with the C6 closed sides.
 USB plug dimensions and insertion clearance must be checked with the actual cable.
 

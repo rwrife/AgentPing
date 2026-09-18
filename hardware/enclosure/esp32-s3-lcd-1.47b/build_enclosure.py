@@ -15,9 +15,8 @@ CLEARANCE = 0.5
 # User measured approximately 1.5 mm button protrusion on 2026-09-18.
 BUTTON_PROTRUSION = 1.5
 BUTTON_PRINT_CLEARANCE = 0.5
-BUTTON_ENVELOPE_W = BOARD_W + 2 * (
-    CLEARANCE + BUTTON_PROTRUSION + BUTTON_PRINT_CLEARANCE
-)
+BUTTON_ENVELOPE_W = BOARD_W + 2 * BUTTON_PROTRUSION
+BUTTON_WIDTH_ALLOWANCE = 3.0
 # Match the C6 rear vent interface, including its through-floor depth.
 FLOOR = 2.8
 VENT_W, VENT_H = 10.0, 2.0
@@ -31,7 +30,8 @@ BEZEL_Z = GLASS_TOP + GLASS_CLEARANCE
 SPLIT = 6.9
 FIT_CLEARANCE = 0.25
 POCKET_DEPTH = BEZEL_Z - FLOOR
-POCKET_W = BOARD_W + 2 * CLEARANCE
+APERTURE_W = BOARD_W + 2 * CLEARANCE
+POCKET_W = APERTURE_W + BUTTON_WIDTH_ALLOWANCE
 POCKET_H = BOARD_H + 2 * CLEARANCE
 BODY_W, BODY_H = 42.0, 56.0
 DEPTH = BEZEL_Z + FRONT_RIM
@@ -45,13 +45,13 @@ def box(w, h, d, x, y, z):
 
 
 def button_keepouts():
-    # Include worst-case board float in both directions. Longitudinal location
-    # and Z are deliberately broad assumptions, not measured switch bounds.
+    # Centred, adhesively located board; the wide pocket leaves 0.5 mm per side.
+    # Check the entire length rather than assuming button positions.
     inner_x = BOARD_W / 2 - CLEARANCE
     outer_x = BUTTON_ENVELOPE_W / 2
     return [
         box(
-            outer_x - inner_x, SERVICE_TOP_Y + POCKET_H / 2,
+            outer_x - inner_x, POCKET_H,
             POCKET_DEPTH, x, -POCKET_H / 2, FLOOR,
         )
         for x in (-outer_x, inner_x)
@@ -135,8 +135,6 @@ def make_tray():
     # Full rectangular board envelope avoids assuming rounded glass corners.
     cavity = box(POCKET_W, POCKET_H, DEPTH, -POCKET_W/2,-POCKET_H/2,FLOOR)
     tray = tray.cut(cavity)
-    for keepout in button_keepouts():
-        tray = tray.cut(keepout)
     # A bottom-facing USB tunnel; leave the rear floor intact for the mounts.
     service = box(14,12,USB_TOP-3.6,-7,-29,3.6)
     tray = tray.cut(service)
@@ -162,16 +160,13 @@ def make_bezel():
     bezel = bezel.cut(rounded(38.5,52.5,3.25,SPLIT-.1,3.2))
     bezel = bezel.cut(box(POCKET_W+.6,POCKET_H+.6,BEZEL_Z-SPLIT+.1,
                          -POCKET_W/2-.3,-POCKET_H/2-.3,SPLIT-.1))
-    bezel = bezel.cut(box(POCKET_W,POCKET_H,DEPTH,-POCKET_W/2,-POCKET_H/2,SPLIT-.1))
-    # Button pockets remain inside closed outer walls, as on the C6.
-    for keepout in button_keepouts():
-        bezel = bezel.cut(keepout)
+    bezel = bezel.cut(box(APERTURE_W,POCKET_H,DEPTH,-APERTURE_W/2,-POCKET_H/2,SPLIT-.1))
     for catch, channel, pocket, release in snap_features():
         bezel = bezel.cut(pocket)
     aperture = [e for e in bezel.Edges
                 if abs(e.BoundBox.ZMin-DEPTH)<.001 and abs(e.BoundBox.ZMax-DEPTH)<.001
-                and e.BoundBox.XMin >= -POCKET_W/2-.001
-                and e.BoundBox.XMax <= POCKET_W/2+.001
+                and e.BoundBox.XMin >= -APERTURE_W/2-.001
+                and e.BoundBox.XMax <= APERTURE_W/2+.001
                 and e.BoundBox.YMin >= -POCKET_H/2-.001
                 and e.BoundBox.YMax <= POCKET_H/2+.001]
     bezel = bezel.makeChamfer(.5,aperture).removeSplitter()
@@ -182,7 +177,7 @@ def make_bezel():
 def check_assembly(tray, bezel):
     assert tray.common(bezel).Volume < 1e-6
     glass = box(
-        POCKET_W, POCKET_H, 0.1, -POCKET_W / 2, -POCKET_H / 2, GLASS_TOP - 0.1,
+        APERTURE_W, POCKET_H, 0.1, -APERTURE_W / 2, -POCKET_H / 2, GLASS_TOP - 0.1,
     )
     for shape in (tray, bezel):
         assert shape.common(glass).Volume < 1e-6
@@ -267,10 +262,13 @@ def build():
             "installed_support_pad": SUPPORT_PAD,
             "glass_clearance": GLASS_CLEARANCE,
             "front_rim": FRONT_RIM,
-            "aperture": [POCKET_W, POCKET_H],
+            "aperture": [APERTURE_W, POCKET_H],
+            "internal_pocket": [POCKET_W, POCKET_H],
+            "button_width_allowance": BUTTON_WIDTH_ALLOWANCE,
+            "centred_button_side_clearance": (POCKET_W-BUTTON_ENVELOPE_W)/2,
             "aperture_basis": "PCB envelope + clearance; glass outline/active-area offset NOT dimensioned",
             "button_z_limit": BEZEL_Z,
-            "internal_button_keepout_top_y": SERVICE_TOP_Y,
+            "internal_button_keepout_top_y": POCKET_H/2,
             "usb_tunnel": {"width": 14, "bottom_z": 3.6, "top_z": USB_TOP},
         },
         "assembly": {

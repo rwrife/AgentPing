@@ -92,6 +92,8 @@ def main():
     assert bezel.cut(generated_bezel).Volume + generated_bezel.cut(bezel).Volume < 1e-6
     assembly_checks = parameters.check_assembly(tray, bezel)
     assert (parameters.VENT_W, parameters.VENT_H, parameters.FLOOR) == (10.0, 2.0, 2.8)
+    assert abs(parameters.POCKET_W-parameters.APERTURE_W-3.0) < 1e-6
+    assert abs((parameters.POCKET_W-parameters.BUTTON_ENVELOPE_W)/2-.5) < 1e-6
     assert parameters.VENT_Y == (-8.0, -2.0, 4.0, 10.0)
     c6_vents = parameters.check_rear_vents(rear, floor_depth=2.8)
     s3_vents = parameters.check_rear_vents(tray, floor_depth=2.8)
@@ -144,7 +146,7 @@ def main():
           "removal sweep samples clear. Actual glass outline remains unverified.")
     print(f"S3 button keepouts clear: 1.5 mm user protrusion + "
           f"{parameters.BUTTON_PRINT_CLEARANCE} mm print clearance + "
-          f"{parameters.CLEARANCE} mm board float; mount-plane gap {button_gap:.2f} mm.")
+          f"centred board; full-length pocket widened 3 mm; mount-plane gap {button_gap:.2f} mm.")
     print("PASS: CAD checks only. Neither board fit nor retention is physically validated.")
 
 

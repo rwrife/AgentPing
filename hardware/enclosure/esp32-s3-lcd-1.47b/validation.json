@@ -88,9 +88,15 @@
       21.32,
       37.37
     ],
+    "internal_pocket": [
+      24.32,
+      37.37
+    ],
+    "button_width_allowance": 3.0,
+    "centred_button_side_clearance": 0.5,
     "aperture_basis": "PCB envelope + clearance; glass outline/active-area offset NOT dimensioned",
     "button_z_limit": 11.3,
-    "internal_button_keepout_top_y": -7.0,
+    "internal_button_keepout_top_y": 18.685,
     "usb_tunnel": {
       "width": 14,
       "bottom_z": 3.6,
@@ -120,24 +126,24 @@
       0.0
     ],
     "released_catch_removal_sweep_sampled_clear": true,
-    "button_keepout_width_mm": 25.32,
+    "button_keepout_width_mm": 23.32,
     "button_to_mount_plane_clearance_mm": 8.84
   },
   "clearance-tray": {
     "valid_solid": true,
     "solid_count": 1,
-    "volume_mm3": 14511.013,
+    "volume_mm3": 14059.96,
     "size_mm": [
       42.0,
       56.0,
       9.7
     ],
-    "triangles": 1092,
+    "triangles": 1076,
     "closed_mesh": true,
     "non_manifold": false,
     "self_intersections": false,
     "mesh_components": 1,
-    "mesh_volume_error_fraction": 3.987803097662624e-05,
+    "mesh_volume_error_fraction": 4.11384527858426e-05,
     "print_z_min_mm": 0.0,
     "nominal_cavity_overlap_mm3": 0.0,
     "service_opening_overlap_mm3": 0.0,
@@ -148,12 +154,12 @@
   },
   "front-bezel": {
     "valid_solid": true,
-    "volume_mm3": 4328.807,
-    "triangles": 1176,
+    "volume_mm3": 4232.372,
+    "triangles": 1144,
     "closed_mesh": true,
     "non_manifold": false,
     "self_intersections": false,
     "print_z_min_mm": -3.552713678800501e-15,
-    "mesh_volume_error_fraction": 0.00010185179755795788
+    "mesh_volume_error_fraction": 0.00010400010152634378
   }
 }
