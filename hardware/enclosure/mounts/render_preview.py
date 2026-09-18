@@ -33,6 +33,16 @@ s=bpy.context.scene;s.render.engine='CYCLES';s.cycles.samples=32;s.world.color=(
 s.render.resolution_x=1500;s.render.resolution_y=1300;s.render.resolution_percentage=100
 s.render.image_settings.file_format='PNG';s.render.filepath=str(OUT/'preview.png');s.render.film_transparent=False
 bpy.ops.render.render(write_still=True)
+for o in bpy.context.scene.objects:
+    if o.type not in ('CAMERA','LIGHT'):
+        o.hide_render = o.name != 'monitor-arm'
+cam.location=(5,-75,95)
+cam.rotation_euler=(Vector((-65,-10,-7))-cam.location).to_track_quat('-Z','Y').to_euler()
+cam.data.ortho_scale=85
+s.render.filepath=str(OUT/'mount-detail.png')
+bpy.ops.render.render(write_still=True)
+for o in bpy.context.scene.objects:
+    o.hide_render=False
 cam.location=(-200,-55,35)
 cam.rotation_euler=(Vector((-65,0,-2))-cam.location).to_track_quat('-Z','Y').to_euler()
 cam.data.ortho_scale=85

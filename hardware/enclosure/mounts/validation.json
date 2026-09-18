@@ -1,17 +1,21 @@
 {
   "prototype": true,
   "arm_length_mm": 152.4,
-  "cable_slot_mm": 6.0,
+  "cable_slot_mm": 7.8,
+  "cable_slot_to_tab_plate_mm": 10.0,
+  "mount_transition_length_mm": 10.0,
   "housing_to_adapter_air_gap_mm": 4.0,
   "housing_to_riser_front_mm": 8.0,
   "monitor_adhesive_pad_mm": [
     42.0,
     42.0
   ],
+  "monitor_adhesive_pad_rise_mm": 4.0,
   "monitor_pad_thickness_mm": 10.0,
   "monitor_arm_to_monitor_clearance_mm": 4.0,
   "monitor_adhesive_face": "front (+Z)",
   "monitor_slot_end_from_bottom_mm": 46.0,
+  "tab_grip_mm": 2.16,
   "tab_insertion_mm": 2.6,
   "rear_floor_mm": 2.8,
   "parts": {
@@ -23,7 +27,7 @@
         152.4,
         16.6
       ],
-      "triangles": 2004
+      "triangles": 1664
     },
     "desk-arm": {
       "valid_single_solid": true,
@@ -33,7 +37,7 @@
         158.4,
         16.6
       ],
-      "triangles": 1836
+      "triangles": 1496
     },
     "desk-foot": {
       "valid_single_solid": true,
@@ -74,6 +78,16 @@
         6.6
       ],
       "triangles": 380
+    },
+    "fit-tab-2.16": {
+      "valid_single_solid": true,
+      "closed_mesh": true,
+      "print_size_mm": [
+        14.0,
+        8.0,
+        6.6
+      ],
+      "triangles": 380
     }
   },
   "checks": {
@@ -81,7 +95,7 @@
     "adapter_body_clears_enclosure": true,
     "air_gap_between_shoulders_clear": true,
     "tabs_stop_before_inner_floor_mm": 0.2,
-    "nominal_tab_interference_per_side_mm": 0.03,
+    "nominal_tab_interference_per_side_mm": 0.08,
     "monitor_arm_clear_of_adhesive_plane_mm": 4.0
   }
 }

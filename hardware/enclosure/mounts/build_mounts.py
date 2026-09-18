@@ -6,21 +6,28 @@ import Part, MeshPart
 
 OUT = Path(__file__).resolve().parent
 V = App.Vector
-LENGTH, WIDTH, THICKNESS, CABLE = 152.4, 26., 6., 6.
+LENGTH, WIDTH, THICKNESS, CABLE = 152.4, 26., 6., 7.8
 MONITOR_PAD, PAD_SLOT_GAP = 42., 4.
-PAD_EXTRA = 4.  # Extend the FRONT adhesive face (+Z); keep the rear print face flat.
+MONITOR_PAD_RISE = 4.
 STANDOFF = 4.
+ARM_TOP, EDGE_RADIUS = 15., 3.
+MOUNT_BOTTOM, SLOT_MOUNT_GAP = -11., 10.
+SLOT_TOP = MOUNT_BOTTOM-SLOT_MOUNT_GAP
 # Enclosure coordinates: rear exterior z=0, electronics toward +z.
 # The two selected slots are x=-5..5, y=-8..-6 and y=10..12.
 TAB_WIDTH, TAB_DEPTH = 9.7, 2.6
+TAB_GRIP = 2.16  # 0.1 mm thicker than the original 2.06 mm grip.
 
 def box(w,h,d,x,y,z):
     return Part.makeBox(w,h,d,V(x,y,z))
 
 def round_plate(w,h,r,z,d,cx=0,cy=0):
-    s=box(w-2*r,h,d,cx-w/2+r,cy-h/2,z).fuse(box(w,h-2*r,d,cx-w/2,cy-h/2+r,z))
-    for x in (cx-w/2+r,cx+w/2-r):
-        for y in (cy-h/2+r,cy+h/2-r):
+    # Canonical coordinates keep shared curved edges identical after fusion.
+    left,right=round(cx-w/2,10),round(cx+w/2,10)
+    bottom,top=round(cy-h/2,10),round(cy+h/2,10)
+    s=box(w-2*r,h,d,left+r,bottom,z).fuse(box(w,h-2*r,d,left,bottom+r,z))
+    for x in (left+r,right-r):
+        for y in (bottom+r,top-r):
             s=s.fuse(Part.makeCylinder(r,d,V(x,y,z)))
     return s.removeSplitter()
 
@@ -31,29 +38,35 @@ def tab(y,grip):
     s=Part.Face(Part.makePolygon(p+[p[0]])).extrude(V(TAB_WIDTH,0,0))
     return s.cut(box(TAB_WIDTH+.2,.6,2.3,-TAB_WIDTH/2-.1,y-.3,.4))
 
-def adapter(grip=2.06):
-    s=round_plate(26,26,2,-4,4,cy=2)
-    # Leave the other two vents open through the adapter.
-    for y in (-2,4):
-        s=s.cut(box(10,2,4.2,-5,y,-4.1))
+def adapter(grip=TAB_GRIP):
+    # Match the arm's outline and blend the raised plate into the solid neck.
+    # The 10 mm ramp rises from the arm face to the 4 mm raised tab plate.
+    s=round_plate(WIDTH,ARM_TOP-SLOT_TOP,EDGE_RADIUS,-4,4,
+                  cy=(ARM_TOP+SLOT_TOP)/2)
+    # Keep the ramp toe straight across the arm; only the top corners round.
+    s=s.fuse(box(WIDTH,ARM_TOP-SLOT_TOP-EDGE_RADIUS,4,
+                 -WIDTH/2,SLOT_TOP,-4)).removeSplitter()
+    p=[V(-WIDTH/2,SLOT_TOP,-4),V(-WIDTH/2,MOUNT_BOTTOM,0),
+       V(-WIDTH/2,ARM_TOP,0),V(-WIDTH/2,ARM_TOP,-4)]
+    profile=Part.Face(Part.makePolygon(p+[p[0]])).extrude(V(WIDTH,0,0))
+    s=s.common(profile)
     s.translate(V(0,0,-STANDOFF))
     for y in (-7,11):
         # Raised shoulder rails set the air gap; tips still stop inside the floor.
-        s=s.fuse(round_plate(26,4,1,-STANDOFF-.1,STANDOFF+.1,cy=y)).fuse(tab(y,grip))
+        # Inset shoulders 1 mm from each side, clear of the rounded outer edge.
+        s=s.fuse(round_plate(WIDTH-2,4,1,-STANDOFF-.1,STANDOFF+.1,cy=y)).fuse(tab(y,grip))
     return s.removeSplitter()
 
 def arm(desk=False):
-    s=round_plate(WIDTH,LENGTH,3,-10,THICKNESS,cy=15-LENGTH/2)
+    s=round_plate(WIDTH,LENGTH,EDGE_RADIUS,-10,THICKNESS,cy=ARM_TOP-LENGTH/2)
     bottom=15-LENGTH
     if not desk:
-        s=s.fuse(round_plate(MONITOR_PAD,MONITOR_PAD,3,-10,THICKNESS+PAD_EXTRA,cy=bottom+MONITOR_PAD/2))
-    # Through-slot: lay cable into the face instead of threading its USB plug.
+        s=s.fuse(round_plate(MONITOR_PAD,MONITOR_PAD,3,-10,
+                             THICKNESS+MONITOR_PAD_RISE,cy=bottom+MONITOR_PAD/2))
+    # Through-slot widened 30% from 6 mm for USB connector clearance.
     slot_bottom=bottom+(14 if desk else MONITOR_PAD+PAD_SLOT_GAP)
-    slot_top=1.
+    slot_top=SLOT_TOP
     s=s.cut(round_plate(CABLE,slot_top-slot_bottom,2,-10.1,6.2,cy=(slot_top+slot_bottom)/2))
-    # Continue airflow from the unoccupied enclosure vents through this arm.
-    for y in (-2,4):
-        s=s.cut(box(10,2,6.2,-5,y,-10.1))
     if desk:
         # Integral tongue extends an extra 6 mm into the separate flat base.
         s=s.fuse(box(18,6.2,6,-9,15-LENGTH-6,-10))
@@ -71,19 +84,23 @@ def foot():
     return s.removeSplitter()
 
 parts={'monitor-arm':arm().fuse(adapter()).removeSplitter(),'desk-arm':arm(True).fuse(adapter()).removeSplitter(),'desk-foot':foot()}
-for grip in (1.98,2.06,2.14):
+for grip in (1.98,2.06,2.14,TAB_GRIP):
     s=round_plate(14,8,1,-4,4).fuse(tab(0,grip)).removeSplitter()
     parts[f'fit-tab-{grip:.2f}']=s
 
 doc=App.newDocument('AgentPingMounts')
 report={'prototype':True,'arm_length_mm':LENGTH,'cable_slot_mm':CABLE,
+        'cable_slot_to_tab_plate_mm':SLOT_MOUNT_GAP,
+        'mount_transition_length_mm':SLOT_MOUNT_GAP,
         'housing_to_adapter_air_gap_mm':STANDOFF,
         'housing_to_riser_front_mm':STANDOFF+4,
         'monitor_adhesive_pad_mm':[MONITOR_PAD,MONITOR_PAD],
-        'monitor_pad_thickness_mm':THICKNESS+PAD_EXTRA,
-        'monitor_arm_to_monitor_clearance_mm':PAD_EXTRA,
+        'monitor_adhesive_pad_rise_mm':MONITOR_PAD_RISE,
+        'monitor_pad_thickness_mm':THICKNESS+MONITOR_PAD_RISE,
+        'monitor_arm_to_monitor_clearance_mm':MONITOR_PAD_RISE,
         'monitor_adhesive_face':'front (+Z)',
         'monitor_slot_end_from_bottom_mm':MONITOR_PAD+PAD_SLOT_GAP,
+        'tab_grip_mm':TAB_GRIP,
         'tab_insertion_mm':TAB_DEPTH,'rear_floor_mm':2.8,'parts':{},'checks':{}}
 for name,shape in parts.items():
     assert shape.isValid() and len(shape.Solids)==1,name
@@ -116,17 +133,18 @@ gap_probe=box(24,13.8,STANDOFF-.2,-12,-4.9,-STANDOFF+.1)
 assert parts['monitor-arm'].common(gap_probe).Volume<.001
 report['checks']['air_gap_between_shoulders_clear']=True
 report['checks']['tabs_stop_before_inner_floor_mm']=round(2.8-TAB_DEPTH,2)
-report['checks']['nominal_tab_interference_per_side_mm']=.03
-# Verify the extra material is confined to the adhesive pad and leaves the
-# stem 4 mm behind the pad's front adhesive face (adapter is above the pad).
-monitor = parts['monitor-arm']
-pad_bottom = 15-LENGTH
-added = round_plate(MONITOR_PAD,MONITOR_PAD,3,-10-STANDOFF+THICKNESS,PAD_EXTRA,cy=pad_bottom+MONITOR_PAD/2)
+report['checks']['nominal_tab_interference_per_side_mm']=round((TAB_GRIP-2)/2,2)
+# Keep the raised bonding face on +Z and the cable-bearing stem behind it.
+monitor=parts['monitor-arm']
+pad_bottom=ARM_TOP-LENGTH
+added=round_plate(MONITOR_PAD,MONITOR_PAD,3,-10-STANDOFF+THICKNESS,
+                  MONITOR_PAD_RISE,cy=pad_bottom+MONITOR_PAD/2)
 assert added.cut(monitor).Volume < .001
-clearance = box(100,-11-(pad_bottom+MONITOR_PAD),PAD_EXTRA,-50,pad_bottom+MONITOR_PAD,-10-STANDOFF+THICKNESS)
+clearance=box(100,SLOT_TOP-(pad_bottom+MONITOR_PAD),MONITOR_PAD_RISE,
+              -50,pad_bottom+MONITOR_PAD,-10-STANDOFF+THICKNESS)
 assert monitor.common(clearance).Volume < .001
-report['checks']['monitor_arm_clear_of_adhesive_plane_mm'] = PAD_EXTRA
-preview_dir=OUT/'preview-geometry' ;preview_dir.mkdir(exist_ok=True)
+report['checks']['monitor_arm_clear_of_adhesive_plane_mm']=MONITOR_PAD_RISE
+preview_dir=OUT/'preview-geometry';preview_dir.mkdir(exist_ok=True)
 front=Part.Shape();front.read(str(OUT.parent/'esp32-c6-touch-amoled-1.64'/'front-shell.step'))
 for name,shape in {**{k:v for k,v in parts.items() if not k.startswith('fit-tab')},'back-cover':cover,'front-shell':front}.items():
     MeshPart.meshFromShape(Shape=shape,LinearDeflection=.08,AngularDeflection=.15,Relative=False).write(str(preview_dir/(name+'.stl')))
