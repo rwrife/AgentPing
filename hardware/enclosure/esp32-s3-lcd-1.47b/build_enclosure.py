@@ -22,18 +22,28 @@ FLOOR = 2.8
 VENT_W, VENT_H = 10.0, 2.0
 VENT_Y = (-8.0, -2.0, 4.0, 10.0)
 MODULE_HEIGHT = 7.7  # User: rear support/feet to top of glass, 2026-09-18.
-SUPPORT_PAD = 0.5  # Assumed installed insulating adhesive thickness; measure it.
+SUPPORT_PAD = 2.5  # Raised 2 mm after the user's USB cable fit check.
+SUPPORT_RADIUS = 2.0
+SCREW_RADIUS = 1.15
+HEAD_RADIUS, HEAD_DEPTH = 2.1, 1.3
+# Manufacturer dimensioned rear photo, USB toward -Y. The two pairs differ.
+# USB pair: 2.40 mm from short edge, 2.00 mm from long edges.
+# Antenna pair: 1.97 mm from short edge, 3.52 mm from long edges.
+SUPPORTS = [(side*(BOARD_W/2-edge), y) for edge,y in (
+    (2.0, -BOARD_H/2+2.4), (3.52, BOARD_H/2-1.97)) for side in (-1,1)]
 GLASS_CLEARANCE = 0.3
 FRONT_RIM = 1.2
 GLASS_TOP = FLOOR + SUPPORT_PAD + MODULE_HEIGHT
 BEZEL_Z = GLASS_TOP + GLASS_CLEARANCE
-SPLIT = 6.9
+SPLIT = 8.9
 FIT_CLEARANCE = 0.25
 POCKET_DEPTH = BEZEL_Z - FLOOR
 APERTURE_W = BOARD_W + 2 * CLEARANCE
 POCKET_W = APERTURE_W + BUTTON_WIDTH_ALLOWANCE
 POCKET_H = BOARD_H + 2 * CLEARANCE
-BODY_W, BODY_H = 42.0, 56.0
+# Match the C6 bezel bands (~7.4 mm sides / 6.9 mm ends) around the S3 aperture.
+BODY_W, BODY_H = 36.0, 51.0
+LIP_W, LIP_H = BODY_W-4, BODY_H-4
 DEPTH = BEZEL_Z + FRONT_RIM
 SERVICE_TOP_Y = -7.0
 USB_TOP = SPLIT + 3.0
@@ -45,14 +55,14 @@ def box(w, h, d, x, y, z):
 
 
 def button_keepouts():
-    # Centred, adhesively located board; the wide pocket leaves 0.5 mm per side.
+    # Centred board on printed supports; pocket leaves 0.5 mm per side.
     # Check the entire length rather than assuming button positions.
     inner_x = BOARD_W / 2 - CLEARANCE
     outer_x = BUTTON_ENVELOPE_W / 2
     return [
         box(
             outer_x - inner_x, POCKET_H,
-            POCKET_DEPTH, x, -POCKET_H / 2, FLOOR,
+            POCKET_DEPTH-SUPPORT_PAD, x, -POCKET_H / 2, FLOOR+SUPPORT_PAD,
         )
         for x in (-outer_x, inner_x)
     ]
@@ -112,8 +122,9 @@ def rounded(w, h, r, z, depth):
 
 
 def snap_features():
-    # C6 interface shifted down 2.6 mm for the thinner S3 stack.
+    # Shift the C6 interface to match the S3 stack.
     shift = DEPTH - 15.1
+    x_shift = (BODY_W-42.0)/2
     for side in (-1, 1):
         for y in (-8, 8):
             beam = box(1, 5, 9.5+shift, 18, y-2.5, FLOOR)
@@ -124,6 +135,8 @@ def snap_features():
             pocket = box(.7,5.6,1,19.15,y-2.8,10.7+shift)
             release = box(1,5.6,FLOOR+.2,17,y-2.8,-.1)
             shapes = (catch, channel, pocket, release)
+            for shape in shapes:
+                shape.translate(V(x_shift,0,0))
             if side < 0:
                 shapes = tuple(shape.mirror(V(),V(1,0,0)) for shape in shapes)
             yield shapes
@@ -131,12 +144,20 @@ def snap_features():
 
 def make_tray():
     tray = rounded(BODY_W, BODY_H, 5, 0, SPLIT)
-    tray = tray.fuse(rounded(38,52,3,SPLIT-.1,2.9))
+    tray = tray.fuse(rounded(LIP_W,LIP_H,3,SPLIT-.1,2.9))
     # Full rectangular board envelope avoids assuming rounded glass corners.
     cavity = box(POCKET_W, POCKET_H, DEPTH, -POCKET_W/2,-POCKET_H/2,FLOOR)
     tray = tray.cut(cavity)
+    support_shapes = [Part.makeCylinder(SUPPORT_RADIUS,SUPPORT_PAD,V(x,y,FLOOR))
+                      for x,y in SUPPORTS]
+    for support in support_shapes:
+        tray = tray.fuse(support)
+        cavity = cavity.cut(support)
+    for x,y in SUPPORTS:
+        tray = tray.cut(Part.makeCylinder(SCREW_RADIUS,FLOOR+SUPPORT_PAD+.2,V(x,y,-.1)))
+        tray = tray.cut(Part.makeCylinder(HEAD_RADIUS,HEAD_DEPTH+.1,V(x,y,-.1)))
     # A bottom-facing USB tunnel; leave the rear floor intact for the mounts.
-    service = box(14,12,USB_TOP-3.6,-7,-29,3.6)
+    service = box(14,BODY_H/2+1-17,USB_TOP-3.6,-7,-BODY_H/2-1,3.6)
     tray = tray.cut(service)
     for catch, channel, pocket, release in snap_features():
         tray = tray.cut(channel).fuse(catch).cut(release)
@@ -157,7 +178,7 @@ def make_bezel():
     top = [e for e in bezel.Edges
            if abs(e.BoundBox.ZMin-DEPTH)<.001 and abs(e.BoundBox.ZMax-DEPTH)<.001]
     bezel = bezel.makeChamfer(2,top)
-    bezel = bezel.cut(rounded(38.5,52.5,3.25,SPLIT-.1,3.2))
+    bezel = bezel.cut(rounded(LIP_W+2*FIT_CLEARANCE,LIP_H+2*FIT_CLEARANCE,3.25,SPLIT-.1,3.2))
     bezel = bezel.cut(box(POCKET_W+.6,POCKET_H+.6,BEZEL_Z-SPLIT+.1,
                          -POCKET_W/2-.3,-POCKET_H/2-.3,SPLIT-.1))
     bezel = bezel.cut(box(APERTURE_W,POCKET_H,DEPTH,-APERTURE_W/2,-POCKET_H/2,SPLIT-.1))
@@ -174,7 +195,21 @@ def make_bezel():
     return bezel
 
 
+def check_supports(tray):
+    # Verify a continuous 0.5 mm annular land around all four M2 holes,
+    # above the rear head recess, including the top of each printed pad.
+    for x,y in SUPPORTS:
+        shaft = Part.makeCylinder(SCREW_RADIUS,FLOOR+SUPPORT_PAD+.2,V(x,y,-.1))
+        head = Part.makeCylinder(HEAD_RADIUS,HEAD_DEPTH,V(x,y,0))
+        assert tray.common(shaft).Volume < 1e-6
+        assert tray.common(head).Volume < 1e-6
+        ring = Part.makeCylinder(SCREW_RADIUS+.5,FLOOR+SUPPORT_PAD-HEAD_DEPTH,
+                                 V(x,y,HEAD_DEPTH)).cut(shaft)
+        assert ring.cut(tray).Volume < 1e-6, "missing support or thin M2 hole land"
+
+
 def check_assembly(tray, bezel):
+    check_supports(tray)
     assert tray.common(bezel).Volume < 1e-6
     glass = box(
         APERTURE_W, POCKET_H, 0.1, -APERTURE_W / 2, -POCKET_H / 2, GLASS_TOP - 0.1,
@@ -259,7 +294,7 @@ def build():
             "button_print_clearance": BUTTON_PRINT_CLEARANCE,
             "button_datum": "protrusion applied outside PCB long edges; confirm against actual display",
             "outer_corner_radius": 5, "front_chamfer": 2, "floor": FLOOR, "floor_to_rim_underside": POCKET_DEPTH,
-            "installed_support_pad": SUPPORT_PAD,
+            "printed_support_pad": SUPPORT_PAD,
             "glass_clearance": GLASS_CLEARANCE,
             "front_rim": FRONT_RIM,
             "aperture": [APERTURE_W, POCKET_H],
@@ -274,8 +309,14 @@ def build():
         "assembly": {
             "size_mm": [round(BODY_W, 2), round(BODY_H, 2), DEPTH],
             "printed_parts": 2,
-            "mounting_holes": "none; no guessed board hole pattern",
-            "board_retention": "removable insulating adhesive on measured standoff feet; not validated",
+            "bezel_bands_mm": {"sides": (BODY_W-APERTURE_W)/2, "ends": (BODY_H-POCKET_H)/2},
+            "mounting_holes": "four 2.3 mm M2 clearance holes; manufacturer-dimensioned positions",
+            "support_centres_mm": [[round(x,3),round(y,3)] for x,y in SUPPORTS],
+            "printed_support_height_mm": SUPPORT_PAD,
+            "printed_support_diameter_mm": 2*SUPPORT_RADIUS,
+            "screw_head_recess_mm": [2*HEAD_RADIUS,HEAD_DEPTH],
+            "screw_grip_mm": FLOOR+SUPPORT_PAD-HEAD_DEPTH,
+            "board_retention": "M2 screws into board metal standoffs, on four printed pads; physical fit unverified",
             "board_interference_checked": False,
             "front_retention": "four C6-style spring catches; rear tool-release slots; no glass clamping",
             "split_z_mm": SPLIT,

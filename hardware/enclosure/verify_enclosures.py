@@ -147,6 +147,12 @@ def main():
     print(f"S3 button keepouts clear: 1.5 mm user protrusion + "
           f"{parameters.BUTTON_PRINT_CLEARANCE} mm print clearance + "
           f"centred board; full-length pocket widened 3 mm; mount-plane gap {button_gap:.2f} mm.")
+    optional_spec = importlib.util.spec_from_file_location(
+        "pin_access_checks", ROOT / "pin-access" / "build_pin_access.py")
+    optional = importlib.util.module_from_spec(optional_spec)
+    optional_spec.loader.exec_module(optional)
+    optional_report = optional.verify()
+    assert optional_report == json.loads((ROOT / "pin-access" / "validation.json").read_text())
     print("PASS: CAD checks only. Neither board fit nor retention is physically validated.")
 
 

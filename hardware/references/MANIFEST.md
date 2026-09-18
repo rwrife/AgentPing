@@ -1,5 +1,30 @@
 # Manufacturer evidence manifest
 
+## Optional rear pin-access housings: 2026-09-18
+
+The additive [pin-access variants](../enclosure/pin-access/README.md) use two
+4 mm-wide slots through the original 2.8 mm floor. Standard C6 geometry and all mount parts are preserved. Both S3 backs now
+have four printed support pads and M2 screw access; pin tips are intended
+to remain inside the rear plane.
+Actual header height/projection was not measured. Available support-foot to
+rear-plane distances are 4.3 mm C6 and 5.3 mm S3, using the current stacks.
+
+- C6: the archived 2024-12-21 dimension PDF shows **11 pins per row** at
+  2.54 mm pitch, 22.86 mm between rows, a 43.5 mm PCB and first pin 9.33 mm
+  from the USB edge. Slot centres X = +/-11.43; Y limits -14.42..14.98.
+  These header coordinates are provisional for the user's measured board
+  revision. The carrier's 1x10 sockets are not the source for these slots.
+  Current manufacturer resources: https://docs.waveshare.com/ESP32-C6-Touch-AMOLED-1.64/Resources-And-Documents
+- S3 B: the archived dimensioned JPG shows **9 pins per row** at 2.54 mm
+  pitch, 17.78 mm between rows, 36.37 mm PCB length and nearest pin 11.31 mm
+  from the USB edge. Slot centres X = +/-8.89; Y limits -8.715..15.285.
+  Manufacturer resource: https://www.waveshare.com/wiki/ESP32-S3-LCD-1.47B
+
+Slot widths/length allowances are design choices, not manufacturer connector
+fit claims. Full nominal 2.54 mm-wide header bodies clear the slots; verify
+actual housings, solder fillets, tip recess and connector reach in a first print.
+The existing arms clear recessed pins but must be removed to insert header leads.
+
 This manifest records the primary external evidence used for the C6-only Rev A0
 carrier and board-specific standalone enclosures. Carrier source documents were
 retrieved or reviewed on **2026-09-02**. URLs are retained in
@@ -69,14 +94,22 @@ SHA-256 of downloaded evidence:
 43738d1480ef9c983bca3e7f1f7ad852c288a1bd00f1621f9ac3e6974e7539fd  schematic.pdf
 ```
 
-No S3 mounting-hole pattern is inferred or reused from the C6. The S3 tray has
-no mounting holes; removable insulating adhesive on physically measured
-standoff feet is only a provisional retention method. Clearance allowances
-(0.5 mm per side and 0.5 mm installed support adhesive), internal width and USB
-tunnel are **design assumptions**, not manufacturer dimensions. The user has now
-supplied the 7.7 mm foot-to-glass stack (below). Support contact areas, glass
-outline/offset, actual USB plug clearance and button access remain blockers to
-verified fit. See the S3 README before printing or attaching a board.
+### S3 printed supports and M2 retention
+
+The S3 manufacturer's dimensioned image gives the USB-end hole offsets as
+2.40 mm from the short edge and 2.00 mm from the long edges, and antenna-end
+hole offsets as 1.97 mm and 3.52 mm respectively. Applied to the centred
+20.32 x 36.37 mm board with USB toward -Y, these give USB centres
+(+/-8.16, -15.785) and antenna centres (+/-6.64, +16.215) mm.
+Both S3 backs now have 4 mm-diameter, 2.5 mm-high printed pads with 2.3 mm
+M2 clearance holes and 4.2 x 1.3 mm rear head recesses. This replaces the
+former adhesive support allowance. After a physical USB cable fit check, the
+user requested 2 mm more support height: pads rise from 0.5 to 2.5 mm, and
+the rear seam, lip, catches and glass rise 2 mm. USB opening bottom remains
+Z = 3.6 mm, with its top raised to 11.9 mm. The subsequent compact revision requires a new matching front.
+Screw thread depth and real board fit require a dry fit. The pin-access back
+uses rounded slot ends and retains at least 0.5 mm annular material around
+the clearance holes above the head recess. The C6 hole pattern is not reused.
 
 ### S3 user-measured button protrusion, 2026-09-18
 
@@ -86,9 +119,9 @@ manufacturer drawing, and is applied only to the S3 prototype. The user subseque
 now 24.32 mm wide throughout, 3 mm wider than the 21.32 mm board-clearance
 pocket, with no separate button recesses. A centred board and its nominal
 1.5 mm button protrusions occupy 23.32 mm, leaving 0.5 mm on each side.
-Secure the board centrally with insulating adhesive; this gap cannot also be
+Secure the board on its printed pads with M2 screws; this gap cannot also be
 claimed as extra movement tolerance. Button height/travel remain unmeasured.
-The outer housing, display aperture, C6 geometry and shared vents are unchanged.
+The display aperture, C6 geometry and shared vents are unchanged.
 
 ### User-required common rear vents, 2026-09-18
 
@@ -100,7 +133,7 @@ rear floor/tunnel depth from the common Z = 0 rear exterior datum.
 
 The S3 copies this complete interface without scaling or moving the vents.
 Its floor remains 2.8 mm; the measured-stack revision below changes outside
-depth to 12.5 mm. C6 files remain unchanged.
+depth to 14.5 mm. C6 files remain unchanged.
 The verifier measures both STEP rear faces, rectangular opening areas,
 coordinates/pitch, clear tunnels and adjoining floor depth and requires equality.
 The nominal S3 tray has space for the pattern. The released mounts stop inside
@@ -112,12 +145,12 @@ reported rather than resolved by altering this interface.
 In response to the explicit question "height from the rear mounting feet/support
 surface to the top of the display glass", the user answered **7.7 mm**.
 This supersedes the open-tray's unmeasured 10 mm pocket allowance. The two-piece
-prototype stack is **2.8 floor + 0.5 assumed installed support adhesive + 7.7
-measured module + 0.3 glass clearance + 1.2 rim = 12.5 mm**.
+prototype stack is **2.8 floor + 2.5 printed support pads + 7.7
+measured module + 0.3 glass clearance + 1.2 rim = 14.5 mm**.
 
 The front seats on a rear-tray shoulder, not the glass. A recessed lip locates it; four C6-style spring catches retain the front.
 Rear tool slots release the catches before bezel removal.
-No board screw positions are invented. The glass/active-area outline and its
+Board screw positions follow the manufacturer dimensioned image above. The glass/active-area outline and its
 X/Y offset are **not dimensioned in the available source**. Therefore the
 21.32 x 37.37 mm aperture exposes the full PCB envelope plus clearance, rather
 than pretending a smaller glass-retaining opening is validated. Glass width,
@@ -126,11 +159,15 @@ measurements for that tighter rim.
 
 CAD checks validate two solids without overlap, sampled removal, 0.3 mm
 clearance to an assumed full-pocket glass envelope at the measured Z, and
-button keepouts on both parts. Internal button clearance extends up to the rim underside at Z = 11.3; actual
+button keepouts on both parts. Internal button clearance extends up to the rim underside at Z = 13.3; actual
 button tops must be below this and their Y bounds within the board-length cavity. Physical glass fit, button travel, retention, support-pad
 thickness and printed mount retention still require a dry fit.
 
-The revised S3 shares the C6 42 x 56 mm rounded outline and chamfered front.
+The revised S3 uses a 36 x 51 mm rounded outline and chamfered front.
+This reduces its bezel bands to 7.34 mm sides / 6.815 mm ends, closely matching
+the C6 bands of 7.4 / 6.9 mm. Both S3 backs and the front must be reprinted
+together; the previous 42 x 56 mm front is incompatible. Support height,
+USB clearance, board/button pocket and all shared mounting vents are retained.
 Both released arm STEP files pass CAD compatibility checks on both trays.
 Their tips insert 2.6 mm into the 2.8 mm floor, leaving 0.2 mm before its inner
 surface; middle vents remain open. This does not prove thermal performance.
