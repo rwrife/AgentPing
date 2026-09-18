@@ -80,8 +80,8 @@
     "outer_corner_radius": 5,
     "front_chamfer": 2,
     "floor": 2.8,
-    "floor_to_rim_underside": 8.5,
-    "printed_support_pad": 0.5,
+    "floor_to_rim_underside": 10.5,
+    "printed_support_pad": 2.5,
     "glass_clearance": 0.3,
     "front_rim": 1.2,
     "aperture": [
@@ -95,19 +95,19 @@
     "button_width_allowance": 3.0,
     "centred_button_side_clearance": 0.5,
     "aperture_basis": "PCB envelope + clearance; glass outline/active-area offset NOT dimensioned",
-    "button_z_limit": 11.3,
+    "button_z_limit": 13.3,
     "internal_button_keepout_top_y": 18.685,
     "usb_tunnel": {
       "width": 14,
       "bottom_z": 3.6,
-      "top_z": 9.9
+      "top_z": 11.9
     }
   },
   "assembly": {
     "size_mm": [
       42.0,
       56.0,
-      12.5
+      14.5
     ],
     "printed_parts": 2,
     "mounting_holes": "four 2.3 mm M2 clearance holes; manufacturer-dimensioned positions",
@@ -129,19 +129,19 @@
         16.215
       ]
     ],
-    "printed_support_height_mm": 0.5,
+    "printed_support_height_mm": 2.5,
     "printed_support_diameter_mm": 4.0,
     "screw_head_recess_mm": [
       4.2,
       1.3
     ],
-    "screw_grip_mm": 1.9999999999999998,
+    "screw_grip_mm": 4.0,
     "board_retention": "M2 screws into board metal standoffs, on four printed pads; physical fit unverified",
     "board_interference_checked": false,
     "front_retention": "four C6-style spring catches; rear tool-release slots; no glass clamping",
-    "split_z_mm": 6.9,
-    "glass_top_z_mm": 11.0,
-    "rim_underside_z_mm": 11.3,
+    "split_z_mm": 8.9,
+    "glass_top_z_mm": 13.0,
+    "rim_underside_z_mm": 13.3,
     "part_overlap_mm3": 0.0,
     "assumed_glass_envelope_clearance_mm": 0.3,
     "button_keepout_overlap_mm3": [
@@ -157,18 +157,18 @@
   "clearance-tray": {
     "valid_solid": true,
     "solid_count": 1,
-    "volume_mm3": 13979.812,
+    "volume_mm3": 16534.956,
     "size_mm": [
       42.0,
       56.0,
-      9.7
+      11.7
     ],
-    "triangles": 5124,
+    "triangles": 5144,
     "closed_mesh": true,
     "non_manifold": false,
     "self_intersections": false,
     "mesh_components": 1,
-    "mesh_volume_error_fraction": 3.9078077190102096e-05,
+    "mesh_volume_error_fraction": 4.6218235604621665e-05,
     "print_z_min_mm": 0.0,
     "nominal_cavity_overlap_mm3": 0.0,
     "service_opening_overlap_mm3": 0.0,
@@ -185,6 +185,6 @@
     "non_manifold": false,
     "self_intersections": false,
     "print_z_min_mm": -3.552713678800501e-15,
-    "mesh_volume_error_fraction": 0.00010400010152634378
+    "mesh_volume_error_fraction": 0.00010388473329496366
   }
 }

@@ -22,7 +22,7 @@ FLOOR = 2.8
 VENT_W, VENT_H = 10.0, 2.0
 VENT_Y = (-8.0, -2.0, 4.0, 10.0)
 MODULE_HEIGHT = 7.7  # User: rear support/feet to top of glass, 2026-09-18.
-SUPPORT_PAD = 0.5  # Printed risers replace the former 0.5 mm adhesive allowance.
+SUPPORT_PAD = 2.5  # Raised 2 mm after the user's USB cable fit check.
 SUPPORT_RADIUS = 2.0
 SCREW_RADIUS = 1.15
 HEAD_RADIUS, HEAD_DEPTH = 2.1, 1.3
@@ -35,7 +35,7 @@ GLASS_CLEARANCE = 0.3
 FRONT_RIM = 1.2
 GLASS_TOP = FLOOR + SUPPORT_PAD + MODULE_HEIGHT
 BEZEL_Z = GLASS_TOP + GLASS_CLEARANCE
-SPLIT = 6.9
+SPLIT = 8.9
 FIT_CLEARANCE = 0.25
 POCKET_DEPTH = BEZEL_Z - FLOOR
 APERTURE_W = BOARD_W + 2 * CLEARANCE
@@ -53,7 +53,7 @@ def box(w, h, d, x, y, z):
 
 
 def button_keepouts():
-    # Centred, adhesively located board; the wide pocket leaves 0.5 mm per side.
+    # Centred board on printed supports; pocket leaves 0.5 mm per side.
     # Check the entire length rather than assuming button positions.
     inner_x = BOARD_W / 2 - CLEARANCE
     outer_x = BUTTON_ENVELOPE_W / 2
@@ -120,7 +120,7 @@ def rounded(w, h, r, z, depth):
 
 
 def snap_features():
-    # C6 interface shifted down 2.6 mm for the thinner S3 stack.
+    # Shift the C6 interface to match the S3 stack.
     shift = DEPTH - 15.1
     for side in (-1, 1):
         for y in (-8, 8):

@@ -2,7 +2,7 @@
 
 The S3 now uses the C6 design: a **42 x 56 mm rounded outline**, 5 mm corner
 radius, 2 mm front chamfer, recessed locating lip and four spring catches.
-Its **12.5 mm depth** follows the measured S3 stack (C6: 15.1 mm).
+Its **14.5 mm depth** follows the measured S3 stack (C6: 15.1 mm).
 The outer sides and front are continuous; USB exits through the rear tray.
 
 ![S3 assembled pod](preview.png)
@@ -20,25 +20,28 @@ projection and mating-connector fit require checking.
 
 | Feature | Millimetres |
 |---|---|
-| Body | 42 x 56 x 12.5 |
+| Body | 42 x 56 x 14.5 |
 | PCB envelope | 20.32 x 36.37 |
 | Internal pocket | 24.32 x 37.37 (3 mm wider overall) |
 | Front aperture | 21.32 x 37.37 |
-| Floor / four printed support pads | 2.8 / 0.5 high, 4.0 diameter |
+| Floor / four printed support pads | 2.8 / 2.5 high, 4.0 diameter |
 | M2 clearance / rear head recess | 2.3 diameter / 4.2 diameter x 1.3 deep |
 | User-measured support feet to glass top | 7.7 |
-| Nominal glass top / rim underside | Z = 11.0 / 11.3 |
-| Rear seam / locating lip top | Z = 6.9 / 9.7 |
+| Nominal glass top / rim underside | Z = 13.0 / 13.3 |
+| Rear seam / locating lip top | Z = 8.9 / 11.7 |
 | Locating lip / socket | 38 x 52 / 38.5 x 52.5 |
 | Front rim / aperture chamfer | 1.2 / 0.5 |
-| USB tunnel | 14 wide; Z = 3.6..9.9 |
+| USB tunnel | 14 wide; Z = 3.6..11.9 |
 
 The aperture uses the full PCB envelope plus 0.5 mm per side because glass
 outline and offset are not dimensioned in the manufacturer drawing. It does
 not clamp or positively retain the board. **Both S3 backs now have four printed
 support pads and M2 screw access**, replacing the earlier adhesive-only support.
-The pads are 0.5 mm high, so the 7.7 mm module stack and front bezel stay at
-their existing heights; do not add adhesive thickness on top of these pads.
+The pads are 2.5 mm high, raised by 2 mm after the first USB cable fit check.
+The rear walls, locating lip and catches rise by the same 2 mm, giving a
+14.5 mm total depth. The front retains its shape and can be reused. The USB
+tunnel floor stays at Z = 3.6 while its ceiling rises to 11.9, providing
+2 mm more clearance below the raised connector. Do not add adhesive on the pads.
 
 The manufacturer-dimensioned hole centres (USB toward -Y) are:
 
@@ -46,7 +49,7 @@ The manufacturer-dimensioned hole centres (USB toward -Y) are:
 - Antenna end: X = +/-6.64, Y = +16.215 mm.
 
 Fasten through the rear into the board's metal M2 standoffs. Nominal screw grip
-is 2.0 mm above the head recess; choose screw length for that grip plus the
+is 4.0 mm above the head recess; choose screw length for that grip plus the
 actual usable thread engagement, without bottoming. Dry-fit all four screws
 without force. The printed pads have 4 mm outside diameter and a 2.3 mm hole.
 The pin-access back trims their edges with rounded slots while retaining at

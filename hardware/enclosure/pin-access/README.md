@@ -29,7 +29,7 @@ material around the M2 clearance holes above the rear head recesses.
 The available distance from the board's support feet to the exterior rear plane is:
 
 - **C6: 4.3 mm** = 1.5 mm printed lift + 2.8 mm floor.
-- **S3: 3.3 mm** = 0.5 mm printed supports + 2.8 mm floor.
+- **S3: 5.3 mm** = 2.5 mm printed supports + 2.8 mm floor.
 
 A header pin extending less than that distance behind the support feet remains
 recessed. These numbers are limits, not measured pin lengths. Check the actual
@@ -46,9 +46,9 @@ mount to connect leads. Simultaneous use of rear plugs and the mount is not
 claimed. No alternate arms or adapters are needed for recessed bare pins.
 
 Both boards fasten through the rear with M2 screws into the metal standoffs.
-The S3 backs now provide four 0.5 mm-high printed pads instead of adhesive
+The S3 backs now provide four 2.5 mm-high printed pads instead of adhesive
 supports; see its [assembly instructions](../esp32-s3-lcd-1.47b/README.md) for
-the manufacturer-dimensioned screw positions and 2.0 mm screw grip. The board
+the manufacturer-dimensioned screw positions and 4.0 mm screw grip. The board
 stack and existing front stay unchanged. Check screw length against actual threads.
 
 ## Coordinates and evidence

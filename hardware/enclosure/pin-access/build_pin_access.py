@@ -29,8 +29,8 @@ BOARDS = {
                front='front-shell', depth=15.1, row_x=11.43, first_y=-12.42,
                count=11, slot_length=29.4, foot_to_rear=4.3, slot_radius=0),
     's3': dict(directory='esp32-s3-lcd-1.47b', rear='clearance-tray',
-               front='front-bezel', depth=12.5, row_x=8.89, first_y=-6.875,
-               count=9, slot_length=24.0, foot_to_rear=3.3, slot_radius=2.0),
+               front='front-bezel', depth=14.5, row_x=8.89, first_y=-6.875,
+               count=9, slot_length=24.0, foot_to_rear=5.3, slot_radius=2.0),
 }
 
 
@@ -57,7 +57,9 @@ def slot_y(spec):
     return centre-spec['slot_length']/2
 
 
-def slots(spec, z=-.1, depth=FLOOR+.7):
+def slots(spec, z=-.1, depth=None):
+    if depth is None:
+        depth = spec['foot_to_rear'] + .2
     result = []
     for side in (-1,1):
         x, y, radius = side*spec['row_x'], slot_y(spec), spec['slot_radius']
@@ -139,7 +141,7 @@ def verify():
         # a straight path through the floor, not just matching hole outlines.
         for side in (-1, 1):
             x = side*spec['row_x']
-            header = box(2.54, spec['count']*2.54, FLOOR+.7,
+            header = box(2.54, spec['count']*2.54, spec['foot_to_rear']+.2,
                          x-1.27, spec['first_y']-1.27, -.1)
             assert rear.common(header).Volume < .001
             for pin in range(spec['count']):

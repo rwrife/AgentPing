@@ -7,7 +7,7 @@ The additive [pin-access variants](../enclosure/pin-access/README.md) use two
 have four printed support pads and M2 screw access; pin tips are intended
 to remain inside the rear plane.
 Actual header height/projection was not measured. Available support-foot to
-rear-plane distances are 4.3 mm C6 and 3.3 mm S3, using the existing stacks.
+rear-plane distances are 4.3 mm C6 and 5.3 mm S3, using the current stacks.
 
 - C6: the archived 2024-12-21 dimension PDF shows **11 pins per row** at
   2.54 mm pitch, 22.86 mm between rows, a 43.5 mm PCB and first pin 9.33 mm
@@ -101,9 +101,12 @@ The S3 manufacturer's dimensioned image gives the USB-end hole offsets as
 hole offsets as 1.97 mm and 3.52 mm respectively. Applied to the centred
 20.32 x 36.37 mm board with USB toward -Y, these give USB centres
 (+/-8.16, -15.785) and antenna centres (+/-6.64, +16.215) mm.
-Both S3 backs now have 4 mm-diameter, 0.5 mm-high printed pads with 2.3 mm
+Both S3 backs now have 4 mm-diameter, 2.5 mm-high printed pads with 2.3 mm
 M2 clearance holes and 4.2 x 1.3 mm rear head recesses. This replaces the
-former 0.5 mm adhesive support allowance without changing the glass stack.
+former adhesive support allowance. After a physical USB cable fit check, the
+user requested 2 mm more support height: pads rise from 0.5 to 2.5 mm, and
+the rear seam, lip, catches and glass rise 2 mm. USB opening bottom remains
+Z = 3.6 mm, with its top raised to 11.9 mm. The front shape is reusable.
 Screw thread depth and real board fit require a dry fit. The pin-access back
 uses rounded slot ends and retains at least 0.5 mm annular material around
 the clearance holes above the head recess. The C6 hole pattern is not reused.
@@ -130,7 +133,7 @@ rear floor/tunnel depth from the common Z = 0 rear exterior datum.
 
 The S3 copies this complete interface without scaling or moving the vents.
 Its floor remains 2.8 mm; the measured-stack revision below changes outside
-depth to 12.5 mm. C6 files remain unchanged.
+depth to 14.5 mm. C6 files remain unchanged.
 The verifier measures both STEP rear faces, rectangular opening areas,
 coordinates/pitch, clear tunnels and adjoining floor depth and requires equality.
 The nominal S3 tray has space for the pattern. The released mounts stop inside
@@ -142,8 +145,8 @@ reported rather than resolved by altering this interface.
 In response to the explicit question "height from the rear mounting feet/support
 surface to the top of the display glass", the user answered **7.7 mm**.
 This supersedes the open-tray's unmeasured 10 mm pocket allowance. The two-piece
-prototype stack is **2.8 floor + 0.5 printed support pads + 7.7
-measured module + 0.3 glass clearance + 1.2 rim = 12.5 mm**.
+prototype stack is **2.8 floor + 2.5 printed support pads + 7.7
+measured module + 0.3 glass clearance + 1.2 rim = 14.5 mm**.
 
 The front seats on a rear-tray shoulder, not the glass. A recessed lip locates it; four C6-style spring catches retain the front.
 Rear tool slots release the catches before bezel removal.
