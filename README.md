@@ -245,7 +245,7 @@ The installer preserves unrelated handlers and backs up existing settings under 
 
 | Agent | Configuration written | Events wired |
 | --- | --- | --- |
-| Codex | `%USERPROFILE%\.codex\hooks.json` | `PermissionRequest`, `Stop` |
+| Codex | `%USERPROFILE%\.codex\hooks.json` | `UserPromptSubmit`, `PostToolUse`, `PermissionRequest`, `Stop` |
 | Claude Code | `%USERPROFILE%\.claude\settings.json` | `PermissionRequest`, `Notification`, `Stop`, `StopFailure` |
 | Copilot CLI | `%USERPROFILE%\.copilot\hooks\agentping-usb.json` | `userPromptSubmitted`, `permissionRequest`, `postToolUse`, `notification`, `awaitingUserInput`, `agentStop`, `errorOccurred` |
 

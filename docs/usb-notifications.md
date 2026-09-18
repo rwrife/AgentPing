@@ -18,13 +18,21 @@ From the repository root, after running `companion/setup-robot.ps1`:
 The installer copies the hook/worker script into `~/.agentping/usb/bin`, backs up
 existing settings under `~/.agentping/usb/backups`, and merges only its own hooks:
 
-- Codex: `~/.codex/hooks.json`, `PermissionRequest` and `Stop`.
+- Codex: `~/.codex/hooks.json`, `UserPromptSubmit`, `PostToolUse`,
+  `PermissionRequest`, and `Stop`.
 - Claude Code: `~/.claude/settings.json`, `PermissionRequest`, `Notification`,
   `Stop`, and `StopFailure`.
 - Copilot CLI: `~/.copilot/hooks/agentping-usb.json`, `userPromptSubmitted`, `permissionRequest`, `postToolUse`,
   `notification`, `awaitingUserInput`, `agentStop`, and `errorOccurred`.
 
 Review/trust the Codex entries in `/hooks`; untrusted hooks are skipped by Codex.
+The Codex lifecycle path does not depend on Windows notifications: submitting a
+prompt or finishing a tool emits thinking, permissions emit attention, and
+`Stop` emits completion. Having a hooks file is not enough: all four AgentPing
+definitions must be trusted. In a terminal, run `codex` and open `/hooks` to
+review the handlers pointing to `~/.agentping/usb/bin/agentping_usb_notifications.py`.
+Reload the desktop app after reviewing hooks so existing sessions pick them up.
+Windows toast forwarding is separate and can work while these hooks are skipped.
 Restart the provider sessions to load updated settings. Existing Codex `notify`
 configuration and unrelated handlers are preserved. Rerunning the installer
 updates AgentPing's handlers without adding duplicates. Remove only the
@@ -38,6 +46,11 @@ it to a different port does not require a restart; pass `--port` to pin an
 explicit port instead, or `--serial <id>` to disambiguate several connected
 Pixel Pals. The process retries disconnected USB every two seconds and checks
 a host heartbeat every five seconds. No network listener or Wi-Fi is needed.
+Unplugging the device does not block provider tools: hooks only write to the
+local notification queue and never open USB. The worker remains available for
+stop commands while disconnected, tolerates errors closing unplugged handles,
+and discovers the device again on reconnection. Queued notices older than
+60 seconds are discarded rather than shown when you return.
 Launching the worker does not install an auto-start service.
 
 ## Detection and display
@@ -51,7 +64,15 @@ reinstalling hooks to load this handler. Attention bypasses the thinking cooldow
 Permission requests and requests for input trigger attention. Thinking/working
 signals trigger the thinking animation instead of the amber “Ready for your
 input” attention state. Turn completion triggers completion, and supported
-failure hooks trigger an error notice. Raw provider payloads are read only in
+failure hooks trigger an error notice. Copilot completion requires a main-agent
+`agentStop`/`Stop` event with `stopReason`/`stop_reason` equal to `end_turn`.
+Background `agent_completed`, `agent_idle`, `shell_completed`, and
+`shell_detached_completed` notifications never mean the main task is done and
+are ignored. Missing or unknown stop reasons are ignored as well. This detects
+the provider's end of a response turn, not independent verification that every
+requested goal is satisfied; another stop hook can still force continuation.
+See the [GitHub hook reference](https://docs.github.com/en/copilot/reference/hooks-reference).
+Raw provider payloads are read only in
 the short-lived hook; only a random event ID,
 provider, fixed kind, and timestamp are queued. Prompts, notification text, tool
 arguments, transcripts, credentials, and session IDs are never persisted by this
