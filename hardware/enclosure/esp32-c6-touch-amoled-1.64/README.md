@@ -30,6 +30,8 @@ screws without force because the user measurement is approximate.
 
 ## Mounting and assembly
 
+Both this C6 pod and the S3 pod accept the same [monitor arm and desktop stand](../mounts/README.md). Their four 10 x 2 mm rear vents and 2.8 mm floor are identical. Remove the mount before using the rear snap-release slots.
+
 1. Fasten the board to the rear tray through four 2.3 mm clearance holes using
    M2 machine screws into its metal standoffs. USB points down.
 2. Rear screw-head recesses are 4.2 mm diameter x 1.3 mm deep. Check the actual

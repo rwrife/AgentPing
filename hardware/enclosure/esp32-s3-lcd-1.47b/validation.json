@@ -77,7 +77,8 @@
     "lateral_clearance_per_side": 0.5,
     "button_print_clearance": 0.5,
     "button_datum": "protrusion applied outside PCB long edges; confirm against actual display",
-    "wall": 2.0,
+    "outer_corner_radius": 5,
+    "front_chamfer": 2,
     "floor": 2.8,
     "floor_to_rim_underside": 8.5,
     "installed_support_pad": 0.5,
@@ -89,24 +90,25 @@
     ],
     "aperture_basis": "PCB envelope + clearance; glass outline/active-area offset NOT dimensioned",
     "button_z_limit": 11.3,
-    "service_cutout_top_y": -7.0,
-    "usb_floor_notch": [
-      14.0,
-      5.0
-    ]
+    "internal_button_keepout_top_y": -7.0,
+    "usb_tunnel": {
+      "width": 14,
+      "bottom_z": 3.6,
+      "top_z": 9.9
+    }
   },
   "assembly": {
     "size_mm": [
-      25.32,
-      41.37,
+      42.0,
+      56.0,
       12.5
     ],
     "printed_parts": 2,
     "mounting_holes": "none; no guessed board hole pattern",
     "board_retention": "removable insulating adhesive on measured standoff feet; not validated",
     "board_interference_checked": false,
-    "front_retention": "slip-fit locating lip + removable exterior tape; no glass clamping",
-    "split_z_mm": 8.0,
+    "front_retention": "four C6-style spring catches; rear tool-release slots; no glass clamping",
+    "split_z_mm": 6.9,
     "glass_top_z_mm": 11.0,
     "rim_underside_z_mm": 11.3,
     "part_overlap_mm3": 0.0,
@@ -117,25 +119,25 @@
       0.0,
       0.0
     ],
-    "removal_sweep_sampled_clear": true,
+    "released_catch_removal_sweep_sampled_clear": true,
     "button_keepout_width_mm": 25.32,
-    "button_to_mount_plane_clearance_mm": 0.5
+    "button_to_mount_plane_clearance_mm": 8.84
   },
   "clearance-tray": {
     "valid_solid": true,
     "solid_count": 1,
-    "volume_mm3": 3480.253,
+    "volume_mm3": 14511.013,
     "size_mm": [
-      25.32,
-      41.37,
-      11.05
+      42.0,
+      56.0,
+      9.7
     ],
-    "triangles": 148,
+    "triangles": 1092,
     "closed_mesh": true,
     "non_manifold": false,
     "self_intersections": false,
     "mesh_components": 1,
-    "mesh_volume_error_fraction": 1.4858383928250177e-07,
+    "mesh_volume_error_fraction": 3.987803097662624e-05,
     "print_z_min_mm": 0.0,
     "nominal_cavity_overlap_mm3": 0.0,
     "service_opening_overlap_mm3": 0.0,
@@ -146,12 +148,12 @@
   },
   "front-bezel": {
     "valid_solid": true,
-    "volume_mm3": 560.589,
-    "triangles": 56,
+    "volume_mm3": 4328.807,
+    "triangles": 1176,
     "closed_mesh": true,
     "non_manifold": false,
     "self_intersections": false,
-    "print_z_min_mm": -1.7763568394002505e-15,
-    "mesh_volume_error_fraction": 3.4579282895631625e-07
+    "print_z_min_mm": -3.552713678800501e-15,
+    "mesh_volume_error_fraction": 0.00010185179755795788
   }
 }

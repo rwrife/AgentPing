@@ -7,7 +7,7 @@ model). Start with the [enclosure chooser](enclosure/README.md).
 | Module | Standalone enclosure | Evidence status |
 |---|---|---|
 | C6 Touch AMOLED 1.64 | [Measured-board snap-fit pod](enclosure/esp32-c6-touch-amoled-1.64/README.md) | Original geometry/assets preserved: 9.3 mm user-measured stack, approximate 22 x 39 mm hole pattern, 42 x 56 x 15.1 mm housing |
-| S3 LCD 1.47B | [Removable-bezel case](enclosure/esp32-s3-lcd-1.47b/README.md) | Manufacturer 20.32 x 36.37 mm PCB; user-measured 7.7 mm stack; two-piece 25.32 x 41.37 x 12.5 mm unprinted prototype with glass-envelope/retention limits |
+| S3 LCD 1.47B | [C6-style snap-fit pod](enclosure/esp32-s3-lcd-1.47b/README.md) | Manufacturer 20.32 x 36.37 mm PCB; user-measured 7.7 mm stack; two-piece 42 x 56 x 12.5 mm unprinted prototype with glass-envelope/retention limits |
 
 The optional low-voltage **Rev A0 carrier below remains C6-only**. It has not
 been adapted to the S3 pinout or mounting layout. Neither small standalone

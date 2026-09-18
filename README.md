@@ -20,6 +20,9 @@ FPS results are C6-only. Select the exact **1.47B**, not the non-B S3 board.
 The optional network/touch application remains C6-only. Board-specific
 [3D-print enclosure files and fit notes](hardware/enclosure/README.md) are separate;
 do not print the C6 enclosure for the S3.
+Both enclosures share the C6 rounded snap-fit design and identical rear vents,
+so the same [monitor arm and desktop stand](hardware/enclosure/mounts/README.md)
+fit either version.
 
 ## Quick start: physical robot on Windows
 

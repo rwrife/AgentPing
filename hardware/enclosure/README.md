@@ -6,7 +6,7 @@ enclosures, not housings for the optional 70 x 60 mm Rev A0 carrier.
 | Board | Enclosure | Status |
 |---|---|---|
 | Waveshare ESP32-C6-Touch-AMOLED-1.64 | [Measured-board snap-fit pod](esp32-c6-touch-amoled-1.64/README.md) | Original 42 x 56 x 15.1 mm geometry and generated artifacts preserved; unprinted fit-check prototype |
-| Waveshare ESP32-S3-LCD-1.47B | [Removable-bezel case](esp32-s3-lcd-1.47b/README.md) | Two-piece unprinted prototype, 7.7 mm user-measured stack; glass outline/aperture fit and retention still unverified |
+| Waveshare ESP32-S3-LCD-1.47B | [C6-style snap-fit pod](esp32-s3-lcd-1.47b/README.md) | Two-piece unprinted prototype, 7.7 mm user-measured stack; glass outline/aperture fit and retention still unverified |
 
 The S3 **B** model is a 172 x 320 ST7789 LCD, without touch. It is not the
 non-B ESP32-S3-LCD-1.47 and does not share the C6 mounting pattern or enclosure.
@@ -22,8 +22,9 @@ Both also use the **same rear vent interface**: four rectangular **10 x 2 mm**
 openings, **6 mm pitch**, x = -5..5 and lower Y edges = -8, -2, 4, 10 mm,
 through a **2.8 mm** rear floor from Z = 0. The existing C6 files were not
 changed. These dimensions are fixed for future use: report any board/accessory
-conflict rather than changing the slots. Accessory-to-electronics clearance has
-not been established.
+conflict rather than changing the slots. Both use the [monitor arm and desktop stand](mounts/README.md). CAD checks
+verify both arms against both trays: 2.6 mm tab insertion leaves 0.2 mm before
+the inner floor, and the middle two vents remain open. Physical retention is untested.
 
 ## Check the existing files without regenerating them
 
@@ -38,8 +39,8 @@ mesh/solid volume agreement, print-bed placement, and assembled C6 part overlap.
 It also measures the actual rear vent openings and pitch in both STEP files,
 verifies clear tunnels and floor depth, and compares the two vent interfaces.
 The S3 now has two parts: the checks require zero assembled overlap and verify
-button keepouts and 0.3 mm clearance above an **assumed full-board glass envelope**.
-Its 25.32 x 41.37 x 12.5 mm stack includes a 0.5 mm support-adhesive allowance.
+released snap catches, button keepouts and 0.3 mm clearance above an **assumed full-board glass envelope**.
+Its 42 x 56 x 12.5 mm stack includes a 0.5 mm support-adhesive allowance.
 The full-board aperture avoids guessing a tighter glass-retaining rim: actual
 glass width/length, PCB offsets and active-area bounds remain essential to
 finalizing that rim. No mechanical model of the real S3 board is available:
@@ -48,7 +49,7 @@ Each generator also validates its new output when explicitly run.
 
 `c6-preservation.json` records the pre-move C6 files (including CAD generator,
 STL/STEP/FCStd, render source, previews, and older 3MF slicer projects). The C6
-README only changed its reproduction paths. Rebuilding CAD may change file
+README updates reproduction paths and links to the shared mounts. Rebuilding CAD may change file
 serialization/hashes; the preservation check intentionally detects that.
 The manifest also records LF-normalized hashes for Git-managed text files
 so a checkout's automatic CRLF conversion does not falsely fail preservation.

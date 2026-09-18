@@ -85,14 +85,14 @@ The user reports that BOOT/RESET protrude from the display by approximately
 manufacturer drawing, and is applied only to the S3 prototype. The generator
 allows that protrusion plus **0.5 mm print clearance** beyond each button tip,
 including **0.5 mm possible board shift** in the pocket. The resulting lateral
-keepout spans **25.32 mm**, cleared by the existing open button-side cutbacks.
+keepout spans **25.32 mm**, cleared by internal button pockets in the revised closed-sided pod.
 No C6 dimension or artifact changes.
 
 The design applies the 1.5 mm beyond the PCB/module long edges; confirm that
 datum against the actual display. Button Y/Z positions and actuation travel
 remain unmeasured. CAD verifies no tray intersection with the broad keepouts,
 not real switch placement. Both buttons must remain unpressed at rest and
-accessible through the open front; confirm full release and access on the actual
+accessible with the bezel removed; confirm full release and access on the actual
 monitor before bonding, especially on the monitor-facing side.
 
 ### User-required common rear vents, 2026-09-18
@@ -108,8 +108,8 @@ Its floor remains 2.8 mm; the measured-stack revision below changes outside
 depth to 12.5 mm. C6 files remain unchanged.
 The verifier measures both STEP rear faces, rectangular opening areas,
 coordinates/pitch, clear tunnels and adjoining floor depth and requires equality.
-The nominal S3 tray has space for the pattern, but board-component and future
-accessory intrusion clearances are unverified. Any physical conflict must be
+The nominal S3 tray has space for the pattern. The released mounts stop inside
+the floor; real board-component and printed fit clearances remain unverified. Any physical conflict must be
 reported rather than resolved by altering this interface.
 
 ### User-measured S3 stack and removable front, 2026-09-18
@@ -120,8 +120,8 @@ This supersedes the open-tray's unmeasured 10 mm pocket allowance. The two-piece
 prototype stack is **2.8 floor + 0.5 assumed installed support adhesive + 7.7
 measured module + 0.3 glass clearance + 1.2 rim = 12.5 mm**.
 
-The front seats on a rear-tray shoulder, not the glass. A recessed slip-fit lip
-locates it; removable exterior tape retains it for this fit-check prototype.
+The front seats on a rear-tray shoulder, not the glass. A recessed lip locates it; four C6-style spring catches retain the front.
+Rear tool slots release the catches before bezel removal.
 No board screw positions are invented. The glass/active-area outline and its
 X/Y offset are **not dimensioned in the available source**. Therefore the
 21.32 x 37.37 mm aperture exposes the full PCB envelope plus clearance, rather
@@ -131,7 +131,11 @@ measurements for that tighter rim.
 
 CAD checks validate two solids without overlap, sampled removal, 0.3 mm
 clearance to an assumed full-pocket glass envelope at the measured Z, and
-button keepouts on both parts. The service slots are open up to the rim
-underside at Z = 11.3; actual button tops must be below this and their Y bounds
-within the slots. Physical glass fit, button travel, retention, support-pad
-thickness and future vent-accessory intrusion still require a dry fit.
+button keepouts on both parts. Internal button pockets extend up to the rim underside at Z = 11.3; actual
+button tops must be below this and their Y bounds within the pockets. Physical glass fit, button travel, retention, support-pad
+thickness and printed mount retention still require a dry fit.
+
+The revised S3 shares the C6 42 x 56 mm rounded outline and chamfered front.
+Both released arm STEP files pass CAD compatibility checks on both trays.
+Their tips insert 2.6 mm into the 2.8 mm floor, leaving 0.2 mm before its inner
+surface; middle vents remain open. This does not prove thermal performance.

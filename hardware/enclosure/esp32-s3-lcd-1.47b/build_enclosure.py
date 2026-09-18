@@ -1,4 +1,4 @@
-"""Generate the unprinted ESP32-S3-LCD-1.47B removable-bezel case; mm."""
+"""Generate the unprinted ESP32-S3-LCD-1.47B C6-style snap-fit pod; mm."""
 import json
 from pathlib import Path
 
@@ -18,7 +18,6 @@ BUTTON_PRINT_CLEARANCE = 0.5
 BUTTON_ENVELOPE_W = BOARD_W + 2 * (
     CLEARANCE + BUTTON_PROTRUSION + BUTTON_PRINT_CLEARANCE
 )
-WALL = 2.0
 # Match the C6 rear vent interface, including its through-floor depth.
 FLOOR = 2.8
 VENT_W, VENT_H = 10.0, 2.0
@@ -29,19 +28,15 @@ GLASS_CLEARANCE = 0.3
 FRONT_RIM = 1.2
 GLASS_TOP = FLOOR + SUPPORT_PAD + MODULE_HEIGHT
 BEZEL_Z = GLASS_TOP + GLASS_CLEARANCE
-SPLIT = 8.0
-LIP_WALL = 0.75
+SPLIT = 6.9
 FIT_CLEARANCE = 0.25
-TRAY_TOP = BEZEL_Z - FIT_CLEARANCE
 POCKET_DEPTH = BEZEL_Z - FLOOR
 POCKET_W = BOARD_W + 2 * CLEARANCE
 POCKET_H = BOARD_H + 2 * CLEARANCE
-BODY_W = POCKET_W + 2 * WALL
-BODY_H = POCKET_H + 2 * WALL
+BODY_W, BODY_H = 42.0, 56.0
 DEPTH = BEZEL_Z + FRONT_RIM
 SERVICE_TOP_Y = -7.0
-USB_FLOOR_NOTCH_W = 14.0
-USB_FLOOR_NOTCH_DEPTH = 5.0
+USB_TOP = SPLIT + 3.0
 EPS = 0.1
 
 
@@ -56,8 +51,8 @@ def button_keepouts():
     outer_x = BUTTON_ENVELOPE_W / 2
     return [
         box(
-            outer_x - inner_x, SERVICE_TOP_Y + BODY_H / 2,
-            POCKET_DEPTH, x, -BODY_H / 2, FLOOR,
+            outer_x - inner_x, SERVICE_TOP_Y + POCKET_H / 2,
+            POCKET_DEPTH, x, -POCKET_H / 2, FLOOR,
         )
         for x in (-outer_x, inner_x)
     ]
@@ -107,61 +102,79 @@ def check_rear_vents(shape, floor_depth=FLOOR):
     return {"openings": measured, "pitch_mm": pitch}
 
 
+def rounded(w, h, r, z, depth):
+    shape = box(w-2*r, h, depth, -w/2+r, -h/2, z).fuse(
+        box(w, h-2*r, depth, -w/2, -h/2+r, z))
+    for x in (-w/2+r, w/2-r):
+        for y in (-h/2+r, h/2-r):
+            shape = shape.fuse(Part.makeCylinder(r, depth, V(x,y,z)))
+    return shape.removeSplitter()
+
+
+def snap_features():
+    # C6 interface shifted down 2.6 mm for the thinner S3 stack.
+    shift = DEPTH - 15.1
+    for side in (-1, 1):
+        for y in (-8, 8):
+            beam = box(1, 5, 9.5+shift, 18, y-2.5, FLOOR)
+            pts = [V(18.9,y-2.5,10.9+shift), V(19.5,y-2.5,10.9+shift),
+                   V(18.9,y-2.5,12.3+shift), V(18.9,y-2.5,10.9+shift)]
+            catch = beam.fuse(Part.Face(Part.makePolygon(pts)).extrude(V(0,5,0)))
+            channel = box(3,5.6,10.5+shift,17,y-2.8,FLOOR)
+            pocket = box(.7,5.6,1,19.15,y-2.8,10.7+shift)
+            release = box(1,5.6,FLOOR+.2,17,y-2.8,-.1)
+            shapes = (catch, channel, pocket, release)
+            if side < 0:
+                shapes = tuple(shape.mirror(V(),V(1,0,0)) for shape in shapes)
+            yield shapes
+
+
 def make_tray():
-    tray = box(BODY_W, BODY_H, TRAY_TOP, -BODY_W / 2, -BODY_H / 2, 0)
-    cavity = box(
-        POCKET_W, POCKET_H, POCKET_DEPTH + EPS,
-        -POCKET_W / 2, -POCKET_H / 2, FLOOR,
-    )
+    tray = rounded(BODY_W, BODY_H, 5, 0, SPLIT)
+    tray = tray.fuse(rounded(38,52,3,SPLIT-.1,2.9))
+    # Full rectangular board envelope avoids assuming rounded glass corners.
+    cavity = box(POCKET_W, POCKET_H, DEPTH, -POCKET_W/2,-POCKET_H/2,FLOOR)
     tray = tray.cut(cavity)
-    lip_w, lip_h = POCKET_W + 2 * LIP_WALL, POCKET_H + 2 * LIP_WALL
-    outer = box(BODY_W + 2, BODY_H + 2, DEPTH, -BODY_W / 2 - 1, -BODY_H / 2 - 1, SPLIT)
-    inner = box(lip_w, lip_h, DEPTH, -lip_w / 2, -lip_h / 2, SPLIT)
-    tray = tray.cut(outer.cut(inner))
-    # Open the entire USB end and both adjacent button regions: no guessed
-    # connector/button centres or close-fitting holes are used.
-    service = box(
-        max(BODY_W, BUTTON_ENVELOPE_W) + 2 * EPS,
-        SERVICE_TOP_Y + BODY_H / 2 + EPS, POCKET_DEPTH + EPS,
-        -max(BODY_W, BUTTON_ENVELOPE_W) / 2 - EPS, -BODY_H / 2 - EPS, FLOOR,
-    )
+    for keepout in button_keepouts():
+        tray = tray.cut(keepout)
+    # A bottom-facing USB tunnel; leave the rear floor intact for the mounts.
+    service = box(14,12,USB_TOP-3.6,-7,-29,3.6)
     tray = tray.cut(service)
-    # Let the USB plug extend below the floor without removing the corner lands.
-    tray = tray.cut(box(
-        USB_FLOOR_NOTCH_W, USB_FLOOR_NOTCH_DEPTH + EPS, FLOOR + 2 * EPS,
-        -USB_FLOOR_NOTCH_W / 2, -BODY_H / 2 - EPS, -EPS,
-    ))
+    for catch, channel, pocket, release in snap_features():
+        tray = tray.cut(channel).fuse(catch).cut(release)
     for y in VENT_Y:
-        tray = tray.cut(box(
-            VENT_W, VENT_H, FLOOR + 2 * EPS, -VENT_W / 2, y, -EPS,
-        ))
+        tray = tray.cut(box(VENT_W,VENT_H,FLOOR+2*EPS,-VENT_W/2,y,-EPS))
     tray = tray.removeSplitter()
     assert tray.isValid() and len(tray.Solids) == 1
     assert tray.common(cavity).Volume < 1e-6
     assert tray.common(service).Volume < 1e-6
-    assert BODY_W >= BUTTON_ENVELOPE_W - 1e-6, "buttons too close to monitor mounting plane"
     for keepout in button_keepouts():
-        assert tray.common(keepout).Volume < 1e-6, "button preload/access interference"
+        assert tray.common(keepout).Volume < 1e-6
     check_rear_vents(tray)
     return tray, cavity, service
 
 
 def make_bezel():
-    bezel = box(BODY_W, BODY_H, DEPTH - SPLIT, -BODY_W / 2, -BODY_H / 2, SPLIT)
-    socket_w = POCKET_W + 2 * (LIP_WALL + FIT_CLEARANCE)
-    socket_h = POCKET_H + 2 * (LIP_WALL + FIT_CLEARANCE)
-    bezel = bezel.cut(box(
-        socket_w, socket_h, BEZEL_Z - SPLIT + EPS,
-        -socket_w / 2, -socket_h / 2, SPLIT - EPS,
-    ))
-    # Full PCB envelope plus lateral tolerance, NOT an invented glass outline.
-    bezel = bezel.cut(box(
-        POCKET_W, POCKET_H, DEPTH, -POCKET_W / 2, -POCKET_H / 2, SPLIT - EPS,
-    ))
-    bezel = bezel.cut(box(
-        BODY_W + 2 * EPS, SERVICE_TOP_Y + BODY_H / 2 + EPS,
-        BEZEL_Z - SPLIT + EPS, -BODY_W / 2 - EPS, -BODY_H / 2 - EPS, SPLIT - EPS,
-    )).removeSplitter()
+    bezel = rounded(BODY_W,BODY_H,5,SPLIT,DEPTH-SPLIT)
+    top = [e for e in bezel.Edges
+           if abs(e.BoundBox.ZMin-DEPTH)<.001 and abs(e.BoundBox.ZMax-DEPTH)<.001]
+    bezel = bezel.makeChamfer(2,top)
+    bezel = bezel.cut(rounded(38.5,52.5,3.25,SPLIT-.1,3.2))
+    bezel = bezel.cut(box(POCKET_W+.6,POCKET_H+.6,BEZEL_Z-SPLIT+.1,
+                         -POCKET_W/2-.3,-POCKET_H/2-.3,SPLIT-.1))
+    bezel = bezel.cut(box(POCKET_W,POCKET_H,DEPTH,-POCKET_W/2,-POCKET_H/2,SPLIT-.1))
+    # Button pockets remain inside closed outer walls, as on the C6.
+    for keepout in button_keepouts():
+        bezel = bezel.cut(keepout)
+    for catch, channel, pocket, release in snap_features():
+        bezel = bezel.cut(pocket)
+    aperture = [e for e in bezel.Edges
+                if abs(e.BoundBox.ZMin-DEPTH)<.001 and abs(e.BoundBox.ZMax-DEPTH)<.001
+                and e.BoundBox.XMin >= -POCKET_W/2-.001
+                and e.BoundBox.XMax <= POCKET_W/2+.001
+                and e.BoundBox.YMin >= -POCKET_H/2-.001
+                and e.BoundBox.YMax <= POCKET_H/2+.001]
+    bezel = bezel.makeChamfer(.5,aperture).removeSplitter()
     assert bezel.isValid() and len(bezel.Solids) == 1
     return bezel
 
@@ -177,11 +190,14 @@ def check_assembly(tray, bezel):
             assert shape.common(keepout).Volume < 1e-6
     gap = bezel.distToShape(glass)[0]
     assert abs(gap - GLASS_CLEARANCE) < 1e-6
-    # Removing the bezel along +Z must never trap the lip.
+    # Depress the catches through the rear release slots before removal.
+    released = tray
+    for catch, channel, pocket, release in snap_features():
+        released = released.cut(catch)
     for lift in (0.25, 1.0, 2.0, 4.0):
         lifted = bezel.copy()
         lifted.translate(V(0, 0, lift))
-        assert tray.common(lifted).Volume < 1e-6
+        assert released.common(lifted).Volume < 1e-6
     return {
         "part_overlap_mm3": tray.common(bezel).Volume,
         "assumed_glass_envelope_clearance_mm": round(gap, 6),
@@ -189,7 +205,7 @@ def check_assembly(tray, bezel):
             shape.common(keepout).Volume
             for shape in (tray, bezel) for keepout in button_keepouts()
         ],
-        "removal_sweep_sampled_clear": True,
+        "released_catch_removal_sweep_sampled_clear": True,
     }
 
 
@@ -247,15 +263,15 @@ def build():
             "lateral_clearance_per_side": CLEARANCE,
             "button_print_clearance": BUTTON_PRINT_CLEARANCE,
             "button_datum": "protrusion applied outside PCB long edges; confirm against actual display",
-            "wall": WALL, "floor": FLOOR, "floor_to_rim_underside": POCKET_DEPTH,
+            "outer_corner_radius": 5, "front_chamfer": 2, "floor": FLOOR, "floor_to_rim_underside": POCKET_DEPTH,
             "installed_support_pad": SUPPORT_PAD,
             "glass_clearance": GLASS_CLEARANCE,
             "front_rim": FRONT_RIM,
             "aperture": [POCKET_W, POCKET_H],
             "aperture_basis": "PCB envelope + clearance; glass outline/active-area offset NOT dimensioned",
             "button_z_limit": BEZEL_Z,
-            "service_cutout_top_y": SERVICE_TOP_Y,
-            "usb_floor_notch": [USB_FLOOR_NOTCH_W, USB_FLOOR_NOTCH_DEPTH],
+            "internal_button_keepout_top_y": SERVICE_TOP_Y,
+            "usb_tunnel": {"width": 14, "bottom_z": 3.6, "top_z": USB_TOP},
         },
         "assembly": {
             "size_mm": [round(BODY_W, 2), round(BODY_H, 2), DEPTH],
@@ -263,7 +279,7 @@ def build():
             "mounting_holes": "none; no guessed board hole pattern",
             "board_retention": "removable insulating adhesive on measured standoff feet; not validated",
             "board_interference_checked": False,
-            "front_retention": "slip-fit locating lip + removable exterior tape; no glass clamping",
+            "front_retention": "four C6-style spring catches; rear tool-release slots; no glass clamping",
             "split_z_mm": SPLIT,
             "glass_top_z_mm": GLASS_TOP,
             "rim_underside_z_mm": BEZEL_Z,

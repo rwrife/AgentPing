@@ -33,6 +33,10 @@ def check_part(directory, name, flip_height=None):
         mesh.transform(App.Placement(
             App.Vector(0, 0, flip_height), App.Rotation(App.Vector(1, 0, 0), 180),
         ).toMatrix())
+    if directory.name == "mounts":
+        mesh.translate(shape.BoundBox.XMin-mesh.BoundBox.XMin,
+                       shape.BoundBox.YMin-mesh.BoundBox.YMin,
+                       shape.BoundBox.ZMin-mesh.BoundBox.ZMin)
     for axis in ("XMin", "XMax", "YMin", "YMax", "ZMin", "ZMax"):
         assert abs(getattr(mesh.BoundBox, axis) - getattr(shape.BoundBox, axis)) < 0.1, (
             name, "mesh/STEP extent mismatch", axis,
@@ -92,6 +96,25 @@ def main():
     c6_vents = parameters.check_rear_vents(rear, floor_depth=2.8)
     s3_vents = parameters.check_rear_vents(tray, floor_depth=2.8)
     assert c6_vents == s3_vents, "rear vent interface differs between boards"
+    # Check the shipped arms, including their pressure-fit blades, on both cases.
+    for name in ("monitor-arm", "desk-arm"):
+        mount = check_part(ROOT / "mounts", name)
+        for board, cover in (("C6", rear), ("S3", tray)):
+            body = mount.common(Part.makeBox(100,200,30,App.Vector(-50,-160,-30)))
+            assert body.common(cover).Volume < 1e-6, (board,name,"mount body collision")
+            tips = mount.common(Part.makeBox(100,100,20,App.Vector(-50,-50,0)))
+            assert abs(tips.BoundBox.ZMax - 2.6) < 1e-6
+            assert 2.8-tips.BoundBox.ZMax >= .199999, "tab enters electronics cavity"
+            # Only 0.03 mm/side at the roots may interfere for the friction fit.
+            allowed = Part.Shape()
+            for y in (-7,11):
+                slot = Part.makeBox(10,2.06,2.8,App.Vector(-5,y-1.03,0))
+                allowed = slot if allowed.isNull() else allowed.fuse(slot)
+            assert mount.common(cover).cut(allowed).Volume < 1e-6
+            for y in (-2,4):
+                air = Part.makeBox(10,2,17,App.Vector(-5,y,-14.1))
+                assert mount.common(air).Volume < 1e-6, "middle vent blocked"
+            print(f"{board}/{name}: body clears; tabs stop 0.2 mm inside floor; middle vents open")
     generated, cavity, service = parameters.make_tray()
     assert tray.cut(generated).Volume + generated.cut(tray).Volume < 1e-6
     assert tray.common(cavity).Volume < 1e-6
