@@ -58,16 +58,16 @@
     "monitor-arm": {
       "recessed_pin_envelopes_clear": true,
       "original_mount_used": true,
-      "both_middle_vents_clear": true,
+      "riser_air_gap_clear": true,
       "single_valid_solid": true,
-      "volume_mm3": 34711.249
+      "volume_mm3": 35528.638
     },
     "desk-arm": {
       "recessed_pin_envelopes_clear": true,
       "original_mount_used": true,
-      "both_middle_vents_clear": true,
+      "riser_air_gap_clear": true,
       "single_valid_solid": true,
-      "volume_mm3": 23173.329
+      "volume_mm3": 23645.118
     }
   }
 }
