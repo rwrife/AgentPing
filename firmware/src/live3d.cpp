@@ -17,6 +17,7 @@
 #include "usb_motion.h"
 #include "manual_pose.h"
 #include "custom_icon.h"
+#include "connection_wait_display.h"
 #include "esp_heap_caps.h"
 #include "driver/usb_serial_jtag.h"
 #include "driver/usb_serial_jtag_vfs.h"
@@ -98,6 +99,9 @@ void update_face(int64_t now) {
 }
 bool first_frame=true;
 lv_obj_t* connection_label=nullptr;
+lv_obj_t* connection_blackout=nullptr;
+ConnectionWaitDisplay connection_wait_display;
+bool connection_blanked=false;
 bool host_seen=false;
 void desktop_signal() {
   host_seen=true;
@@ -346,6 +350,15 @@ void run_live3d() {
   lv_obj_set_style_radius(thought_dot,LV_RADIUS_CIRCLE,0);
   lv_obj_set_style_bg_color(thought_dot,lv_color_hex(0x50dfff),0);
   lv_obj_set_style_border_width(thought_dot,0,0);
+  // Opaque, screen-sized black covers the robot, caption and background on
+  // both displays. USB processing and animation clocks keep running underneath.
+  connection_blackout=lv_obj_create(screen);
+  lv_obj_remove_style_all(connection_blackout);
+  lv_obj_set_size(connection_blackout,board::kWidth,board::kHeight);
+  lv_obj_set_pos(connection_blackout,0,0);
+  lv_obj_set_style_bg_color(connection_blackout,lv_color_black(),0);
+  lv_obj_set_style_bg_opa(connection_blackout,LV_OPA_COVER,0);
+  lv_obj_add_flag(connection_blackout,LV_OBJ_FLAG_HIDDEN);
   start_sequence(0,false);
   // The bare console reads from the 64 byte USB FIFO, which drops the long
   // `key` lines of a motion upload. The driver adds a real RX ring buffer.
@@ -409,7 +422,7 @@ void run_live3d() {
           }
           if(!strcmp(line,"viewstatus")){lv_mem_monitor_t pool;lv_mem_monitor(&pool);printf("VIEW state=%s zoom=%.3f bubble=%d thought=%d heap=%u provider=%d icon=%d color=%04x lvgl_used=%u lvgl_free=%u\n",sequence_name(),double(camera_focus),!lv_obj_has_flag(bubble,LV_OBJ_FLAG_HIDDEN),!lv_obj_has_flag(thought_dot,LV_OBJ_FLAG_HIDDEN),unsigned(esp_get_free_heap_size()),face_provider,custom_icon.active,custom_icon.color,unsigned(pool.total_size-pool.free_size),unsigned(pool.free_size));used=0;continue;}
           if(!strcmp(line,"host")){desktop_signal();printf("PAL HOST OK\n");used=0;continue;}
-          if(!strcmp(line,"startupstatus")){printf("STARTUP STATUS state=%s frame=%.2f waiting=%d blend=%d bottom=%d\n",sequence_name(),double(motion.frame_position),!lv_obj_has_flag(connection_label,LV_OBJ_FLAG_HIDDEN),esp_timer_get_time()-motion.started<motion.transition_us,projected_bottom);used=0;continue;}
+          if(!strcmp(line,"startupstatus")){printf("STARTUP STATUS state=%s frame=%.2f waiting=%d blend=%d bottom=%d blank=%d\n",sequence_name(),double(motion.frame_position),!lv_obj_has_flag(connection_label,LV_OBJ_FLAG_HIDDEN),esp_timer_get_time()-motion.started<motion.transition_us,projected_bottom,connection_blanked);used=0;continue;}
           if(motion.command(line)){if(!strncmp(line,"motion ",7)||!strcmp(line,"play"))sequence=-1;used=0;continue;}
           if(!strcmp(line,"low"))ok=resolution(board::kLow.width,board::kLow.height);
           else if(!strcmp(line,"medium"))ok=resolution(board::kMedium.width,board::kMedium.height);
@@ -438,6 +451,12 @@ void run_live3d() {
       else overflow=true;
     }
     auto now=esp_timer_get_time();
+    const bool blank=connection_wait_display.update(now,!host_seen&&(sequence==2||dancing()));
+    if(blank!=connection_blanked) {
+      connection_blanked=blank;
+      if(blank)lv_obj_remove_flag(connection_blackout,LV_OBJ_FLAG_HIDDEN);
+      else lv_obj_add_flag(connection_blackout,LV_OBJ_FLAG_HIDDEN);
+    }
     if(!paused) {
       // Completion is acted on only after the final pose was rendered.
       if(sequence>=0&&sequence<2&&motion.finished)start_sequence(sequence+1);

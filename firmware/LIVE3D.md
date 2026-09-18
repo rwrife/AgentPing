@@ -172,11 +172,17 @@ holds the last displayed pose until a validated clip is ready. Pause/resume
 preserves animation time.
 
 Before the first desktop signal, idle shows “Waiting for connection...” and
-the host-agent caption.
+the host-agent caption. After two minutes on this waiting screen, the entire
+display goes black for 30 seconds, then returns for another two minutes. This
+cycle repeats on C6 and S3 until the first desktop signal. Animation transitions
+and renderer pause/resume do not reset the cycle; USB commands keep processing
+while black. This reduces continuous exposure of the static caption.
 The first USB `host` heartbeat or desktop state message hides it for the rest
 of the boot session; silence afterward never restores it. USB power alone is not treated as a host-agent connection. `boot` replays
 startup for testing, `idle` transitions to idle, and `startupstatus` reports the
-state, key position, transition status, and caption visibility.
+state, key position, transition status, caption visibility, and `blank=1` during
+the black interval. A host heartbeat or desktop state message wakes the display
+immediately, including during the black interval.
 
 The reduced FBX retains the front screen surface but has only one material.
 The renderer now projects a separate 64 x 64 RGB565 face canvas over 51 front
@@ -274,7 +280,8 @@ its full-body view. Thinking, attention and error commands interrupt immediately
 with the normal pose blend and close-up camera transition. Host heartbeats do
 not reset the dance timer; pausing playback pauses the idle countdown as well.
 Before the first desktop signal, the waiting-for-connection caption remains
-visible during automatic idle dancing.
+visible during automatic idle dancing, except during the 30-second black
+interval described above. Dances do not restart that display cycle.
 
 | Dance | Duration | Motion bytes |
 | --- | ---: | ---: |
