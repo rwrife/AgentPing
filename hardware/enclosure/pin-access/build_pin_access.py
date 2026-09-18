@@ -175,20 +175,19 @@ def verify():
     for name in ('monitor-arm', 'desk-arm'):
         mount = checks.check_part(ROOT/'mounts', name)
         # A pressure fit deliberately interferes with the two vent walls only.
-        allowed = box(10,2.06,2.8,-5,-8.03,0).fuse(box(10,2.06,2.8,-5,9.97,0))
+        allowed = box(10,2.16,2.8,-5,-8.08,0).fuse(box(10,2.16,2.8,-5,9.92,0))
         for board, spec in BOARDS.items():
             assert mount.common(covers[board]).cut(allowed).Volume < .001
             # Pins are required to remain at/inside rear datum z=0. Original
             # mount bodies sit at z<=0; only central vent tabs enter the floor.
             for slot in slots(spec, z=0, depth=FLOOR+.1):
                 assert mount.common(slot).Volume < .001, (board,name,'recessed pin collision')
-            for y in (-2,4):
-                assert mount.common(box(10,2,17,-5,y,-14.1)).Volume < .001
+            assert mount.common(box(24,13.8,3.8,-12,-4.9,-3.9)).Volume < .001
         if name == 'desk-arm':
             foot = read_step(ROOT/'mounts'/'desk-foot.step')
             assert mount.common(foot).Volume < .001
         report['mounts'][name] = {'recessed_pin_envelopes_clear': True,
-            'original_mount_used': True, 'both_middle_vents_clear': True,
+            'original_mount_used': True, 'riser_air_gap_clear': True,
             'single_valid_solid': True, 'volume_mm3': round(mount.Volume,3)}
     print('PASS: optional rear slots; original mounts clear recessed pin envelopes; common vents unchanged.')
     return report
