@@ -1,0 +1,71 @@
+{
+  "prototype": true,
+  "floor_mm": 2.8,
+  "slot_width_mm": 4.0,
+  "boards": {
+    "c6": {
+      "part": "esp32-c6-touch-amoled-1.64/back-cover-pin-access",
+      "rows": 2,
+      "pins_per_row": 11,
+      "pin_pitch_mm": 2.54,
+      "row_x_mm": [
+        -11.43,
+        11.43
+      ],
+      "first_pin_y_mm": -12.42,
+      "slot_y_mm": [
+        -14.42,
+        14.98
+      ],
+      "slot_length_mm": 29.4,
+      "vent_to_slot_web_mm": 4.43,
+      "maximum_pin_projection_from_support_feet_for_flush_rear_mm": 4.3,
+      "actual_pin_tip_recess_measured": false,
+      "original_front_compatible": true,
+      "rear_vents_unchanged": true,
+      "slot_tunnels_clear": true,
+      "single_valid_solid": true,
+      "volume_mm3": 13081.927
+    },
+    "s3": {
+      "part": "esp32-s3-lcd-1.47b/clearance-tray-pin-access",
+      "rows": 2,
+      "pins_per_row": 9,
+      "pin_pitch_mm": 2.54,
+      "row_x_mm": [
+        -8.89,
+        8.89
+      ],
+      "first_pin_y_mm": -6.875,
+      "slot_y_mm": [
+        -8.715,
+        15.285
+      ],
+      "slot_length_mm": 24.0,
+      "vent_to_slot_web_mm": 1.89,
+      "maximum_pin_projection_from_support_feet_for_flush_rear_mm": 3.3,
+      "actual_pin_tip_recess_measured": false,
+      "original_front_compatible": true,
+      "rear_vents_unchanged": true,
+      "slot_tunnels_clear": true,
+      "single_valid_solid": true,
+      "volume_mm3": 13522.36
+    }
+  },
+  "mounts": {
+    "monitor-arm": {
+      "recessed_pin_envelopes_clear": true,
+      "original_mount_used": true,
+      "both_middle_vents_clear": true,
+      "single_valid_solid": true,
+      "volume_mm3": 27686.152
+    },
+    "desk-arm": {
+      "recessed_pin_envelopes_clear": true,
+      "original_mount_used": true,
+      "both_middle_vents_clear": true,
+      "single_valid_solid": true,
+      "volume_mm3": 23173.329
+    }
+  }
+}

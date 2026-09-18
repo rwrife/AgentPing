@@ -83,3 +83,7 @@ Run `hardware/enclosure/verify_enclosures.py` with FreeCAD Python to check both
 released arms against both board enclosures, including vent alignment, intentional
 press-fit interference, clear middle vents, and 0.2 mm tip-to-inner-floor clearance.
 Remove the arm before accessing the rear bezel-release slots.
+
+The optional [pin-access backs](../pin-access/README.md) also use these arms,
+provided header pins stay at or inside the housing's rear plane. The shoulders
+cover portions of the slot entrances; detach the arm to plug in header leads.

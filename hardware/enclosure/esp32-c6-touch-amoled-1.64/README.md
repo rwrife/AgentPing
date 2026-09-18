@@ -4,6 +4,11 @@ White PLA, two-piece edge-mounted housing for the pin-free Waveshare
 ESP32-C6-Touch-AMOLED-1.64. Dimensions are millimetres. This is an unprinted
 fit-check prototype, not a verified production fit.
 
+For fitted rear GPIO headers, the optional [pin-access back](../pin-access/README.md)
+adds two slots while retaining this front, M2 supports and existing mounts.
+Print `back-cover-pin-access.stl` instead of `back-cover.stl`; verify that pin
+tips remain recessed before attaching the mount.
+
 ## Current dimensions
 
 | Feature | Dimension |

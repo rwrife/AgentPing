@@ -11,6 +11,11 @@ The outer sides and front are continuous; USB exits through the rear tray.
 For the **ESP32-S3-LCD-1.47B**, non-touch 172 x 320 board without headers.
 This is an unprinted fit-check prototype. The existing C6 geometry is preserved.
 
+For fitted rear GPIO headers, use the optional [pin-access back](../pin-access/README.md):
+print `clearance-tray-pin-access.stl` instead of `clearance-tray.stl` and reuse
+this front and the existing mount. Pin tips must remain recessed; actual header
+projection and mating-connector fit require checking.
+
 ## Dimensions and board retention
 
 | Feature | Millimetres |
@@ -61,7 +66,7 @@ The S3's shorter snap beams need a physical force/durability check.
 
 Print `clearance-tray.stl` floor-down and `front-bezel.stl` face-down; supplied
 meshes already have those orientations. Matching STEP and `s3b-monitor-tray.FCStd`
-retain assembly coordinates. Start with 0.2 mm layers, four walls and 20–30%
+retain assembly coordinates. Start with 0.2 mm layers, four walls and 20â€“30%
 infill. Inspect USB bridging, snap pockets and release slots in the slicer.
 
 ```powershell

@@ -10,7 +10,10 @@ enclosures, not housings for the optional 70 x 60 mm Rev A0 carrier.
 
 The S3 **B** model is a 172 x 320 ST7789 LCD, without touch. It is not the
 non-B ESP32-S3-LCD-1.47 and does not share the C6 mounting pattern or enclosure.
-The S3 tray targets the bare, **unsoldered-header** board, not B-M with headers.
+The standard S3 tray targets the bare, **unsoldered-header** board.
+For rear-facing GPIO headers, choose the optional [pin-access backs](pin-access/README.md)
+for C6 or S3. They retain the original fronts and vent-mounted arms, with two
+slots for recessed pins. Verify the actual header projection before fitting a mount.
 Neither design claims verified board fit, printability on a particular printer,
 adhesive strength, thermal performance, or production readiness.
 

@@ -1,5 +1,29 @@
 # Manufacturer evidence manifest
 
+## Optional rear pin-access housings: 2026-09-18
+
+The additive [pin-access variants](../enclosure/pin-access/README.md) use two
+4 mm-wide slots through the original 2.8 mm floor. No standard geometry or
+mount part is modified; pin tips are intended to remain inside the rear plane.
+Actual header height/projection was not measured. Available support-foot to
+rear-plane distances are 4.3 mm C6 and 3.3 mm S3, using the existing stacks.
+
+- C6: the archived 2024-12-21 dimension PDF shows **11 pins per row** at
+  2.54 mm pitch, 22.86 mm between rows, a 43.5 mm PCB and first pin 9.33 mm
+  from the USB edge. Slot centres X = +/-11.43; Y limits -14.42..14.98.
+  These header coordinates are provisional for the user's measured board
+  revision. The carrier's 1x10 sockets are not the source for these slots.
+  Current manufacturer resources: https://docs.waveshare.com/ESP32-C6-Touch-AMOLED-1.64/Resources-And-Documents
+- S3 B: the archived dimensioned JPG shows **9 pins per row** at 2.54 mm
+  pitch, 17.78 mm between rows, 36.37 mm PCB length and nearest pin 11.31 mm
+  from the USB edge. Slot centres X = +/-8.89; Y limits -8.715..15.285.
+  Manufacturer resource: https://www.waveshare.com/wiki/ESP32-S3-LCD-1.47B
+
+Slot widths/length allowances are design choices, not manufacturer connector
+fit claims. Full nominal 2.54 mm-wide header bodies clear the slots; verify
+actual housings, solder fillets, tip recess and connector reach in a first print.
+The existing arms clear recessed pins but must be removed to insert header leads.
+
 This manifest records the primary external evidence used for the C6-only Rev A0
 carrier and board-specific standalone enclosures. Carrier source documents were
 retrieved or reviewed on **2026-09-02**. URLs are retained in
