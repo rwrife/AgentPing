@@ -92,7 +92,7 @@ def main():
     assert bezel.cut(generated_bezel).Volume + generated_bezel.cut(bezel).Volume < 1e-6
     assembly_checks = parameters.check_assembly(tray, bezel)
     assert (parameters.VENT_W, parameters.VENT_H, parameters.FLOOR) == (10.0, 2.0, 2.8)
-    assert abs(parameters.POCKET_W-parameters.APERTURE_W-3.0) < 1e-6
+    assert abs(parameters.POCKET_W-parameters.BOARD_CLEARANCE_W-3.0) < 1e-6
     assert abs((parameters.POCKET_W-parameters.BUTTON_ENVELOPE_W)/2-.5) < 1e-6
     assert parameters.VENT_Y == (-8.0, -2.0, 4.0, 10.0)
     c6_vents = parameters.check_rear_vents(rear, floor_depth=2.8)

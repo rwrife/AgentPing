@@ -29,8 +29,8 @@ BOARDS = {
                front='front-shell', depth=15.1, row_x=11.43, first_y=-12.42,
                count=11, slot_length=29.4, foot_to_rear=4.3, slot_radius=0),
     's3': dict(directory='esp32-s3-lcd-1.47b', rear='clearance-tray',
-               front='front-bezel', depth=14.5, row_x=8.89, first_y=-6.875,
-               count=9, slot_length=24.0, foot_to_rear=5.3, slot_radius=2.0),
+               front='front-bezel', depth=14.8, row_x=8.89, first_y=-6.875,
+               count=9, slot_length=24.0, foot_to_rear=5.6, slot_radius=2.0),
 }
 
 

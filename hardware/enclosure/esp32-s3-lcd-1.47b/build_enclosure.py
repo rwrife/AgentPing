@@ -22,7 +22,7 @@ FLOOR = 2.8
 VENT_W, VENT_H = 10.0, 2.0
 VENT_Y = (-8.0, -2.0, 4.0, 10.0)
 MODULE_HEIGHT = 7.7  # User: rear support/feet to top of glass, 2026-09-18.
-SUPPORT_PAD = 2.5  # Raised 2 mm after the user's USB cable fit check.
+SUPPORT_PAD = 2.8  # Raised another 0.3 mm after the second USB cable fit check.
 SUPPORT_RADIUS = 2.0
 SCREW_RADIUS = 1.15
 HEAD_RADIUS, HEAD_DEPTH = 2.1, 1.3
@@ -35,18 +35,24 @@ GLASS_CLEARANCE = 0.3
 FRONT_RIM = 1.2
 GLASS_TOP = FLOOR + SUPPORT_PAD + MODULE_HEIGHT
 BEZEL_Z = GLASS_TOP + GLASS_CLEARANCE
-SPLIT = 8.9
+SPLIT = 9.2
 FIT_CLEARANCE = 0.25
 POCKET_DEPTH = BEZEL_Z - FLOOR
-APERTURE_W = BOARD_W + 2 * CLEARANCE
-POCKET_W = APERTURE_W + BUTTON_WIDTH_ALLOWANCE
+BOARD_CLEARANCE_W = BOARD_W + 2 * CLEARANCE
+# User screen measurement; centred alignment and corner radius are provisional.
+APERTURE_W, APERTURE_H = 19.3, 33.3
+APERTURE_RADIUS = 3.0
+POCKET_W = BOARD_CLEARANCE_W + BUTTON_WIDTH_ALLOWANCE
 POCKET_H = BOARD_H + 2 * CLEARANCE
 # Match the C6 bezel bands (~7.4 mm sides / 6.9 mm ends) around the S3 aperture.
 BODY_W, BODY_H = 36.0, 51.0
 LIP_W, LIP_H = BODY_W-4, BODY_H-4
 DEPTH = BEZEL_Z + FRONT_RIM
 SERVICE_TOP_Y = -7.0
-USB_TOP = SPLIT + 3.0
+USB_BOTTOM = 3.6
+# Previous assembled opening ended at the seam (8.9), despite a taller tray cut.
+# Board rises 0.3; opening roof rises 0.6 for +0.3 clearance on each side.
+USB_TOP = 9.5
 EPS = 0.1
 
 
@@ -142,6 +148,10 @@ def snap_features():
             yield shapes
 
 
+def usb_keepout():
+    return box(14,BODY_H/2+1-17,USB_TOP-USB_BOTTOM,-7,-BODY_H/2-1,USB_BOTTOM)
+
+
 def make_tray():
     tray = rounded(BODY_W, BODY_H, 5, 0, SPLIT)
     tray = tray.fuse(rounded(LIP_W,LIP_H,3,SPLIT-.1,2.9))
@@ -157,7 +167,7 @@ def make_tray():
         tray = tray.cut(Part.makeCylinder(SCREW_RADIUS,FLOOR+SUPPORT_PAD+.2,V(x,y,-.1)))
         tray = tray.cut(Part.makeCylinder(HEAD_RADIUS,HEAD_DEPTH+.1,V(x,y,-.1)))
     # A bottom-facing USB tunnel; leave the rear floor intact for the mounts.
-    service = box(14,BODY_H/2+1-17,USB_TOP-3.6,-7,-BODY_H/2-1,3.6)
+    service = usb_keepout()
     tray = tray.cut(service)
     for catch, channel, pocket, release in snap_features():
         tray = tray.cut(channel).fuse(catch).cut(release)
@@ -181,15 +191,16 @@ def make_bezel():
     bezel = bezel.cut(rounded(LIP_W+2*FIT_CLEARANCE,LIP_H+2*FIT_CLEARANCE,3.25,SPLIT-.1,3.2))
     bezel = bezel.cut(box(POCKET_W+.6,POCKET_H+.6,BEZEL_Z-SPLIT+.1,
                          -POCKET_W/2-.3,-POCKET_H/2-.3,SPLIT-.1))
-    bezel = bezel.cut(box(APERTURE_W,POCKET_H,DEPTH,-APERTURE_W/2,-POCKET_H/2,SPLIT-.1))
+    bezel = bezel.cut(rounded(APERTURE_W,APERTURE_H,APERTURE_RADIUS,SPLIT-.1,DEPTH))
+    bezel = bezel.cut(usb_keepout())
     for catch, channel, pocket, release in snap_features():
         bezel = bezel.cut(pocket)
     aperture = [e for e in bezel.Edges
                 if abs(e.BoundBox.ZMin-DEPTH)<.001 and abs(e.BoundBox.ZMax-DEPTH)<.001
                 and e.BoundBox.XMin >= -APERTURE_W/2-.001
                 and e.BoundBox.XMax <= APERTURE_W/2+.001
-                and e.BoundBox.YMin >= -POCKET_H/2-.001
-                and e.BoundBox.YMax <= POCKET_H/2+.001]
+                and e.BoundBox.YMin >= -APERTURE_H/2-.001
+                and e.BoundBox.YMax <= APERTURE_H/2+.001]
     bezel = bezel.makeChamfer(.5,aperture).removeSplitter()
     assert bezel.isValid() and len(bezel.Solids) == 1
     return bezel
@@ -211,8 +222,10 @@ def check_supports(tray):
 def check_assembly(tray, bezel):
     check_supports(tray)
     assert tray.common(bezel).Volume < 1e-6
+    for shape in (tray, bezel):
+        assert shape.common(usb_keepout()).Volume < 1e-6, "assembled USB passage blocked"
     glass = box(
-        APERTURE_W, POCKET_H, 0.1, -APERTURE_W / 2, -POCKET_H / 2, GLASS_TOP - 0.1,
+        BOARD_CLEARANCE_W, POCKET_H, 0.1, -BOARD_CLEARANCE_W / 2, -POCKET_H / 2, GLASS_TOP - 0.1,
     )
     for shape in (tray, bezel):
         assert shape.common(glass).Volume < 1e-6
@@ -259,7 +272,7 @@ def build():
     obj.Label = "ESP32-S3-LCD-1.47B - UNPRINTED clearance tray"
     obj.Shape = tray
     front = doc.addObject("PartDesign::Feature", "FrontBezel")
-    front.Label = "Removable front - full-board aperture; glass outline UNVERIFIED"
+    front.Label = "Removable front - measured screen opening; corner radius provisional"
     front.Shape = bezel
     doc.recompute()
     tray.exportStep(str(OUT / "clearance-tray.step"))
@@ -284,6 +297,7 @@ def build():
         "user_measurements_mm": {
             "boot_reset_lateral_protrusion_approx": BUTTON_PROTRUSION,
             "support_feet_to_glass_top": MODULE_HEIGHT,
+            "screen_dimensions": [APERTURE_W, APERTURE_H],
         },
         "rear_vent_interface": {
             "basis": "user-required exact C6 rear vent compatibility, 2026-09-18",
@@ -297,19 +311,20 @@ def build():
             "printed_support_pad": SUPPORT_PAD,
             "glass_clearance": GLASS_CLEARANCE,
             "front_rim": FRONT_RIM,
-            "aperture": [APERTURE_W, POCKET_H],
+            "aperture": [APERTURE_W, APERTURE_H],
+            "aperture_corner_radius_provisional": APERTURE_RADIUS,
             "internal_pocket": [POCKET_W, POCKET_H],
             "button_width_allowance": BUTTON_WIDTH_ALLOWANCE,
             "centred_button_side_clearance": (POCKET_W-BUTTON_ENVELOPE_W)/2,
-            "aperture_basis": "PCB envelope + clearance; glass outline/active-area offset NOT dimensioned",
+            "aperture_basis": "user screen dimensions; centred offset and 3 mm radius provisional",
             "button_z_limit": BEZEL_Z,
             "internal_button_keepout_top_y": POCKET_H/2,
-            "usb_tunnel": {"width": 14, "bottom_z": 3.6, "top_z": USB_TOP},
+            "usb_tunnel": {"width": 14, "bottom_z": USB_BOTTOM, "top_z": USB_TOP},
         },
         "assembly": {
             "size_mm": [round(BODY_W, 2), round(BODY_H, 2), DEPTH],
             "printed_parts": 2,
-            "bezel_bands_mm": {"sides": (BODY_W-APERTURE_W)/2, "ends": (BODY_H-POCKET_H)/2},
+            "bezel_bands_mm": {"sides": (BODY_W-APERTURE_W)/2, "ends": (BODY_H-APERTURE_H)/2},
             "mounting_holes": "four 2.3 mm M2 clearance holes; manufacturer-dimensioned positions",
             "support_centres_mm": [[round(x,3),round(y,3)] for x,y in SUPPORTS],
             "printed_support_height_mm": SUPPORT_PAD,

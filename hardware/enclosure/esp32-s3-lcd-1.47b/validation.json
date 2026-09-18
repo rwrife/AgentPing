@@ -9,7 +9,11 @@
   },
   "user_measurements_mm": {
     "boot_reset_lateral_protrusion_approx": 1.5,
-    "support_feet_to_glass_top": 7.7
+    "support_feet_to_glass_top": 7.7,
+    "screen_dimensions": [
+      19.3,
+      33.3
+    ]
   },
   "rear_vent_interface": {
     "basis": "user-required exact C6 rear vent compatibility, 2026-09-18",
@@ -80,39 +84,40 @@
     "outer_corner_radius": 5,
     "front_chamfer": 2,
     "floor": 2.8,
-    "floor_to_rim_underside": 10.5,
-    "printed_support_pad": 2.5,
+    "floor_to_rim_underside": 10.8,
+    "printed_support_pad": 2.8,
     "glass_clearance": 0.3,
     "front_rim": 1.2,
     "aperture": [
-      21.32,
-      37.37
+      19.3,
+      33.3
     ],
+    "aperture_corner_radius_provisional": 3.0,
     "internal_pocket": [
       24.32,
       37.37
     ],
     "button_width_allowance": 3.0,
     "centred_button_side_clearance": 0.5,
-    "aperture_basis": "PCB envelope + clearance; glass outline/active-area offset NOT dimensioned",
-    "button_z_limit": 13.3,
+    "aperture_basis": "user screen dimensions; centred offset and 3 mm radius provisional",
+    "button_z_limit": 13.600000000000001,
     "internal_button_keepout_top_y": 18.685,
     "usb_tunnel": {
       "width": 14,
       "bottom_z": 3.6,
-      "top_z": 11.9
+      "top_z": 9.5
     }
   },
   "assembly": {
     "size_mm": [
       36.0,
       51.0,
-      14.5
+      14.8
     ],
     "printed_parts": 2,
     "bezel_bands_mm": {
-      "sides": 7.34,
-      "ends": 6.815000000000001
+      "sides": 8.35,
+      "ends": 8.850000000000001
     },
     "mounting_holes": "four 2.3 mm M2 clearance holes; manufacturer-dimensioned positions",
     "support_centres_mm": [
@@ -133,19 +138,19 @@
         16.215
       ]
     ],
-    "printed_support_height_mm": 2.5,
+    "printed_support_height_mm": 2.8,
     "printed_support_diameter_mm": 4.0,
     "screw_head_recess_mm": [
       4.2,
       1.3
     ],
-    "screw_grip_mm": 4.0,
+    "screw_grip_mm": 4.3,
     "board_retention": "M2 screws into board metal standoffs, on four printed pads; physical fit unverified",
     "board_interference_checked": false,
     "front_retention": "four C6-style spring catches; rear tool-release slots; no glass clamping",
-    "split_z_mm": 8.9,
-    "glass_top_z_mm": 13.0,
-    "rim_underside_z_mm": 13.3,
+    "split_z_mm": 9.2,
+    "glass_top_z_mm": 13.3,
+    "rim_underside_z_mm": 13.600000000000001,
     "part_overlap_mm3": 0.0,
     "assumed_glass_envelope_clearance_mm": 0.3,
     "button_keepout_overlap_mm3": [
@@ -161,18 +166,18 @@
   "clearance-tray": {
     "valid_solid": true,
     "solid_count": 1,
-    "volume_mm3": 10904.456,
+    "volume_mm3": 11311.943,
     "size_mm": [
       36.0,
       51.0,
-      11.7
+      12.0
     ],
-    "triangles": 5144,
+    "triangles": 5148,
     "closed_mesh": true,
     "non_manifold": false,
     "self_intersections": false,
     "mesh_components": 1,
-    "mesh_volume_error_fraction": 9.515871407369567e-05,
+    "mesh_volume_error_fraction": 0.00010316705733934009,
     "print_z_min_mm": 0.0,
     "nominal_cavity_overlap_mm3": 0.0,
     "service_opening_overlap_mm3": 0.0,
@@ -183,12 +188,12 @@
   },
   "front-bezel": {
     "valid_solid": true,
-    "volume_mm3": 2867.022,
-    "triangles": 1144,
+    "volume_mm3": 3055.991,
+    "triangles": 1744,
     "closed_mesh": true,
     "non_manifold": false,
     "self_intersections": false,
-    "print_z_min_mm": 1.7763568394002505e-15,
-    "mesh_volume_error_fraction": 0.00015850068142776223
+    "print_z_min_mm": 0.0,
+    "mesh_volume_error_fraction": 0.0001312700098569249
   }
 }

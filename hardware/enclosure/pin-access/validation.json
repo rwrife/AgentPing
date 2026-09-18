@@ -45,13 +45,13 @@
       "slot_length_mm": 24.0,
       "vent_to_slot_web_mm": 1.89,
       "slot_end_radius_mm": 2.0,
-      "maximum_pin_projection_from_support_feet_for_flush_rear_mm": 5.3,
+      "maximum_pin_projection_from_support_feet_for_flush_rear_mm": 5.6,
       "actual_pin_tip_recess_measured": false,
       "original_front_compatible": true,
       "rear_vents_unchanged": true,
       "slot_tunnels_clear": true,
       "single_valid_solid": true,
-      "volume_mm3": 10385.772
+      "volume_mm3": 10793.07
     }
   },
   "mounts": {
