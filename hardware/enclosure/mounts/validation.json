@@ -1,0 +1,83 @@
+{
+  "prototype": true,
+  "arm_length_mm": 152.4,
+  "cable_slot_mm": 6.0,
+  "housing_to_adapter_air_gap_mm": 4.0,
+  "housing_to_riser_front_mm": 8.0,
+  "monitor_adhesive_pad_mm": [
+    42.0,
+    42.0
+  ],
+  "monitor_slot_end_from_bottom_mm": 46.0,
+  "tab_insertion_mm": 2.6,
+  "rear_floor_mm": 2.8,
+  "parts": {
+    "monitor-arm": {
+      "valid_single_solid": true,
+      "closed_mesh": true,
+      "print_size_mm": [
+        42.0,
+        152.4,
+        16.6
+      ],
+      "triangles": 2004
+    },
+    "desk-arm": {
+      "valid_single_solid": true,
+      "closed_mesh": true,
+      "print_size_mm": [
+        26.0,
+        158.4,
+        16.6
+      ],
+      "triangles": 1836
+    },
+    "desk-foot": {
+      "valid_single_solid": true,
+      "closed_mesh": true,
+      "print_size_mm": [
+        80.0,
+        85.0,
+        6.0
+      ],
+      "triangles": 368
+    },
+    "fit-tab-1.98": {
+      "valid_single_solid": true,
+      "closed_mesh": true,
+      "print_size_mm": [
+        14.0,
+        8.0,
+        6.6
+      ],
+      "triangles": 380
+    },
+    "fit-tab-2.06": {
+      "valid_single_solid": true,
+      "closed_mesh": true,
+      "print_size_mm": [
+        14.0,
+        8.0,
+        6.6
+      ],
+      "triangles": 380
+    },
+    "fit-tab-2.14": {
+      "valid_single_solid": true,
+      "closed_mesh": true,
+      "print_size_mm": [
+        14.0,
+        8.0,
+        6.6
+      ],
+      "triangles": 380
+    }
+  },
+  "checks": {
+    "desk-arm / desk-foot overlap_mm3": 0.0,
+    "adapter_body_clears_enclosure": true,
+    "air_gap_between_shoulders_clear": true,
+    "tabs_stop_before_inner_floor_mm": 0.2,
+    "nominal_tab_interference_per_side_mm": 0.03
+  }
+}

@@ -30,6 +30,10 @@ screws without force because the user measurement is approximate.
 
 ## Mounting and assembly
 
+Optional vent-mounted 6-inch monitor arm and flat-print desk stand prototypes
+are available in [`mounts/README.md`](mounts/README.md), with STL/STEP files
+and pressure-fit test coupons.
+
 1. Fasten the board to the rear tray through four 2.3 mm clearance holes using
    M2 machine screws into its metal standoffs. USB points down.
 2. Rear screw-head recesses are 4.2 mm diameter x 1.3 mm deep. Check the actual
