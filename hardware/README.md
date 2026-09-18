@@ -1,8 +1,23 @@
 # Hardware
 
-AgentPing's initial target remains the unmodified **Waveshare ESP32-C6 Touch
-AMOLED 1.64** module. This directory adds an optional, low-voltage carrier
-board; it does not alter the module's certified RF design.
+Hardware is separated by exact module: **Waveshare ESP32-C6-Touch-AMOLED-1.64**
+and **Waveshare ESP32-S3-LCD-1.47B** (172 x 320 ST7789, no touch; not the non-B
+model). Start with the [enclosure chooser](enclosure/README.md).
+
+| Module | Standalone enclosure | Evidence status |
+|---|---|---|
+| C6 Touch AMOLED 1.64 | [Measured-board snap-fit pod](enclosure/esp32-c6-touch-amoled-1.64/README.md) | Original geometry/assets preserved: 9.3 mm user-measured stack, approximate 22 x 39 mm hole pattern, 42 x 56 x 15.1 mm housing |
+| S3 LCD 1.47B | [C6-style snap-fit pod](enclosure/esp32-s3-lcd-1.47b/README.md) | Manufacturer 20.32 x 36.37 mm PCB; user-measured 7.7 mm stack; two-piece 42 x 56 x 12.5 mm unprinted prototype with glass-envelope/retention limits |
+
+The optional low-voltage **Rev A0 carrier below remains C6-only**. It has not
+been adapted to the S3 pinout or mounting layout. Neither small standalone
+enclosure fits this 70 x 60 mm carrier. No RF design is modified.
+
+Both enclosures retain the exact C6 rear vent interface for future use:
+**four 10 x 2 mm rectangular slots on 6 mm pitch**, x = -5..5 and lower Y
+edges = -8, -2, 4, 10 mm, through a **2.8 mm rear floor**. C6 artifacts remain
+unchanged. The S3 copies these dimensions; any physical board/accessory conflict
+must be reported rather than resolved by changing the vents.
 
 ## Rev A0 carrier
 
@@ -68,6 +83,18 @@ the BOM comments. The carrier contains no provider credentials and must not
 be used to transfer them.
 
 ## Reproducible checks and fabrication exports
+
+For both standalone enclosures, run the read-only FreeCAD check independently
+of KiCad:
+
+```powershell
+& 'C:\Program Files\FreeCAD 1.1\bin\python.exe' hardware\enclosure\verify_enclosures.py
+```
+
+It checks C6 preservation hashes, solid/mesh validity, assembled C6 overlap,
+and the S3 tray/bezel, part overlap, 0.3 mm assumed-envelope glass clearance,
+button keepouts and common rear vents. Physical fit and retention remain unverified.
+The carrier-only `verify.sh` does not claim to validate enclosure geometry.
 
 KiCad CLI 9.0.9 was used for the checked-in reports and fabrication snapshot.
 Run the checks from the repository root:

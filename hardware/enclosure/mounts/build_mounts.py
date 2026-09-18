@@ -102,7 +102,7 @@ for a,b in [('desk-arm','desk-foot')]:
     overlap=parts[a].common(parts[b]).Volume
     assert overlap<.001,(a,b,overlap)
     report['checks'][a+' / '+b+' overlap_mm3']=round(overlap,6)
-cover=Part.Shape();cover.read(str(OUT.parent/'back-cover.step'))
+cover=Part.Shape();cover.read(str(OUT.parent/'esp32-c6-touch-amoled-1.64'/'back-cover.step'))
 # Press-fit tabs intentionally interfere with vent walls. The rest must clear.
 adapter_body=parts['monitor-arm'].common(box(100,100,20,-50,-50,-20))
 assert adapter_body.common(cover).Volume<.001
@@ -114,7 +114,7 @@ report['checks']['air_gap_between_shoulders_clear']=True
 report['checks']['tabs_stop_before_inner_floor_mm']=round(2.8-TAB_DEPTH,2)
 report['checks']['nominal_tab_interference_per_side_mm']=.03
 preview_dir=OUT/'preview-geometry';preview_dir.mkdir(exist_ok=True)
-front=Part.Shape();front.read(str(OUT.parent/'front-shell.step'))
+front=Part.Shape();front.read(str(OUT.parent/'esp32-c6-touch-amoled-1.64'/'front-shell.step'))
 for name,shape in {**{k:v for k,v in parts.items() if not k.startswith('fit-tab')},'back-cover':cover,'front-shell':front}.items():
     MeshPart.meshFromShape(Shape=shape,LinearDeflection=.08,AngularDeflection=.15,Relative=False).write(str(preview_dir/(name+'.stl')))
 doc.recompute();doc.saveAs(str(OUT/'mounts.FCStd'))

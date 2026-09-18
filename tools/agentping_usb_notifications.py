@@ -22,7 +22,7 @@ MAX_INPUT = 1024 * 1024
 TTL = 60
 MAX_PENDING = 64
 THINKING_COOLDOWN = 120
-# The ESP32-C6's built-in USB Serial/JTAG controller always enumerates with
+# The ESP32-C6/S3 built-in USB Serial/JTAG controllers enumerate with
 # this Espressif VID/PID, regardless of which physical port it is plugged
 # into, so the worker can find the Pixel Pal without a fixed COM port.
 DEVICE_VID = 0x303A

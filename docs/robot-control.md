@@ -27,7 +27,7 @@ From the repository root:
 The underlying entry point is `python tools/agentping_robot.py`. Run `--help`
 or a subcommand's `--help` for options. `--state-dir`, `--port`, and `--serial`
 go before the subcommand. The worker finds the Pixel Pal by its USB VID/PID
-(`303A:1001`, the ESP32-C6's built-in USB Serial/JTAG controller), so moving it
+(`303A:1001`, shared by the ESP32-C6 and ESP32-S3 built-in USB Serial/JTAG controllers), so moving it
 to a different port or unplugging and reconnecting it does not require
 restarting the worker or passing `--port`. Pass `--port COM5` to pin an
 explicit port instead, and `--serial <id>` to pick one of several connected
@@ -131,7 +131,7 @@ then turn the robot's head 25 degrees and reset it.”
 
 ## Delivery and compatibility
 
-Requires the `live3d_usb` firmware with `joint` support. The old baked profile
+Requires `live3d_usb` (C6) or `live3d_usb_s3` (S3) firmware with `joint` support. The old baked profile
 does not implement this command set. The firmware validates joint limits too.
 
 Requests are local files under `%USERPROFILE%\.agentping\usb\commands`, consumed

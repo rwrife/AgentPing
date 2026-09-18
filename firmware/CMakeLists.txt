@@ -1,3 +1,6 @@
 cmake_minimum_required(VERSION 3.16.0)
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
+if(IDF_TARGET STREQUAL "esp32s3")
+  idf_build_set_property(DEPENDENCIES_LOCK "${CMAKE_SOURCE_DIR}/dependencies.esp32s3.lock")
+endif()
 project(firmware)

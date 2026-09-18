@@ -43,7 +43,11 @@ with usb:
     assert any(b[1]<a[1] for a,b in zip(idle,idle[1:])),'Idle did not loop'
     assert any(row[3] for row in rows if row[0]=='stand'),'Stand transition not observed'
     grounded=re.findall(r'STARTUP STATUS state=(?:stand|idle).* bottom=(-?\d+)', '\n'.join(lines))
-    assert grounded and all(abs(int(y)-356)<=1 for y in grounded),'Stand-up/idle ground level moved'
+    resolution=re.search(r'LIVE3D RES (\d+)x(\d+) output=(\d+)x(\d+)', '\n'.join(lines))
+    assert resolution, 'Missing startup render dimensions'
+    height=int(resolution[2]); scale=int(resolution[4])/height
+    floor=round((height*.88-25/scale)*scale)
+    assert grounded and all(abs(int(y)-floor)<=1 for y in grounded),'Stand-up/idle ground level moved'
     print('PASS: off-screen boot, fall once, stand once, blended transitions, looping idle and waiting caption',flush=True)
     usb.write(b'host\nidle\n');collect(2)
     assert rows[-1][0]=='idle' and rows[-1][2]==0,'Host heartbeat did not clear waiting caption'

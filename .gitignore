@@ -8,6 +8,7 @@ firmware/.pio/
 firmware/managed_components/
 firmware/sdkconfig.*
 !firmware/sdkconfig.defaults
+!firmware/sdkconfig.defaults.esp32s3
 .pio/
 
 # Local tool environments

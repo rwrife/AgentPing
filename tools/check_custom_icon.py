@@ -1,15 +1,19 @@
-"""Validate custom icon publication and malformed-upload handling on COM5.
+"""Validate custom icon publication and malformed-upload handling.
 
 Stop the desktop worker before running this hardware check.
 """
+import argparse
 import json
 from pathlib import Path
 import time
 import serial
 from robot_control import command
 
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--port', default='COM5')
+args = parser.parse_args()
 usb = serial.Serial(baudrate=115200, timeout=.1, write_timeout=3)
-usb.dtr = False; usb.rts = False; usb.port = "COM5"
+usb.dtr = False; usb.rts = False; usb.port = args.port
 lines = []
 
 

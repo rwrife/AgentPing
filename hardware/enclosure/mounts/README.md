@@ -1,6 +1,6 @@
 # Monitor and desk mount prototypes
 
-These fit the current AgentPing rear tray's 10 x 2 mm vents. All dimensions
+These fit both the C6 and S3 rear trays' identical 10 x 2 mm vents. All dimensions
 are millimetres. CAD-checked, **not yet print-tested**. The mounts carry the
 small AgentPing pod; the monitor arm bonds down the back of a monitor.
 
@@ -78,3 +78,8 @@ when inspecting an assembly. `preview-geometry` contains assembled-coordinate
 render meshes, not print meshes. `validation.json` records solid/mesh checks,
 assembly clearances and nominal dimensions. Validation does not establish
 spring force, retention, stiffness, stability or printability on your printer.
+
+Run `hardware/enclosure/verify_enclosures.py` with FreeCAD Python to check both
+released arms against both board enclosures, including vent alignment, intentional
+press-fit interference, clear middle vents, and 0.2 mm tip-to-inner-floor clearance.
+Remove the arm before accessing the rear bezel-release slots.

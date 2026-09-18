@@ -1,6 +1,41 @@
 # AgentPing display firmware
 
-This directory contains the reproducible ESP-IDF/PlatformIO firmware for the **Waveshare ESP32-C6-Touch-AMOLED-1.64**. It is a thin authenticated protocol-v1 display client: provider credentials and provider actions remain on the PC.
+This directory contains ESP-IDF/PlatformIO firmware for two Waveshare boards.
+
+## USB robot: choose a board
+
+| Board | Environment | Driver | Input |
+| --- | --- | --- | --- |
+| ESP32-C6-Touch-AMOLED-1.64 | `live3d_usb` | CO5300, 280 x 456, QSPI | Touch present, disabled by robot |
+| ESP32-S3-LCD-1.47B | `live3d_usb_s3` | ST7789, 172 x 320, SPI | No touch |
+
+Build with `platformio run -d firmware -e <environment>` and flash with the
+same environment plus `-t upload --upload-port COM5` (replace the port).
+Never cross-flash C6 and S3 images. Both boards use 16 MB flash and native
+USB Serial/JTAG. The S3 has 8 MB PSRAM, but this port deliberately uses internal
+RAM for the renderer and DMA, without depending on PSRAM initialization.
+The S3-specific SDK defaults select its 240 MHz CPU; C6 defaults are unchanged.
+`dependencies.lock` retains the C6 lock, and `dependencies.esp32s3.lock` pins the
+same component versions for S3 without rewriting the C6 target on every build.
+
+`src/boards/waveshare_c6.cpp` and `src/boards/waveshare_s3.cpp` isolate panel,
+pin, touch, and brightness differences. `src/boards/display.cpp` owns shared
+LVGL/DMA setup. `src/display_profile.h` defines board-specific resolution modes
+and message layout; `src/live3d.cpp`, assets, commands, and desktop software
+are shared. Existing `live3d_usb` and `character_usb` names remain C6-compatible.
+
+See [Windows setup](../README.md), [live renderer](LIVE3D.md), and
+[S3 bring-up checklist](BRINGUP-S3.md). The S3 driver is based on the
+manufacturer's **Type B** demo, not the non-B board. The S3 passed on-device USB/rendering/desktop smoke tests on 2026-09-18;
+see the bring-up report for results and remaining physical checks.
+
+## C6 network application
+
+The default `waveshare_esp32_c6_touch_amoled_1_64` environment is a separate thin
+authenticated protocol-v1 display client: provider credentials and provider
+actions remain on the PC. The network/touch UI and baked `character_usb`
+application are C6-only; the S3 target rejects these applications at compile time.
+The sections below describe the C6 network application, not the USB robot.
 
 ## Implemented vertical slice
 

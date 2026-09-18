@@ -1,0 +1,52 @@
+{
+  "files": {
+    ".gitignore": {
+      "sha256": "cf72cf428272224ab287963574233d2bf0dabe3bd67b2ba9158ea9f41b45f0a0",
+      "lf_sha256": "56c9fc7f3fc1cf449cd9c70259861284e4de82024ae2fb3cf0afbb237d9d807b"
+    },
+    "back-cover.3mf": {
+      "sha256": "af1a00eb68ec9a15f4e2296e7f4a0ab3717fffa95e29f9104c1225914f485ea3"
+    },
+    "back-cover.step": {
+      "sha256": "a7d1868a616c44efd061a8f61fb2dd8a5be8945ce9ba75251884c041fb20cbcb",
+      "lf_sha256": "0b3a01957b0252ccd55132a23e6131c32da741ea6a1ec66b238148ea75888a9d"
+    },
+    "back-cover.stl": {
+      "sha256": "e285d1cc6262845609e57aa78aa2cd0f1e4ed036ed8da54cba14c71b2fb97bc6"
+    },
+    "build_enclosure.py": {
+      "sha256": "f87223e63ec07c30c6d9eb665d5fe6c9e712e6f591688015d959e27d5a90d724",
+      "lf_sha256": "e60866e1cbe59a46b9f7cc0140ba8e52ac4b6fade2d094f65fea1d995ad99606"
+    },
+    "exploded.png": {
+      "sha256": "9a163ff7e4e7e4f08e8f07165668391b786dabd7bdcfda9d8d520c24b5adbf2a"
+    },
+    "front-shell.3mf": {
+      "sha256": "912b3f81098173ed608fda4f205d0ccc05e21de3077f42280b7375c9fa293cb2"
+    },
+    "front-shell.step": {
+      "sha256": "fd3b0a409e626aed9a873599499ecc0a98814be3ec6afad351352ae1c1ba6654",
+      "lf_sha256": "9ccdcd7a5ddfe6075837adc7c79f5674a765c338d04322980e0e5b26d1e95d4d"
+    },
+    "front-shell.stl": {
+      "sha256": "d22a64d37d776337f05b8ffefaf01a8a137e6f2cbfb78f6a2eee03f25cd5ebd9"
+    },
+    "pixel-pal-monitor-pod.FCStd": {
+      "sha256": "cfddc91541edbcc5ed218d4db602131f84d569df00bf0fa524b6feb01f85849c"
+    },
+    "preview.blend": {
+      "sha256": "d492d5c6db733afb5923055e2f3da009e84b1e2e76aeadc3f3d0a6b5f476113f"
+    },
+    "preview.png": {
+      "sha256": "5c29554321925c111704c07509be2dbfc999c166013cbd8c0e8bb8837ba9ae51"
+    },
+    "render_preview.py": {
+      "sha256": "5bcee80ba291db551266ec073f64885a599beb121a9fff07716a3315a5e48bda",
+      "lf_sha256": "6ec7562b31fb14d5dae06710ab70c99888a9deb36ea315aa08559f1fc23391a7"
+    },
+    "validation.json": {
+      "sha256": "cae656f78e24c6f4da001895d98e6aa7115cbf8b8697c481dc3978664ed908fa",
+      "lf_sha256": "dbb159461e889831242cc11d76631510530b5016247f1980cdd417f7c57abb13"
+    }
+  }
+}

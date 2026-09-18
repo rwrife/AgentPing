@@ -14,15 +14,33 @@ AgentPing's repository license is MIT. The firmware also links or adapts the fol
   - `Examples/ESP-IDF-V5.5.2/06_LVGL_Demo/components/espressif__esp_lcd_touch_ft3168/`
 - Product documentation: <https://docs.waveshare.com/ESP32-C6-Touch-AMOLED-1.64>
 
-AgentPing reimplemented the small board-initialization layer in `src/board.cpp` from the documented values and adapted the FT3168-compatible touch component under `components/ft3168/`. The adapted files retain Apache-2.0 SPDX/provenance notices and are modified for smaller scope and current Espressif APIs. A copy of Apache-2.0 is included at `components/ft3168/LICENSE`.
+AgentPing reimplemented the small board-initialization layer in `src/boards/waveshare_c6.cpp` from the documented values and adapted the FT3168-compatible touch component under `components/ft3168/`. The adapted files retain Apache-2.0 SPDX/provenance notices and are modified for smaller scope and current Espressif APIs. A copy of Apache-2.0 is included at `components/ft3168/LICENSE`.
 
 ### Hardware revision decision
 
 The current product page, schematic, and ESP-IDF 5.5.2 example agree on CO5300, FT6146, OLED reset GPIO20, touch interrupt GPIO1, QSPI GPIO10/11/4/5/7/19, and I²C GPIO18/8. The repository's older Arduino 3.2.0 LVGL example identifies SH8601 and reset GPIO21. AgentPing treats that Arduino example as a legacy/incompatible board revision and does not mix its controller/reset assumptions into the current target.
 
+## Waveshare ESP32-S3-LCD-1.47B evidence
+
+- Product: <https://www.waveshare.com/ESP32-S3-LCD-1.47B.htm>
+- Wiki/pin table: <https://www.waveshare.com/wiki/ESP32-S3-LCD-1.47B>
+- Demo: <https://files.waveshare.com/wiki/ESP32-S3-LCD-1.47B/ESP32-S3-LCD-1.47B-Demo.zip>
+- Retrieved 2026-09-18; archive SHA-256:
+  `9e375aeb82e4ad56212cbbfbf6a8dc7ddb1183469d9904b2d09c7ba070699e08`.
+- Evidence paths within the archive:
+  `ESP-IDF/ESP32-S3-LCD-1.47B-Test/main/LCD_Driver/ST7789.{c,h}`,
+  `LCD_Driver/Vernon_ST7789T/Vernon_ST7789T.c`, and
+  `main/LVGL_Driver/LVGL_Driver.c`.
+
+`src/boards/waveshare_s3.cpp` is a small new initialization layer using the
+documented Type B pin assignments, panel register values, and orientation.
+It links ESP-IDF's Apache-2.0 ST7789 driver rather than copying the vendor's
+modified driver. The demo's driver carries Espressif Apache-2.0 notices.
+The Type B configuration must not be substituted with the non-B board pinout.
+
 ## Managed Espressif/LVGL components
 
-Exact resolved versions and component hashes are recorded in `firmware/dependencies.lock`; downloaded sources are generated under `firmware/managed_components/` and are not committed.
+Exact resolved versions and component hashes are recorded in `firmware/dependencies.lock` (C6) and `firmware/dependencies.esp32s3.lock` (S3); downloaded sources are generated under `firmware/managed_components/` and are not committed.
 
 - Espressif CO5300 LCD driver 2.0.3 — Apache-2.0
 - Espressif LCD touch abstraction 1.2.1 — Apache-2.0
