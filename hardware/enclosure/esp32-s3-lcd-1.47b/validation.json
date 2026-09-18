@@ -105,11 +105,15 @@
   },
   "assembly": {
     "size_mm": [
-      42.0,
-      56.0,
+      36.0,
+      51.0,
       14.5
     ],
     "printed_parts": 2,
+    "bezel_bands_mm": {
+      "sides": 7.34,
+      "ends": 6.815000000000001
+    },
     "mounting_holes": "four 2.3 mm M2 clearance holes; manufacturer-dimensioned positions",
     "support_centres_mm": [
       [
@@ -152,15 +156,15 @@
     ],
     "released_catch_removal_sweep_sampled_clear": true,
     "button_keepout_width_mm": 23.32,
-    "button_to_mount_plane_clearance_mm": 8.84
+    "button_to_mount_plane_clearance_mm": 5.84
   },
   "clearance-tray": {
     "valid_solid": true,
     "solid_count": 1,
-    "volume_mm3": 16534.956,
+    "volume_mm3": 10904.456,
     "size_mm": [
-      42.0,
-      56.0,
+      36.0,
+      51.0,
       11.7
     ],
     "triangles": 5144,
@@ -168,7 +172,7 @@
     "non_manifold": false,
     "self_intersections": false,
     "mesh_components": 1,
-    "mesh_volume_error_fraction": 4.6218235604621665e-05,
+    "mesh_volume_error_fraction": 9.515871407369567e-05,
     "print_z_min_mm": 0.0,
     "nominal_cavity_overlap_mm3": 0.0,
     "service_opening_overlap_mm3": 0.0,
@@ -179,12 +183,12 @@
   },
   "front-bezel": {
     "valid_solid": true,
-    "volume_mm3": 4232.372,
+    "volume_mm3": 2867.022,
     "triangles": 1144,
     "closed_mesh": true,
     "non_manifold": false,
     "self_intersections": false,
-    "print_z_min_mm": -3.552713678800501e-15,
-    "mesh_volume_error_fraction": 0.00010388473329496366
+    "print_z_min_mm": 1.7763568394002505e-15,
+    "mesh_volume_error_fraction": 0.00015850068142776223
   }
 }

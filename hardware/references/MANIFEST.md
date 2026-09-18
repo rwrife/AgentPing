@@ -106,7 +106,7 @@ M2 clearance holes and 4.2 x 1.3 mm rear head recesses. This replaces the
 former adhesive support allowance. After a physical USB cable fit check, the
 user requested 2 mm more support height: pads rise from 0.5 to 2.5 mm, and
 the rear seam, lip, catches and glass rise 2 mm. USB opening bottom remains
-Z = 3.6 mm, with its top raised to 11.9 mm. The front shape is reusable.
+Z = 3.6 mm, with its top raised to 11.9 mm. The subsequent compact revision requires a new matching front.
 Screw thread depth and real board fit require a dry fit. The pin-access back
 uses rounded slot ends and retains at least 0.5 mm annular material around
 the clearance holes above the head recess. The C6 hole pattern is not reused.
@@ -121,7 +121,7 @@ pocket, with no separate button recesses. A centred board and its nominal
 1.5 mm button protrusions occupy 23.32 mm, leaving 0.5 mm on each side.
 Secure the board on its printed pads with M2 screws; this gap cannot also be
 claimed as extra movement tolerance. Button height/travel remain unmeasured.
-The outer housing, display aperture, C6 geometry and shared vents are unchanged.
+The display aperture, C6 geometry and shared vents are unchanged.
 
 ### User-required common rear vents, 2026-09-18
 
@@ -159,11 +159,15 @@ measurements for that tighter rim.
 
 CAD checks validate two solids without overlap, sampled removal, 0.3 mm
 clearance to an assumed full-pocket glass envelope at the measured Z, and
-button keepouts on both parts. Internal button clearance extends up to the rim underside at Z = 11.3; actual
+button keepouts on both parts. Internal button clearance extends up to the rim underside at Z = 13.3; actual
 button tops must be below this and their Y bounds within the board-length cavity. Physical glass fit, button travel, retention, support-pad
 thickness and printed mount retention still require a dry fit.
 
-The revised S3 shares the C6 42 x 56 mm rounded outline and chamfered front.
+The revised S3 uses a 36 x 51 mm rounded outline and chamfered front.
+This reduces its bezel bands to 7.34 mm sides / 6.815 mm ends, closely matching
+the C6 bands of 7.4 / 6.9 mm. Both S3 backs and the front must be reprinted
+together; the previous 42 x 56 mm front is incompatible. Support height,
+USB clearance, board/button pocket and all shared mounting vents are retained.
 Both released arm STEP files pass CAD compatibility checks on both trays.
 Their tips insert 2.6 mm into the 2.8 mm floor, leaving 0.2 mm before its inner
 surface; middle vents remain open. This does not prove thermal performance.

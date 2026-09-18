@@ -1,7 +1,8 @@
 # Optional rear housings with pin-access slots
 
 Print one of these backs **instead of** the standard back when rear-facing
-GPIO headers are fitted. Reuse the original front, snap catches and mounts.
+GPIO headers are fitted. Use the matching current front and existing mounts. The compact S3 requires
+its new 36 x 51 mm front; older 42 x 56 mm S3 fronts do not fit.
 Two slots expose each board's header rows through the rear floor; the pins
 are intended to remain recessed rather than stick out behind the case.
 These are unprinted fit-check options, not verified fits to soldered headers.
@@ -14,12 +15,13 @@ These are unprinted fit-check options, not verified fits to soldered headers.
 | ESP32-S3-LCD-1.47B | [clearance-tray-pin-access.stl](../esp32-s3-lcd-1.47b/clearance-tray-pin-access.stl) | 9 pins per row; 2.54 mm pitch; 17.78 mm between rows | 4 x 24 mm, rounded ends |
 
 Matching STEP files and `pin-access.FCStd` are beside each STL. Each FreeCAD
-document contains the optional rear and the unchanged original front, in
+document contains the optional rear and the matching current front, in
 assembled coordinates. STL files are floor-down, ready for slicing.
 
 ## Recessed pins and the existing mounts
 
-The exterior housing size, board seating height, USB/button clearance and all
+Compared with each current standard back, the exterior housing size, board
+seating height, USB/button clearance and all
 four **10 x 2 mm vents** remain unchanged. Slots are entirely outside the vent
 pattern. The minimum material between a slot and the vents is **4.43 mm on C6**
 and **1.89 mm on S3**. Snap-release openings are untouched. The S3 now has printed support pads in
@@ -49,7 +51,7 @@ Both boards fasten through the rear with M2 screws into the metal standoffs.
 The S3 backs now provide four 2.5 mm-high printed pads instead of adhesive
 supports; see its [assembly instructions](../esp32-s3-lcd-1.47b/README.md) for
 the manufacturer-dimensioned screw positions and 4.0 mm screw grip. The board
-stack and existing front stay unchanged. Check screw length against actual threads.
+stack retains the raised USB clearance; both compact backs use the new front. Check screw length against actual threads.
 
 ## Coordinates and evidence
 
@@ -90,7 +92,7 @@ and print tolerances still require checking.
 regenerating them. The main enclosure verifier includes the optional variants.
 Checks cover single valid solids, closed connected manifold meshes, STEP/STL/
 FreeCAD agreement, exact subtraction of two slots, nominal header clearance,
-unchanged vents and compatibility with both original mount arms and fronts.
+unchanged vents and compatibility with both original mount arms and matching current fronts.
 `validation.json` records the dimensions and results. The standard C6 files and generator are preserved. The standard S3 back is
 also regenerated with the same four printed pads and M2 screw access.
 

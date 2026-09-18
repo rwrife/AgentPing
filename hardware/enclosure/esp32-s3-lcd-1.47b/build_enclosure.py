@@ -41,7 +41,9 @@ POCKET_DEPTH = BEZEL_Z - FLOOR
 APERTURE_W = BOARD_W + 2 * CLEARANCE
 POCKET_W = APERTURE_W + BUTTON_WIDTH_ALLOWANCE
 POCKET_H = BOARD_H + 2 * CLEARANCE
-BODY_W, BODY_H = 42.0, 56.0
+# Match the C6 bezel bands (~7.4 mm sides / 6.9 mm ends) around the S3 aperture.
+BODY_W, BODY_H = 36.0, 51.0
+LIP_W, LIP_H = BODY_W-4, BODY_H-4
 DEPTH = BEZEL_Z + FRONT_RIM
 SERVICE_TOP_Y = -7.0
 USB_TOP = SPLIT + 3.0
@@ -122,6 +124,7 @@ def rounded(w, h, r, z, depth):
 def snap_features():
     # Shift the C6 interface to match the S3 stack.
     shift = DEPTH - 15.1
+    x_shift = (BODY_W-42.0)/2
     for side in (-1, 1):
         for y in (-8, 8):
             beam = box(1, 5, 9.5+shift, 18, y-2.5, FLOOR)
@@ -132,6 +135,8 @@ def snap_features():
             pocket = box(.7,5.6,1,19.15,y-2.8,10.7+shift)
             release = box(1,5.6,FLOOR+.2,17,y-2.8,-.1)
             shapes = (catch, channel, pocket, release)
+            for shape in shapes:
+                shape.translate(V(x_shift,0,0))
             if side < 0:
                 shapes = tuple(shape.mirror(V(),V(1,0,0)) for shape in shapes)
             yield shapes
@@ -139,7 +144,7 @@ def snap_features():
 
 def make_tray():
     tray = rounded(BODY_W, BODY_H, 5, 0, SPLIT)
-    tray = tray.fuse(rounded(38,52,3,SPLIT-.1,2.9))
+    tray = tray.fuse(rounded(LIP_W,LIP_H,3,SPLIT-.1,2.9))
     # Full rectangular board envelope avoids assuming rounded glass corners.
     cavity = box(POCKET_W, POCKET_H, DEPTH, -POCKET_W/2,-POCKET_H/2,FLOOR)
     tray = tray.cut(cavity)
@@ -152,7 +157,7 @@ def make_tray():
         tray = tray.cut(Part.makeCylinder(SCREW_RADIUS,FLOOR+SUPPORT_PAD+.2,V(x,y,-.1)))
         tray = tray.cut(Part.makeCylinder(HEAD_RADIUS,HEAD_DEPTH+.1,V(x,y,-.1)))
     # A bottom-facing USB tunnel; leave the rear floor intact for the mounts.
-    service = box(14,12,USB_TOP-3.6,-7,-29,3.6)
+    service = box(14,BODY_H/2+1-17,USB_TOP-3.6,-7,-BODY_H/2-1,3.6)
     tray = tray.cut(service)
     for catch, channel, pocket, release in snap_features():
         tray = tray.cut(channel).fuse(catch).cut(release)
@@ -173,7 +178,7 @@ def make_bezel():
     top = [e for e in bezel.Edges
            if abs(e.BoundBox.ZMin-DEPTH)<.001 and abs(e.BoundBox.ZMax-DEPTH)<.001]
     bezel = bezel.makeChamfer(2,top)
-    bezel = bezel.cut(rounded(38.5,52.5,3.25,SPLIT-.1,3.2))
+    bezel = bezel.cut(rounded(LIP_W+2*FIT_CLEARANCE,LIP_H+2*FIT_CLEARANCE,3.25,SPLIT-.1,3.2))
     bezel = bezel.cut(box(POCKET_W+.6,POCKET_H+.6,BEZEL_Z-SPLIT+.1,
                          -POCKET_W/2-.3,-POCKET_H/2-.3,SPLIT-.1))
     bezel = bezel.cut(box(APERTURE_W,POCKET_H,DEPTH,-APERTURE_W/2,-POCKET_H/2,SPLIT-.1))
@@ -304,6 +309,7 @@ def build():
         "assembly": {
             "size_mm": [round(BODY_W, 2), round(BODY_H, 2), DEPTH],
             "printed_parts": 2,
+            "bezel_bands_mm": {"sides": (BODY_W-APERTURE_W)/2, "ends": (BODY_H-POCKET_H)/2},
             "mounting_holes": "four 2.3 mm M2 clearance holes; manufacturer-dimensioned positions",
             "support_centres_mm": [[round(x,3),round(y,3)] for x,y in SUPPORTS],
             "printed_support_height_mm": SUPPORT_PAD,

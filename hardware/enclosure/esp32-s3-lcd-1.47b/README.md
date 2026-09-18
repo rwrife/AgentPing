@@ -1,9 +1,12 @@
 # ESP32-S3-LCD-1.47B snap-fit monitor pod
 
-The S3 now uses the C6 design: a **42 x 56 mm rounded outline**, 5 mm corner
+The S3 uses a compact **36 x 51 mm rounded outline**, 5 mm corner
 radius, 2 mm front chamfer, recessed locating lip and four spring catches.
 Its **14.5 mm depth** follows the measured S3 stack (C6: 15.1 mm).
-The outer sides and front are continuous; USB exits through the rear tray.
+The bezel bands are 7.34 mm at the sides and 6.815 mm at the ends, close to
+the C6 bands of 7.4 and 6.9 mm. The outer sides and front are continuous; USB
+exits through the rear tray. **Print the new front and one new back together:**
+the older 42 x 56 mm S3 parts do not fit this compact revision.
 
 ![S3 assembled pod](preview.png)
 ![S3 snap-fit interior](exploded.png)
@@ -12,15 +15,15 @@ For the **ESP32-S3-LCD-1.47B**, non-touch 172 x 320 board without headers.
 This is an unprinted fit-check prototype. The existing C6 geometry is preserved.
 
 For fitted rear GPIO headers, use the optional [pin-access back](../pin-access/README.md):
-print `clearance-tray-pin-access.stl` instead of `clearance-tray.stl` and reuse
-this front and the existing mount. Pin tips must remain recessed; actual header
+print `clearance-tray-pin-access.stl` instead of `clearance-tray.stl` with
+the current compact front and the existing mount. Pin tips must remain recessed; actual header
 projection and mating-connector fit require checking.
 
 ## Dimensions and board retention
 
 | Feature | Millimetres |
 |---|---|
-| Body | 42 x 56 x 14.5 |
+| Body | 36 x 51 x 14.5 |
 | PCB envelope | 20.32 x 36.37 |
 | Internal pocket | 24.32 x 37.37 (3 mm wider overall) |
 | Front aperture | 21.32 x 37.37 |
@@ -29,7 +32,7 @@ projection and mating-connector fit require checking.
 | User-measured support feet to glass top | 7.7 |
 | Nominal glass top / rim underside | Z = 13.0 / 13.3 |
 | Rear seam / locating lip top | Z = 8.9 / 11.7 |
-| Locating lip / socket | 38 x 52 / 38.5 x 52.5 |
+| Locating lip / socket | 32 x 47 / 32.5 x 47.5 |
 | Front rim / aperture chamfer | 1.2 / 0.5 |
 | USB tunnel | 14 wide; Z = 3.6..11.9 |
 
@@ -39,7 +42,7 @@ not clamp or positively retain the board. **Both S3 backs now have four printed
 support pads and M2 screw access**, replacing the earlier adhesive-only support.
 The pads are 2.5 mm high, raised by 2 mm after the first USB cable fit check.
 The rear walls, locating lip and catches rise by the same 2 mm, giving a
-14.5 mm total depth. The front retains its shape and can be reused. The USB
+14.5 mm total depth. The compact front matches both current back options. The USB
 tunnel floor stays at Z = 3.6 while its ceiling rises to 11.9, providing
 2 mm more clearance below the raised connector. Do not add adhesive on the pads.
 

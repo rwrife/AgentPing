@@ -43,7 +43,7 @@ It also measures the actual rear vent openings and pitch in both STEP files,
 verifies clear tunnels and floor depth, and compares the two vent interfaces.
 The S3 now has two parts: the checks require zero assembled overlap and verify
 released snap catches, button keepouts and 0.3 mm clearance above an **assumed full-board glass envelope**.
-Its 42 x 56 x 14.5 mm stack includes four 2.5 mm printed support pads with M2 screw access.
+Its 36 x 51 x 14.5 mm stack includes four 2.5 mm printed support pads with M2 screw access.
 The full-board aperture avoids guessing a tighter glass-retaining rim: actual
 glass width/length, PCB offsets and active-area bounds remain essential to
 finalizing that rim. No mechanical model of the real S3 board is available:
