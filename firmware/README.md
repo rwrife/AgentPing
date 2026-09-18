@@ -26,8 +26,8 @@ are shared. Existing `live3d_usb` and `character_usb` names remain C6-compatible
 
 See [Windows setup](../README.md), [live renderer](LIVE3D.md), and
 [S3 bring-up checklist](BRINGUP-S3.md). The S3 driver is based on the
-manufacturer's **Type B** demo, not the non-B board. No S3 physical validation
-or performance measurement is claimed.
+manufacturer's **Type B** demo, not the non-B board. The S3 passed on-device USB/rendering/desktop smoke tests on 2026-09-18;
+see the bring-up report for results and remaining physical checks.
 
 ## C6 network application
 

@@ -1,0 +1,1293 @@
+{
+  "lines": [
+    "ESP-ROM:esp32s3-20210327",
+    "Build:Mar 27 2021",
+    "rst:0x15 (USB_UART_CHIP_RESET),boot:0x8 (SPI_FAST_FLASH_BOOT)",
+    "Saved PC:0x420065ba",
+    "SPIWP:0xee",
+    "mode:DIO, clock div:1",
+    "load:0x3fce2820,len:0x159c",
+    "load:0x403c8700,len:0xc80",
+    "load:0x403cb700,len:0x2f54",
+    "entry 0x403c8908",
+    "I (24) boot: ESP-IDF 5.5.0 2nd stage bootloader",
+    "I (24) boot: compile time Sep 18 2026 09:09:41",
+    "I (25) boot: Multicore bootloader",
+    "I (25) boot: chip revision: v0.2",
+    "I (25) boot: efuse block revision: v1.4",
+    "I (25) boot.esp32s3: Boot SPI Speed : 80MHz",
+    "I (25) boot.esp32s3: SPI Mode       : DIO",
+    "I (25) boot.esp32s3: SPI Flash Size : 16MB",
+    "I (26) boot: Enabling RNG early entropy source...",
+    "I (26) boot: Partition Table:",
+    "I (26) boot: ## Label            Usage          Type ST Offset   Length",
+    "I (27) boot:  0 nvs              WiFi data        01 02 00009000 00006000",
+    "I (27) boot:  1 phy_init         RF data          01 01 0000f000 00001000",
+    "I (27) boot:  2 factory          factory app      00 00 00010000 00300000",
+    "I (28) boot: End of partition table",
+    "I (28) esp_image: segment 0: paddr=00010020 vaddr=3c070020 size=4bea0h (310944) map",
+    "I (83) esp_image: segment 1: paddr=0005bec8 vaddr=3fc96800 size=03450h ( 13392) load",
+    "I (86) esp_image: segment 2: paddr=0005f320 vaddr=40374000 size=00cf8h (  3320) load",
+    "I (88) esp_image: segment 3: paddr=00060020 vaddr=42000020 size=64f60h (413536) map",
+    "I (161) esp_image: segment 4: paddr=000c4f88 vaddr=40374cf8 size=11ad0h ( 72400) load",
+    "I (177) esp_image: segment 5: paddr=000d6a60 vaddr=600fe000 size=00020h (    32) load",
+    "I (185) boot: Loaded app from partition at offset 0x10000",
+    "I (185) boot: Disabling RNG early entropy source...",
+    "I (186) cpu_start: Multicore app",
+    "I (195) cpu_start: Pro cpu start user code",
+    "I (195) cpu_start: cpu freq: 240000000 Hz",
+    "I (195) app_init: Application information:",
+    "I (195) app_init: Project name:     firmware",
+    "I (195) app_init: App version:      4dce8a1",
+    "I (196) app_init: Compile time:     Sep 18 2026 11:16:11",
+    "I (196) app_init: ELF file SHA256:  22854c51d...",
+    "I (196) app_init: ESP-IDF:          5.5.0",
+    "I (196) efuse_init: Min chip rev:     v0.0",
+    "I (196) efuse_init: Max chip rev:     v0.99",
+    "I (196) efuse_init: Chip rev:         v0.2",
+    "I (196) heap_init: Initializing. RAM available for dynamic allocation:",
+    "I (197) heap_init: At 3FCA9260 len 000404B0 (257 KiB): RAM",
+    "I (197) heap_init: At 3FCE9710 len 00005724 (21 KiB): RAM",
+    "I (197) heap_init: At 3FCF0000 len 00008000 (32 KiB): DRAM",
+    "I (197) heap_init: At 600FE020 len 00001FC8 (7 KiB): RTCRAM",
+    "I (198) spi_flash: detected chip: generic",
+    "I (198) spi_flash: flash io: dio",
+    "I (199) sleep_gpio: Configure to isolate all GPIO pins in sleep state",
+    "I (199) sleep_gpio: Enable automatic switching of GPIO sleep configuration",
+    "I (200) main_task: Started on CPU0",
+    "I (201) main_task: Calling app_main()",
+    "I (335) board: ESP32-S3-LCD-1.47B ST7789 172x320 initialized (no touch)",
+    "LIVE3D RES 172x320 output=172x320 buffers=121088 heap=158848",
+    "MOTION STORED frames=20 rate=12 bytes=4320 heap=158848",
+    "STARTUP ENTER state=fall blend_ms=0",
+    "LIVE3D READY vertices=2822 triangles=2668 bones=27 commands=low,medium,high,max,native,fast,tex64,tex128,pause,resume,status,frame",
+    "FACE state=0",
+    "STARTUP FIRST max_y=-12 state=fall",
+    "STARTUP STATUS state=fall frame=0.04 waiting=0 blend=0 bottom=-12",
+    "STARTUP STATUS state=fall frame=5.38 waiting=0 blend=0 bottom=41",
+    "STARTUP STATUS state=fall frame=9.63 waiting=0 blend=0 bottom=125",
+    "STARTUP STATUS state=fall frame=15.75 waiting=0 blend=0 bottom=236",
+    "STARTUP STATUS state=fall frame=19.00 waiting=0 blend=0 bottom=257",
+    "MOTION STORED frames=138 rate=12 bytes=29808 heap=155692",
+    "STARTUP ENTER state=stand blend_ms=400",
+    "FACE state=1",
+    "STARTUP STATUS state=stand frame=0.00 waiting=0 blend=1 bottom=257",
+    "STARTUP STATUS state=stand frame=1.77 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=stand frame=4.59 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=stand frame=8.35 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=stand frame=12.09 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=stand frame=14.91 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=stand frame=17.74 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=stand frame=21.55 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=stand frame=24.41 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=stand frame=28.24 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=stand frame=32.06 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=stand frame=34.93 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=stand frame=38.75 waiting=0 blend=0 bottom=257",
+    "LIVE3D FPS 12.04 resolution=172x320 texture=128 skin_ms=5.51 raster_ms=32.53 display_ms=43.92 heap=155692 min_heap=155692",
+    "STARTUP STATUS state=stand frame=42.58 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=stand frame=45.47 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=stand frame=48.35 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=stand frame=52.21 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=stand frame=56.05 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=stand frame=58.94 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=stand frame=61.84 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=stand frame=65.69 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=stand frame=69.52 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=stand frame=72.38 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=stand frame=75.67 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=stand frame=78.97 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=stand frame=82.27 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=stand frame=86.60 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=stand frame=89.84 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=stand frame=93.55 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=stand frame=96.04 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=stand frame=99.93 waiting=0 blend=0 bottom=257",
+    "LIVE3D FPS 11.39 resolution=172x320 texture=128 skin_ms=5.43 raster_ms=35.17 display_ms=46.00 heap=155692 min_heap=155692",
+    "STARTUP STATUS state=stand frame=104.11 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=stand frame=106.88 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=stand frame=111.03 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=stand frame=113.80 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=stand frame=117.98 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=stand frame=120.62 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=stand frame=124.39 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=stand frame=127.17 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=stand frame=131.33 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=stand frame=134.12 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=stand frame=136.91 waiting=0 blend=0 bottom=257",
+    "MOTION STORED frames=73 rate=12 bytes=15768 heap=155692",
+    "STARTUP ENTER state=idle blend_ms=400",
+    "FACE state=2",
+    "STARTUP STATUS state=idle frame=0.00 waiting=1 blend=1 bottom=257",
+    "STARTUP STATUS state=idle frame=0.00 waiting=1 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=2.47 waiting=1 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=5.36 waiting=1 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=8.25 waiting=1 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=12.59 waiting=1 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=15.49 waiting=1 blend=0 bottom=257",
+    "LIVE3D FPS 8.57 resolution=172x320 texture=128 skin_ms=5.56 raster_ms=35.48 display_ms=74.29 heap=155692 min_heap=155692",
+    "STARTUP STATUS state=idle frame=18.40 waiting=1 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=21.30 waiting=1 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=25.63 waiting=1 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=28.52 waiting=1 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=31.41 waiting=1 blend=0 bottom=257",
+    "FACE state=3",
+    "STARTUP STATUS state=idle frame=34.31 waiting=1 blend=0 bottom=257",
+    "FACE state=2",
+    "STARTUP STATUS state=idle frame=38.66 waiting=1 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=41.57 waiting=1 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=44.46 waiting=1 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=48.79 waiting=1 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=51.68 waiting=1 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=54.57 waiting=1 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=58.91 waiting=1 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=61.81 waiting=1 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=64.70 waiting=1 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=69.05 waiting=1 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=71.95 waiting=1 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=4.28 waiting=1 blend=0 bottom=257",
+    "LIVE3D FPS 8.29 resolution=172x320 texture=128 skin_ms=5.58 raster_ms=34.94 display_ms=78.80 heap=155692 min_heap=155692",
+    "STARTUP STATUS state=idle frame=7.20 waiting=1 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=10.09 waiting=1 blend=0 bottom=257",
+    "FACE state=3",
+    "STARTUP STATUS state=idle frame=12.99 waiting=1 blend=0 bottom=257",
+    "FACE state=2",
+    "STARTUP STATUS state=idle frame=17.39 waiting=1 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=20.28 waiting=1 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=23.17 waiting=1 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=27.50 waiting=1 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=30.39 waiting=1 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=34.73 waiting=1 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=37.62 waiting=1 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=40.51 waiting=1 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=43.41 waiting=1 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=47.75 waiting=1 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=50.64 waiting=1 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=53.53 waiting=1 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=57.86 waiting=1 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=60.77 waiting=1 blend=0 bottom=257",
+    "FACE state=3",
+    "STARTUP STATUS state=idle frame=63.66 waiting=1 blend=0 bottom=257",
+    "FACE state=2",
+    "LIVE3D FPS 8.28 resolution=172x320 texture=128 skin_ms=5.66 raster_ms=34.93 display_ms=78.83 heap=155692 min_heap=155692",
+    "STARTUP STATUS state=idle frame=68.05 waiting=1 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=70.93 waiting=1 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=1.82 waiting=1 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=4.71 waiting=1 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=7.61 waiting=1 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=11.94 waiting=1 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=14.84 waiting=1 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=17.75 waiting=1 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=20.64 waiting=1 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=23.53 waiting=1 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=26.42 waiting=1 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=30.75 waiting=1 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=33.65 waiting=1 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=37.98 waiting=1 blend=0 bottom=257",
+    "PAL HOST OK",
+    "MOTION STORED frames=73 rate=12 bytes=15768 heap=155692",
+    "STARTUP ENTER state=idle blend_ms=400",
+    "STARTUP STATUS state=idle frame=40.88 waiting=0 blend=1 bottom=257",
+    "FACE state=3",
+    "FACE state=2",
+    "STARTUP STATUS state=idle frame=0.00 waiting=0 blend=1 bottom=257",
+    "STARTUP STATUS state=idle frame=0.00 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=3.55 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=6.33 waiting=0 blend=0 bottom=257",
+    "LIVE3D FPS 8.37 resolution=172x320 texture=128 skin_ms=5.58 raster_ms=35.00 display_ms=77.50 heap=155692 min_heap=155692",
+    "STARTUP STATUS state=idle frame=9.11 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=11.87 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=16.02 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=18.79 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=21.55 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=24.31 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=27.07 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=31.20 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=33.96 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=36.73 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=39.51 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=42.28 waiting=0 blend=0 bottom=257",
+    "FACE state=3",
+    "STARTUP STATUS state=idle frame=46.43 waiting=0 blend=0 bottom=257",
+    "FACE state=2",
+    "STARTUP STATUS state=idle frame=49.20 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=51.96 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=54.72 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=57.48 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=61.63 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=64.39 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=67.15 waiting=0 blend=0 bottom=257",
+    "LIVE3D FPS 8.68 resolution=172x320 texture=128 skin_ms=5.55 raster_ms=34.94 display_ms=73.41 heap=155692 min_heap=155692",
+    "STARTUP STATUS state=idle frame=69.95 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=0.71 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=4.86 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=7.62 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=10.39 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=13.17 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=15.94 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=20.08 waiting=0 blend=0 bottom=257",
+    "FACE state=3",
+    "STARTUP STATUS state=idle frame=22.84 waiting=0 blend=0 bottom=257",
+    "FACE state=2",
+    "STARTUP STATUS state=idle frame=25.62 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=28.41 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=32.55 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=35.32 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=38.09 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=40.86 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=43.63 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=47.77 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=50.53 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=53.29 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=56.05 waiting=0 blend=0 bottom=257",
+    "LIVE3D FPS 8.67 resolution=172x320 texture=128 skin_ms=5.58 raster_ms=34.95 display_ms=73.40 heap=155692 min_heap=155692",
+    "STARTUP STATUS state=idle frame=60.21 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=62.98 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=65.74 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=69.88 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=0.65 waiting=0 blend=0 bottom=257",
+    "FACE state=3",
+    "FACE state=2",
+    "STARTUP STATUS state=idle frame=4.83 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=7.59 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=11.73 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=14.50 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=17.27 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=21.40 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=24.16 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=28.29 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=31.05 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=33.82 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=36.59 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=40.74 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=43.51 waiting=0 blend=0 bottom=257",
+    "LIVE3D FPS 8.68 resolution=172x320 texture=128 skin_ms=5.57 raster_ms=34.97 display_ms=73.40 heap=155692 min_heap=155692",
+    "STARTUP STATUS state=idle frame=47.68 waiting=0 blend=0 bottom=257",
+    "STARTUP STATUS state=idle frame=50.44 waiting=0 blend=0 bottom=257",
+    "FACE state=3",
+    "STARTUP STATUS state=idle frame=53.22 waiting=0 blend=0 bottom=257",
+    "FACE state=2"
+  ],
+  "samples": [
+    [
+      "fall",
+      0.04,
+      0,
+      0
+    ],
+    [
+      "fall",
+      5.38,
+      0,
+      0
+    ],
+    [
+      "fall",
+      9.63,
+      0,
+      0
+    ],
+    [
+      "fall",
+      15.75,
+      0,
+      0
+    ],
+    [
+      "fall",
+      19.0,
+      0,
+      0
+    ],
+    [
+      "stand",
+      0.0,
+      0,
+      1
+    ],
+    [
+      "stand",
+      1.77,
+      0,
+      0
+    ],
+    [
+      "stand",
+      4.59,
+      0,
+      0
+    ],
+    [
+      "stand",
+      8.35,
+      0,
+      0
+    ],
+    [
+      "stand",
+      12.09,
+      0,
+      0
+    ],
+    [
+      "stand",
+      14.91,
+      0,
+      0
+    ],
+    [
+      "stand",
+      17.74,
+      0,
+      0
+    ],
+    [
+      "stand",
+      21.55,
+      0,
+      0
+    ],
+    [
+      "stand",
+      24.41,
+      0,
+      0
+    ],
+    [
+      "stand",
+      28.24,
+      0,
+      0
+    ],
+    [
+      "stand",
+      32.06,
+      0,
+      0
+    ],
+    [
+      "stand",
+      34.93,
+      0,
+      0
+    ],
+    [
+      "stand",
+      38.75,
+      0,
+      0
+    ],
+    [
+      "stand",
+      42.58,
+      0,
+      0
+    ],
+    [
+      "stand",
+      45.47,
+      0,
+      0
+    ],
+    [
+      "stand",
+      48.35,
+      0,
+      0
+    ],
+    [
+      "stand",
+      52.21,
+      0,
+      0
+    ],
+    [
+      "stand",
+      56.05,
+      0,
+      0
+    ],
+    [
+      "stand",
+      58.94,
+      0,
+      0
+    ],
+    [
+      "stand",
+      61.84,
+      0,
+      0
+    ],
+    [
+      "stand",
+      65.69,
+      0,
+      0
+    ],
+    [
+      "stand",
+      69.52,
+      0,
+      0
+    ],
+    [
+      "stand",
+      72.38,
+      0,
+      0
+    ],
+    [
+      "stand",
+      75.67,
+      0,
+      0
+    ],
+    [
+      "stand",
+      78.97,
+      0,
+      0
+    ],
+    [
+      "stand",
+      82.27,
+      0,
+      0
+    ],
+    [
+      "stand",
+      86.6,
+      0,
+      0
+    ],
+    [
+      "stand",
+      89.84,
+      0,
+      0
+    ],
+    [
+      "stand",
+      93.55,
+      0,
+      0
+    ],
+    [
+      "stand",
+      96.04,
+      0,
+      0
+    ],
+    [
+      "stand",
+      99.93,
+      0,
+      0
+    ],
+    [
+      "stand",
+      104.11,
+      0,
+      0
+    ],
+    [
+      "stand",
+      106.88,
+      0,
+      0
+    ],
+    [
+      "stand",
+      111.03,
+      0,
+      0
+    ],
+    [
+      "stand",
+      113.8,
+      0,
+      0
+    ],
+    [
+      "stand",
+      117.98,
+      0,
+      0
+    ],
+    [
+      "stand",
+      120.62,
+      0,
+      0
+    ],
+    [
+      "stand",
+      124.39,
+      0,
+      0
+    ],
+    [
+      "stand",
+      127.17,
+      0,
+      0
+    ],
+    [
+      "stand",
+      131.33,
+      0,
+      0
+    ],
+    [
+      "stand",
+      134.12,
+      0,
+      0
+    ],
+    [
+      "stand",
+      136.91,
+      0,
+      0
+    ],
+    [
+      "idle",
+      0.0,
+      1,
+      1
+    ],
+    [
+      "idle",
+      0.0,
+      1,
+      0
+    ],
+    [
+      "idle",
+      2.47,
+      1,
+      0
+    ],
+    [
+      "idle",
+      5.36,
+      1,
+      0
+    ],
+    [
+      "idle",
+      8.25,
+      1,
+      0
+    ],
+    [
+      "idle",
+      12.59,
+      1,
+      0
+    ],
+    [
+      "idle",
+      15.49,
+      1,
+      0
+    ],
+    [
+      "idle",
+      18.4,
+      1,
+      0
+    ],
+    [
+      "idle",
+      21.3,
+      1,
+      0
+    ],
+    [
+      "idle",
+      25.63,
+      1,
+      0
+    ],
+    [
+      "idle",
+      28.52,
+      1,
+      0
+    ],
+    [
+      "idle",
+      31.41,
+      1,
+      0
+    ],
+    [
+      "idle",
+      34.31,
+      1,
+      0
+    ],
+    [
+      "idle",
+      38.66,
+      1,
+      0
+    ],
+    [
+      "idle",
+      41.57,
+      1,
+      0
+    ],
+    [
+      "idle",
+      44.46,
+      1,
+      0
+    ],
+    [
+      "idle",
+      48.79,
+      1,
+      0
+    ],
+    [
+      "idle",
+      51.68,
+      1,
+      0
+    ],
+    [
+      "idle",
+      54.57,
+      1,
+      0
+    ],
+    [
+      "idle",
+      58.91,
+      1,
+      0
+    ],
+    [
+      "idle",
+      61.81,
+      1,
+      0
+    ],
+    [
+      "idle",
+      64.7,
+      1,
+      0
+    ],
+    [
+      "idle",
+      69.05,
+      1,
+      0
+    ],
+    [
+      "idle",
+      71.95,
+      1,
+      0
+    ],
+    [
+      "idle",
+      4.28,
+      1,
+      0
+    ],
+    [
+      "idle",
+      7.2,
+      1,
+      0
+    ],
+    [
+      "idle",
+      10.09,
+      1,
+      0
+    ],
+    [
+      "idle",
+      12.99,
+      1,
+      0
+    ],
+    [
+      "idle",
+      17.39,
+      1,
+      0
+    ],
+    [
+      "idle",
+      20.28,
+      1,
+      0
+    ],
+    [
+      "idle",
+      23.17,
+      1,
+      0
+    ],
+    [
+      "idle",
+      27.5,
+      1,
+      0
+    ],
+    [
+      "idle",
+      30.39,
+      1,
+      0
+    ],
+    [
+      "idle",
+      34.73,
+      1,
+      0
+    ],
+    [
+      "idle",
+      37.62,
+      1,
+      0
+    ],
+    [
+      "idle",
+      40.51,
+      1,
+      0
+    ],
+    [
+      "idle",
+      43.41,
+      1,
+      0
+    ],
+    [
+      "idle",
+      47.75,
+      1,
+      0
+    ],
+    [
+      "idle",
+      50.64,
+      1,
+      0
+    ],
+    [
+      "idle",
+      53.53,
+      1,
+      0
+    ],
+    [
+      "idle",
+      57.86,
+      1,
+      0
+    ],
+    [
+      "idle",
+      60.77,
+      1,
+      0
+    ],
+    [
+      "idle",
+      63.66,
+      1,
+      0
+    ],
+    [
+      "idle",
+      68.05,
+      1,
+      0
+    ],
+    [
+      "idle",
+      70.93,
+      1,
+      0
+    ],
+    [
+      "idle",
+      1.82,
+      1,
+      0
+    ],
+    [
+      "idle",
+      4.71,
+      1,
+      0
+    ],
+    [
+      "idle",
+      7.61,
+      1,
+      0
+    ],
+    [
+      "idle",
+      11.94,
+      1,
+      0
+    ],
+    [
+      "idle",
+      14.84,
+      1,
+      0
+    ],
+    [
+      "idle",
+      17.75,
+      1,
+      0
+    ],
+    [
+      "idle",
+      20.64,
+      1,
+      0
+    ],
+    [
+      "idle",
+      23.53,
+      1,
+      0
+    ],
+    [
+      "idle",
+      26.42,
+      1,
+      0
+    ],
+    [
+      "idle",
+      30.75,
+      1,
+      0
+    ],
+    [
+      "idle",
+      33.65,
+      1,
+      0
+    ],
+    [
+      "idle",
+      37.98,
+      1,
+      0
+    ],
+    [
+      "idle",
+      40.88,
+      0,
+      1
+    ],
+    [
+      "idle",
+      0.0,
+      0,
+      1
+    ],
+    [
+      "idle",
+      0.0,
+      0,
+      0
+    ],
+    [
+      "idle",
+      3.55,
+      0,
+      0
+    ],
+    [
+      "idle",
+      6.33,
+      0,
+      0
+    ],
+    [
+      "idle",
+      9.11,
+      0,
+      0
+    ],
+    [
+      "idle",
+      11.87,
+      0,
+      0
+    ],
+    [
+      "idle",
+      16.02,
+      0,
+      0
+    ],
+    [
+      "idle",
+      18.79,
+      0,
+      0
+    ],
+    [
+      "idle",
+      21.55,
+      0,
+      0
+    ],
+    [
+      "idle",
+      24.31,
+      0,
+      0
+    ],
+    [
+      "idle",
+      27.07,
+      0,
+      0
+    ],
+    [
+      "idle",
+      31.2,
+      0,
+      0
+    ],
+    [
+      "idle",
+      33.96,
+      0,
+      0
+    ],
+    [
+      "idle",
+      36.73,
+      0,
+      0
+    ],
+    [
+      "idle",
+      39.51,
+      0,
+      0
+    ],
+    [
+      "idle",
+      42.28,
+      0,
+      0
+    ],
+    [
+      "idle",
+      46.43,
+      0,
+      0
+    ],
+    [
+      "idle",
+      49.2,
+      0,
+      0
+    ],
+    [
+      "idle",
+      51.96,
+      0,
+      0
+    ],
+    [
+      "idle",
+      54.72,
+      0,
+      0
+    ],
+    [
+      "idle",
+      57.48,
+      0,
+      0
+    ],
+    [
+      "idle",
+      61.63,
+      0,
+      0
+    ],
+    [
+      "idle",
+      64.39,
+      0,
+      0
+    ],
+    [
+      "idle",
+      67.15,
+      0,
+      0
+    ],
+    [
+      "idle",
+      69.95,
+      0,
+      0
+    ],
+    [
+      "idle",
+      0.71,
+      0,
+      0
+    ],
+    [
+      "idle",
+      4.86,
+      0,
+      0
+    ],
+    [
+      "idle",
+      7.62,
+      0,
+      0
+    ],
+    [
+      "idle",
+      10.39,
+      0,
+      0
+    ],
+    [
+      "idle",
+      13.17,
+      0,
+      0
+    ],
+    [
+      "idle",
+      15.94,
+      0,
+      0
+    ],
+    [
+      "idle",
+      20.08,
+      0,
+      0
+    ],
+    [
+      "idle",
+      22.84,
+      0,
+      0
+    ],
+    [
+      "idle",
+      25.62,
+      0,
+      0
+    ],
+    [
+      "idle",
+      28.41,
+      0,
+      0
+    ],
+    [
+      "idle",
+      32.55,
+      0,
+      0
+    ],
+    [
+      "idle",
+      35.32,
+      0,
+      0
+    ],
+    [
+      "idle",
+      38.09,
+      0,
+      0
+    ],
+    [
+      "idle",
+      40.86,
+      0,
+      0
+    ],
+    [
+      "idle",
+      43.63,
+      0,
+      0
+    ],
+    [
+      "idle",
+      47.77,
+      0,
+      0
+    ],
+    [
+      "idle",
+      50.53,
+      0,
+      0
+    ],
+    [
+      "idle",
+      53.29,
+      0,
+      0
+    ],
+    [
+      "idle",
+      56.05,
+      0,
+      0
+    ],
+    [
+      "idle",
+      60.21,
+      0,
+      0
+    ],
+    [
+      "idle",
+      62.98,
+      0,
+      0
+    ],
+    [
+      "idle",
+      65.74,
+      0,
+      0
+    ],
+    [
+      "idle",
+      69.88,
+      0,
+      0
+    ],
+    [
+      "idle",
+      0.65,
+      0,
+      0
+    ],
+    [
+      "idle",
+      4.83,
+      0,
+      0
+    ],
+    [
+      "idle",
+      7.59,
+      0,
+      0
+    ],
+    [
+      "idle",
+      11.73,
+      0,
+      0
+    ],
+    [
+      "idle",
+      14.5,
+      0,
+      0
+    ],
+    [
+      "idle",
+      17.27,
+      0,
+      0
+    ],
+    [
+      "idle",
+      21.4,
+      0,
+      0
+    ],
+    [
+      "idle",
+      24.16,
+      0,
+      0
+    ],
+    [
+      "idle",
+      28.29,
+      0,
+      0
+    ],
+    [
+      "idle",
+      31.05,
+      0,
+      0
+    ],
+    [
+      "idle",
+      33.82,
+      0,
+      0
+    ],
+    [
+      "idle",
+      36.59,
+      0,
+      0
+    ],
+    [
+      "idle",
+      40.74,
+      0,
+      0
+    ],
+    [
+      "idle",
+      43.51,
+      0,
+      0
+    ],
+    [
+      "idle",
+      47.68,
+      0,
+      0
+    ],
+    [
+      "idle",
+      50.44,
+      0,
+      0
+    ],
+    [
+      "idle",
+      53.22,
+      0,
+      0
+    ]
+  ]
+}

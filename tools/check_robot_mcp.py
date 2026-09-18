@@ -16,7 +16,7 @@ async def main():
         async with ClientSession(read, write) as session:
             await session.initialize()
             tools = await session.list_tools()
-            assert {t.name for t in tools.tools} == {"robot_status", "robot_message", "robot_animation", "robot_dance", "robot_move_joint", "robot_reset", "robot_icon"}
+            assert {t.name for t in tools.tools} == {"robot_status", "robot_message", "robot_animation", "robot_dance", "robot_move_joint", "robot_reset", "robot_icon", "robot_play_motion"}
 
             async def call(name, args=None):
                 result = await session.call_tool(name, args or {})
@@ -58,7 +58,7 @@ async def main():
     output = Path("test-results/robot-control")
     output.mkdir(parents=True, exist_ok=True)
     (output / "mcp-hardware.json").write_text(json.dumps(records, indent=2))
-    print("PASS: MCP initialization, seven tools, joint limits, messages, animation, CLI coexistence and reset")
+    print("PASS: MCP initialization, eight-tool discovery, joint limits, messages, animation, CLI coexistence and reset")
 
 
 if __name__ == "__main__":

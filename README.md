@@ -15,8 +15,9 @@ The physical robot uses `live3d_usb` on C6 or `live3d_usb_s3` on S3. Both share 
 | ESP32-C6-Touch-AMOLED-1.64 | 280 × 456 AMOLED, touch | `live3d_usb` | [Amazon](https://www.amazon.com/dp/B0GTDXXYV8) |
 | ESP32-S3-LCD-1.47B | 172 × 320 LCD, **no touch** | `live3d_usb_s3` | [Amazon](https://www.amazon.com/dp/B0FBWPJPXN) / [Waveshare specifications](https://www.waveshare.com/ESP32-S3-LCD-1.47B.htm) |
 
-The S3 port requires physical bring-up; the existing hardware measurements and
-FPS results are C6-only. Select the exact **1.47B**, not the non-B S3 board.
+The S3 passed [on-device smoke tests](firmware/BRINGUP-S3.md) for USB commands,
+rendering and desktop controls. Physical LCD appearance and enclosure fit still
+need verification. Select the exact **1.47B**, not the non-B S3 board.
 The optional network/touch application remains C6-only. Board-specific
 [3D-print enclosure files and fit notes](hardware/enclosure/README.md) are separate;
 do not print the C6 enclosure for the S3.

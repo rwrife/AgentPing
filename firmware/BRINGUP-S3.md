@@ -41,7 +41,24 @@ after upload if the application does not start. Close serial monitors before
 starting the USB worker. With both a C6 and S3 attached, select a device with
 `robot.cmd --serial <id> start` or `robot.cmd --port COM5 start`.
 
-## Physical acceptance checklist (not yet performed)
+## On-device smoke test — 2026-09-18
+
+Flashed `live3d_usb_s3` version `4dce8a1` to the connected ESP32-S3 on COM7;
+flash hashes verified. No factory-firmware backup was made, as requested.
+[Recorded results and logs](reports/s3-bringup-2026-09-18/results.json) include
+startup/reset, notification expiry/deduplication, icon validation, all six render
+modes, a full 172 x 320 framebuffer, and desktop CLI/MCP control tests. All passed.
+Native rendering measured roughly 8–13 FPS across the tested states, with about
+155 KB free heap; the resolution sweep minimum was about 131 KB.
+
+![Framebuffer captured from the S3](reports/s3-bringup-2026-09-18/frame.png)
+
+This is the renderer framebuffer, not a photograph of the LCD. Physical panel
+orientation/color fidelity still need visual confirmation. Cable unplug/replug,
+long-duration thermal stability, enclosure fit, custom-motion upload and automatic
+idle-dance timing are not covered by this smoke test.
+
+## Physical acceptance checklist (partially completed; see results above)
 
 - Cold boot and reset: local fall/stand/idle sequence; no watchdog or allocation errors.
 - All four display edges visible, correct portrait orientation and no 34-pixel shift.

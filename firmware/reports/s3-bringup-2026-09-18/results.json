@@ -1,0 +1,51 @@
+{
+  "date": "2026-09-18",
+  "board": "Waveshare ESP32-S3-LCD-1.47B",
+  "chip": "ESP32-S3 QFN56 rev 0.2",
+  "firmware_version": "4dce8a1",
+  "environment": "live3d_usb_s3",
+  "port": "COM7",
+  "firmware_sha256": "fd48dbdf98c5c571d956e503b42053c59e3e39332b8a9154db869254b82d97a2",
+  "factory_backup_created": false,
+  "upload_hash_verified": true,
+  "checks": {
+    "startup": [
+      "PASS: off-screen boot, fall once, stand once, blended transitions, looping idle and waiting caption",
+      "PASS: first desktop signal clears waiting status permanently until restart"
+    ],
+    "states": [
+      "PASS: states, eased camera in/out, 30-second dismissal, deduplicated USB error and stable heap"
+    ],
+    "icons": [
+      "PASS: custom bitmap, RGB565 color, rejected malformed/expired uploads and idle reset"
+    ],
+    "desktop_mcp": [
+      "PASS: MCP initialization, eight-tool discovery, joint limits, messages, animation, CLI coexistence and reset"
+    ]
+  },
+  "render_modes": [
+    "LIVE3D RES 86x160 output=86x160 buffers=55040 heap=223276",
+    "LIVE3D RES 100x186 output=100x186 buffers=74400 heap=202796",
+    "LIVE3D RES 120x224 output=120x224 buffers=107520 heap=170028",
+    "LIVE3D RES 140x260 output=140x260 buffers=145600 heap=131116",
+    "LIVE3D RES 86x160 output=172x320 buffers=115584 heap=161836",
+    "LIVE3D RES 172x320 output=172x320 buffers=121088 heap=155692"
+  ],
+  "fps_samples": [
+    "LIVE3D FPS 6.92 resolution=86x160 texture=128 skin_ms=5.64 raster_ms=19.51 display_ms=118.69 heap=223276 min_heap=155692",
+    "LIVE3D FPS 6.84 resolution=100x186 texture=128 skin_ms=5.74 raster_ms=21.17 display_ms=118.41 heap=202796 min_heap=155692",
+    "LIVE3D FPS 6.73 resolution=120x224 texture=128 skin_ms=5.65 raster_ms=23.67 display_ms=118.64 heap=170028 min_heap=155692",
+    "LIVE3D FPS 6.57 resolution=140x260 texture=128 skin_ms=5.74 raster_ms=26.84 display_ms=118.64 heap=131116 min_heap=131116",
+    "LIVE3D FPS 9.78 resolution=86x160 texture=128 skin_ms=5.68 raster_ms=21.92 display_ms=73.75 heap=161836 min_heap=131116",
+    "LIVE3D FPS 8.68 resolution=172x320 texture=128 skin_ms=5.69 raster_ms=34.96 display_ms=73.78 heap=155692 min_heap=131116"
+  ],
+  "framebuffer_size": [
+    172,
+    320
+  ],
+  "limitations": [
+    "Physical LCD orientation and color fidelity await user confirmation.",
+    "USB cable unplug/replug, long-duration thermal stability and enclosure fit not tested.",
+    "Custom-motion upload and automatic idle-dance timing not covered by this smoke test."
+  ]
+}

@@ -1,0 +1,100 @@
+[
+  {
+    "tool": "robot_reset",
+    "result": {
+      "ok": true,
+      "reply": "STARTUP ENTER state=idle blend_ms=400"
+    }
+  },
+  {
+    "tool": "robot_move_joint",
+    "result": {
+      "ok": true,
+      "reply": "PAL JOINT head OK"
+    }
+  },
+  {
+    "tool": "robot_move_joint",
+    "result": {
+      "ok": true,
+      "reply": "PAL JOINT left_elbow OK"
+    }
+  },
+  {
+    "tool": "robot_status",
+    "result": {
+      "ok": true,
+      "reply": "VIEW state=manual zoom=0.000 bubble=0 thought=0 heap=155404 provider=-1 icon=0 color=fc40 lvgl_used=6932 lvgl_free=15952"
+    }
+  },
+  {
+    "tool": "robot_message",
+    "result": {
+      "ok": true,
+      "reply": "PAL STATE attention OK"
+    }
+  },
+  {
+    "tool": "robot_status",
+    "result": {
+      "ok": true,
+      "reply": "VIEW state=attention zoom=0.679 bubble=1 thought=0 heap=155372 provider=-1 icon=0 color=fc40 lvgl_used=6932 lvgl_free=15956"
+    }
+  },
+  {
+    "tool": "robot_dance",
+    "result": {
+      "ok": true,
+      "reply": "STARTUP ENTER state=chicken blend_ms=400"
+    }
+  },
+  {
+    "tool": "robot_icon",
+    "result": {
+      "ok": true,
+      "reply": "PAL ICON OK"
+    }
+  },
+  {
+    "tool": "robot_status",
+    "result": {
+      "ok": true,
+      "reply": "VIEW state=attention zoom=0.786 bubble=1 thought=0 heap=155372 provider=-1 icon=1 color=fc40 lvgl_used=6948 lvgl_free=15940"
+    }
+  },
+  {
+    "tool": "robot_icon",
+    "result": {
+      "ok": true,
+      "reply": "PAL ICON OK"
+    }
+  },
+  {
+    "tool": "robot_status",
+    "result": {
+      "ok": true,
+      "reply": "VIEW state=attention zoom=0.984 bubble=0 thought=0 heap=155372 provider=-1 icon=1 color=07e0 lvgl_used=6948 lvgl_free=15940"
+    }
+  },
+  {
+    "tool": "robot_animation",
+    "result": {
+      "ok": true,
+      "reply": "PAL STATE thinking OK"
+    }
+  },
+  {
+    "tool": "robot_reset",
+    "result": {
+      "ok": true,
+      "reply": "STARTUP ENTER state=idle blend_ms=400"
+    }
+  },
+  {
+    "tool": "robot_status",
+    "result": {
+      "ok": true,
+      "reply": "VIEW state=idle zoom=0.378 bubble=0 thought=0 heap=155372 provider=-1 icon=0 color=07e0 lvgl_used=6948 lvgl_free=15940"
+    }
+  }
+]
