@@ -10,7 +10,7 @@ small AgentPing pod; the monitor arm bonds down the back of a monitor.
 
 | Part | Purpose / dimensions |
 |---|---|
-| `monitor-arm.stl` | 152.4 mm (6 inch) long, 26 wide stem, 6 thick; solid 42 x 42 mm rounded-square adhesive pad at bottom |
+| `monitor-arm.stl` | 152.4 mm (6 inch) long, 26 wide stem, 6 thick; solid 42 x 42 x 10 mm rounded-square adhesive pad at bottom |
 | `desk-arm.stl` | Same arm plus 6 mm tongue to engage the foot |
 | `desk-foot.stl` | 80 x 85 x 6 platform; projects toward display, forming an L |
 | `fit-tab-1.98.stl`, `fit-tab-2.06.stl`, `fit-tab-2.14.stl` | Single-tab fit coupons, labelled by nominal grip thickness in filename |
@@ -22,7 +22,9 @@ your cable diameter and bend radius. Small cable ties can secure the cable
 around the rails. The monitor cable slot stops 46 mm above the bottom,
 leaving a 4 mm gap before the solid 42 x 42 mm adhesive pad. The pad has
 3 mm corner radii and provides approximately 17.6 cm² of uninterrupted
-bonding surface. Overall arm length remains 6 inches.
+bonding surface. The pad is 10 mm thick, extending 4 mm farther toward the
+monitor than the 6 mm arm. This leaves a nominal 4 mm gap between the arm
+and a flat monitor before adhesive thickness. Overall arm length remains 6 inches.
 
 The raised vent shoulders provide a 4 mm air gap between the housing and
 adapter plate, putting the rear housing surface 8 mm ahead of the riser's
@@ -55,9 +57,10 @@ The desk foot remains a separate flat-print part.
 
 ## Printing
 
-The STL files already have print orientations. Arms lie on their broad rear
-faces with integral tabs pointing up (16.6 mm overall height); the foot is
-6 mm high. Inspect the short bridges above the cable slot and ventilation
+The STL files already have print orientations. The desk arm lies on its broad rear
+face with tabs up (16.6 mm height); the foot is 6 mm high. The monitor arm
+rests on its thicker adhesive pad with tabs up (20.6 mm height): enable
+support under the raised arm, which now starts 4 mm above the bed. Inspect the short bridges above the cable slot and ventilation
 openings in the slicer, and use local support if needed. Keep support out of
 the tab splits. Coupons print base-down with tabs pointing up, matching the
 integrated tabs' layer orientation. Confirm grip again on the finished mount.
