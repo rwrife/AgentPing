@@ -72,8 +72,8 @@ SHA-256 of downloaded evidence:
 No S3 mounting-hole pattern is inferred or reused from the C6. The S3 tray has
 no mounting holes; removable insulating adhesive on physically measured
 standoff feet is only a provisional retention method. Clearance allowances
-(0.5 mm per side and 0.5 mm installed support adhesive), service cutbacks and USB
-notch are **design assumptions**, not manufacturer dimensions. The user has now
+(0.5 mm per side and 0.5 mm installed support adhesive), internal button pockets and USB
+tunnel are **design assumptions**, not manufacturer dimensions. The user has now
 supplied the 7.7 mm foot-to-glass stack (below). Support contact areas, glass
 outline/offset, actual USB plug clearance and button access remain blockers to
 verified fit. See the S3 README before printing or attaching a board.

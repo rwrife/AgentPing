@@ -29,7 +29,7 @@ This is an unprinted fit-check prototype. The existing C6 geometry is preserved.
 The aperture uses the full PCB envelope plus 0.5 mm per side because glass
 outline and offset are not dimensioned in the manufacturer drawing. It does
 not clamp or positively retain the board. Use removable insulating adhesive
-on the actual support feet, with a measured installed thickness of 0.5 mm.
+on the actual support feet outside the vents, with a measured installed thickness of 0.5 mm.
 Do not bond components, antenna, flex or glass. Feet positions and underside
 component clearance still require a physical fit check; no screw pattern is assumed.
 
